@@ -4943,6 +4943,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     x.restore();
   }
   x.fillStyle='#98a7bf';x.fillText('全長 約'+Math.round(cfg.L/1000)+'km　'+sts.length+'駅',12,H-12);}
+  window.drawHomeMap = drawHomeMap;
   drawHomeMap();
   setInterval(() => {
     const vl = document.getElementById('viewLoop');
