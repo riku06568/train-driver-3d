@@ -2,6 +2,9 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>汐見環状線 3Dトレインシミュレーター | 本格ブラウザ電車運転ゲーム</title>
 <meta name="description" content="ブラウザですぐ遊べる本格3D電車運転シミュレーター「汐見環状線 3Dトレインシミュレーター」。全85駅・方向別三複線の大環状線と4つの支線を運転！大阪メトロ風車内放送・ドア上3画面LCD搭載。">
@@ -198,7 +201,7 @@ html,body{overscroll-behavior:none}
 <body>
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
 <button id="btnTitleReturn" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
-<button id="btnOnlineHud" class="online-hud-btn hide">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
+<button id="btnOnlineHud" class="online-hud-btn">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
 <div id="onlinePanel" class="hide"><div class="op-box"><div class="op-header"><span>🌐 オンライン乗務員一覧</span><button id="opClose">✕</button></div><div id="opList" class="op-list"></div></div></div>
 <div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・動作</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div><button class="qclose" id="qualClose">閉じる</button></div></div>
 <div id="home">
@@ -213,18 +216,19 @@ html,body{overscroll-behavior:none}
       </div>
 
       <div class="main-menu-buttons">
-        <button id="btnNavOnline" class="menu-btn online-menu-btn">
-          <span class="m-icon">🌐</span>
-          <div class="m-info">
-            <span class="m-title">オンライン乗務（環状線）</span>
-            <span class="m-desc">全85駅で他プレイヤーと同時走行・リアルタイム位置共有</span>
+        <div class="online-status-bar" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:10px 16px;margin:8px 0 14px;display:flex;align-items:center;justify-content:space-between;color:#e0f2fe;font-size:14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;"></span>
+            <span>オンライン接続中：<strong id="titleOnlineCount" style="color:#38bdf8;font-size:16px;">1</strong> 名乗務中</span>
           </div>
-        </button>
-        <button id="btnNavDuty" class="menu-btn primary-menu-btn">
+          <button id="btnChangeName" style="background:#1e293b;border:1px solid #38bdf8;color:#38bdf8;padding:4px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:700;">名前変更</button>
+        </div>
+
+        <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
           <span class="m-icon">🚃</span>
           <div class="m-info">
-            <span class="m-title">乗務開始（シングル）</span>
-            <span class="m-desc">環状線・支線の運転台へ</span>
+            <span class="m-title">乗務開始（オンライン環状線・支線）</span>
+            <span class="m-desc">全85駅・他プレイヤーとリアルタイムで常時同時走行</span>
           </div>
         </button>
         <button id="btnNavSettings" class="menu-btn">
@@ -542,21 +546,33 @@ function makeNameplateSprite(name, svcName) {
   return sprite;
 }
 
+const BROKER_URLS = [
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt'
+];
+let currentBrokerIdx = 0;
+
 function initOnlineClient() {
   if (ONLINE_CLIENT && ONLINE_CLIENT.connected) return;
   if (typeof mqtt === 'undefined') {
     const s = document.createElement('script');
-    s.src = 'https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js';
+    s.src = 'assets/js/mqtt.min.js';
     s.onload = () => initOnlineClient();
+    s.onerror = () => {
+      const s2 = document.createElement('script');
+      s2.src = 'https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js';
+      s2.onload = () => initOnlineClient();
+      document.head.appendChild(s2);
+    };
     document.head.appendChild(s);
     return;
   }
-  const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+  const brokerUrl = BROKER_URLS[currentBrokerIdx];
   try {
     ONLINE_CLIENT = mqtt.connect(brokerUrl, {
       clientId: ONLINE_CLIENT_ID,
       clean: true,
-      connectTimeout: 6000,
+      connectTimeout: 8000,
       keepalive: 15,
       will: {
         topic: 'shiomi3d/v1/players/' + ONLINE_CLIENT_ID,
@@ -570,6 +586,21 @@ function initOnlineClient() {
       ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#');
       updateOnlineHud();
       if (typeof drawHomeMap === 'function') drawHomeMap();
+    });
+
+    ONLINE_CLIENT.on('error', (err) => {
+      console.warn('MQTT error on ' + brokerUrl, err);
+      if (!ONLINE_CLIENT.connected) {
+        currentBrokerIdx = (currentBrokerIdx + 1) % BROKER_URLS.length;
+      }
+    });
+
+    ONLINE_CLIENT.on('close', () => {
+      setTimeout(() => {
+        if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) {
+          initOnlineClient();
+        }
+      }, 3000);
     });
     
     ONLINE_CLIENT.on('message', (topic, message) => {
@@ -591,7 +622,8 @@ function initOnlineClient() {
 function handleRemotePlayerUpdate(data) {
   const now = Date.now();
   let p = ONLINE_PLAYERS[data.id];
-  if (!p) {
+  const isNew = !p;
+  if (isNew) {
     p = {
       id: data.id,
       name: data.name || 'ゲスト運転士',
@@ -609,6 +641,9 @@ function handleRemotePlayerUpdate(data) {
       tr: null
     };
     ONLINE_PLAYERS[data.id] = p;
+    try {
+      toast('👤 ' + p.name + ' さんが乗務を開始しました', 'ok');
+    } catch(e) {}
   } else {
     p.name = data.name || p.name;
     p.service = data.service || p.service;
@@ -630,11 +665,15 @@ function handleRemotePlayerUpdate(data) {
 function removeRemotePlayer(id) {
   const p = ONLINE_PLAYERS[id];
   if (!p) return;
+  const pName = p.name;
   if (p.tr && p.tr.grp && p.tr.grp.parent) {
     p.tr.grp.parent.remove(p.tr.grp);
     p.tr = null;
   }
   delete ONLINE_PLAYERS[id];
+  try {
+    toast('👤 ' + pName + ' さんが乗務を終了しました', 'info');
+  } catch(e) {}
   updateOnlineHud();
   if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
   if (typeof drawHomeMap === 'function') drawHomeMap();
@@ -642,10 +681,13 @@ function removeRemotePlayer(id) {
 
 function updateOnlineHud() {
   const badge = document.getElementById('onlineCountBadge');
+  const titleCount = document.getElementById('titleOnlineCount');
   const hudBtn = document.getElementById('btnOnlineHud');
-  const count = (IS_ONLINE ? 1 : 0) + Object.keys(ONLINE_PLAYERS).length;
+  const count = 1 + Object.keys(ONLINE_PLAYERS).length;
   if (badge) badge.textContent = count;
-  if (hudBtn && IS_ONLINE) hudBtn.classList.remove('hide');
+  if (titleCount) titleCount.textContent = count;
+  if (hudBtn) hudBtn.classList.remove('hide');
+  if (typeof drawHomeMap === 'function') drawHomeMap();
 
   const opList = document.getElementById('opList');
   if (!opList) return;
@@ -776,6 +818,8 @@ function stopOnlinePublishLoop() {
    boot: builds the chosen line (loop or branch) and starts the game
    ===================================================================== */
 function boot(LINE_ID,SVC,START_I){
+IS_ONLINE = (LINE_ID === 'loop');
+initOnlineClient();
 const CFG=lineConfig(LINE_ID);const ST0=layoutStations(CFG);const L=CFG.L,BRANCH=!!CFG.branch,MINI=!!CFG.mini;
 const {px,pz,th}=genPath(L,CFG.R||0);
 function P(s){s=mod(s,L);const i=Math.floor(s),f=s-i;return [px[i]+(px[i+1]-px[i])*f,pz[i]+(pz[i+1]-pz[i])*f,th[i]+(th[i+1]-th[i])*f];}
@@ -2267,28 +2311,15 @@ const stOf=v=>STATIONS[stopIdx(v)];
 
 /* ================= voice ================= */
 let jaVoice=null,enVoice=null,speechOK=false;const keepU=[];
-const SS=()=>window.speechSynthesis||null;
-function pickVoice(){try{const vs=SS().getVoices();jaVoice=vs.find(v=>/^ja(-|_|$)/i.test(v.lang))||vs.find(v=>/japan|日本/i.test(v.name))||null;
-  enVoice=vs.find(v=>/^en(-|_)US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;}catch(e){}}
-if(SS()){pickVoice();try{SS().addEventListener('voiceschanged',pickVoice);}catch(e){SS().onvoiceschanged=pickVoice;}}
-const VOICE={sta:{pitch:1.3,rate:1.05},ann:{pitch:1.15,rate:1.0},sys:{pitch:1.0,rate:1.05},drv:{pitch:0.8,rate:1.0},en:{pitch:1.05,rate:0.95}};
-function mkU(text,kind,vol){if(kind!=='en')text=text.replace(/ATO/g,'エーティーオー').replace(/ATS/g,'エーティーエス');const u=new SpeechSynthesisUtterance(text),v=VOICE[kind||'sys'];u.pitch=v.pitch;u.rate=v.rate;u.volume=(kind==='ann'||kind==='sta')?1:(vol===undefined?1:Math.max(0.55,Math.min(1,vol*1.6)));
-  if(kind==='en'){u.lang='en-US';if(enVoice)u.voice=enVoice;}else{u.lang='ja-JP';if(jaVoice)u.voice=jaVoice;}
-  keepU.push(u);if(keepU.length>16)keepU.shift();return u;}
-function unlockSpeech(){const ss=SS();if(window.__speechOK)speechOK=true;if(!ss||speechOK)return;speechOK=true;try{pickVoice();ss.cancel();ss.resume();ss.speak(mkU('運転を開始します。','sys'));}catch(e){}}
-function say(text,kind,urgent,vol){if(kind==='drv')return; /* drv＝指差し確認の喚呼：音声なし */const ss=SS();if(!ss||!text)return;
-  try{if(!jaVoice)pickVoice();if(urgent)ss.cancel();
-
-    ss.resume();ss.speak(mkU(text,kind,vol));}catch(e){}}
-function sayJE(ja,en,urgent){say(ja,'ann',urgent);if(en)say(en,'en');}
-/* 手動放送だけは自動放送の無効設定に関係なく声を出す */
-function sayManual(ja,en){const ss=SS();if(!ss||!ja)return;
-  try{if(!jaVoice)pickVoice();ss.cancel();ss.resume();ss.speak(mkU(ja,'ann'));if(en)ss.speak(mkU(en,'en'));}catch(e){}}
-setInterval(()=>{try{const ss=SS();if(ss&&ss.speaking&&ss.paused)ss.resume();}catch(e){}},1000);
-/* ===== 肉声放送（環状線の各駅停車）：ONにすると、乗務員が自分の声で案内する ===== */
-let LIVE=(()=>{try{return localStorage.getItem('td_live')==='1';}catch(e){return false;}})();
-function liveAvail(){return !PAX&&!BRANCH&&KIND[G.key]==='local'&&G.phase==='play';}
-function liveSay(ja){const ss=SS();if(!ss||!ja)return;try{if(!jaVoice)pickVoice();ss.resume();const u=mkU(ja,'ann');u.rate=0.93;u.pitch=0.82;u.volume=1;ss.speak(u);}catch(e){}}
+/* ================= voice (完全事前録音音声化：OS合成音声は使用しない) ================= */
+const SS=()=>null;
+function pickVoice(){}
+function mkU(text,kind,vol){return null;}
+function unlockSpeech(){}
+function say(text,kind,urgent,vol){}
+function sayJE(ja,en,urgent){}
+function sayManual(ja,en){}
+function liveSay(ja){}
 function toggleLive(){LIVE=!LIVE;try{localStorage.setItem('td_live',LIVE?'1':'0');}catch(e){}toast(LIVE?'肉声放送 ON：駅の案内を自分の声で行います':'肉声放送 OFF','info');
   if(LIVE&&liveAvail()){G.liveDep=G.v>4?G.nv:null;G.liveAppr=null;G.liveArr=G.atStation;}updLive();}
 function updLive(){const b=document.getElementById('btnTitleReturn');if(b){b.classList.toggle('hide',G.walkOn);}
@@ -4533,7 +4564,13 @@ function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,fals
   for(const ch of CHUNKS){if(!ch.built||!ch.g)continue;const sp=chunkSphere(ch);if(!sp){ch.g.visible=true;continue;}
     ch.g.visible=_frus.intersectsSphere(sp)&&(cp.distanceTo(sp.center)-sp.radius)<far;}
   const trs=[ownTrain];for(const a of OT)trs.push(a.tr);for(const t of cityTrains)trs.push(t);for(const t of depotTrains)trs.push(t);
-  if (IS_ONLINE) { for (const pid in ONLINE_PLAYERS) if (ONLINE_PLAYERS[pid].tr) trs.push(ONLINE_PLAYERS[pid].tr); }
+  if (IS_ONLINE) {
+    for (const pid in ONLINE_PLAYERS) {
+      if (ONLINE_PLAYERS[pid].tr && ONLINE_PLAYERS[pid].tr.cars) {
+        for (const car of ONLINE_PLAYERS[pid].tr.cars) car.visible = true;
+      }
+    }
+  }
   for(const tr of trs){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=car.position.distanceTo(cp)<far+14;}}
 function frameBody(now){
   updQuality(now-last);
@@ -4544,27 +4581,31 @@ function frameBody(now){
     const nowMsTime = Date.now();
     for (const pid in ONLINE_PLAYERS) {
       const p = ONLINE_PLAYERS[pid];
-      if (nowMsTime - p.lastSeen > 6000) {
+      if (nowMsTime - p.lastSeen > 10000) {
         removeRemotePlayer(pid);
         continue;
       }
-      if (!p.tr && p.key) {
-        const k = p.key;
+      const k = (p.key && TK[p.key]) ? p.key : 'A';
+      if (!p.tr) {
         const flip = TK[k].dir < 0;
-        const liv = SVCLOOK[k][0];
+        const liv = SVCLOOK[k] ? SVCLOOK[k][0] : 0x14935f;
+        const svcLabel = SVCLOOK[k] ? SVCLOOK[k][1] : '環状線';
         const tr = buildTrain('', flip, liv, true, greenCarsFor(k), carsFor(k));
         setLook(tr, k);
-        const plate = makeNameplateSprite(p.name, SVCLOOK[k][1]);
+        const plate = makeNameplateSprite(p.name, svcLabel);
         plate.position.set(0, 4.6, -CARHALF + 2.5);
         tr.cars[0].add(plate);
         tr.nameplate = plate;
         p.tr = tr;
-        p.smoothS = p.s;
+        p.smoothS = p.s != null ? p.s : 0;
+        placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+        for (const car of p.tr.cars) car.visible = true;
       }
       if (p.tr && p.s != null) {
         let ds = sdiff(p.smoothS, p.s);
-        p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 10) + (p.v || 0) * dt * (p.dir || 1), L);
-        placeTrain(p.tr, p.smoothS, TK[p.key].off, TK[p.key].y);
+        p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 12), L);
+        placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+        for (const car of p.tr.cars) car.visible = true;
         if (p.door) {
           setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
         }
@@ -4761,12 +4802,11 @@ if (IS_ONLINE) {
 window.__T={enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks};
 }
 /* ================= home screen (before the world is built) ================= */
-// audio + speech must be started inside the user's tap (iOS / Chrome autoplay rules)
+// audio must be started inside the user's tap (iOS / Chrome autoplay rules)
 function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext||window.webkitAudioContext)();window.__AC=A;}if(window.__AC.state==='suspended')window.__AC.resume();try{preloadGuides();}catch(e){}
-    const o=window.__AC.createOscillator(),g=window.__AC.createGain();g.gain.value=0.0001;o.connect(g);g.connect(window.__AC.destination);o.start();o.stop(window.__AC.currentTime+0.05);}catch(e){}
-  try{const ss=window.speechSynthesis;if(ss){ss.cancel();ss.resume();const u=new SpeechSynthesisUtterance(pax?'ようこそ。':'運転を開始します。');u.lang='ja-JP';u.volume=1;
-      const vs=ss.getVoices();const jv=vs.find(v=>/^ja/i.test(v.lang));if(jv)u.voice=jv;window.__keepU=u;ss.speak(u);window.__speechOK=true;}}catch(e){}}
+    const o=window.__AC.createOscillator(),g=window.__AC.createGain();g.gain.value=0.0001;o.connect(g);g.connect(window.__AC.destination);o.start();o.stop(window.__AC.currentTime+0.05);}catch(e){}}
 (function home(){
+  initOnlineClient();
   const cfg=lineConfig('loop'),sts=layoutStations(cfg);const LN={};for(const id of ['branch','branch2','branch3','branch4']){const c=lineConfig(id);LN[id]={cfg:c,sts:layoutStations(c)};}const bcfg=LN.branch.cfg,bsts=LN.branch.sts;
   const path=genPath(cfg.L,0);
   // route map
@@ -4860,11 +4900,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
   const btnNavDuty = document.getElementById('btnNavDuty');
   if (btnNavDuty) btnNavDuty.onclick = () => {
-    IS_ONLINE = false;
-    const loopHeader = document.querySelector('#viewLoop .view-header h2');
-    if (loopHeader) loopHeader.textContent = '本線　汐見環状線';
     showHomeView('viewDutySelect');
   };
+  const btnChangeName = document.getElementById('btnChangeName');
   const btnNavOnline = document.getElementById('btnNavOnline');
   const onlineModal = document.getElementById('onlineModal');
   const onlineNameInput = document.getElementById('onlineNameInput');
@@ -4874,12 +4912,12 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
   if (onlineNameInput) onlineNameInput.value = MY_PLAYER_NAME;
   const hideOnlineModal = () => { if (onlineModal) onlineModal.classList.add('hide'); };
-  if (btnNavOnline) {
-    btnNavOnline.onclick = () => {
-      if (onlineNameInput) onlineNameInput.value = MY_PLAYER_NAME;
-      if (onlineModal) onlineModal.classList.remove('hide');
-    };
-  }
+  const showOnlineModal = () => {
+    if (onlineNameInput) onlineNameInput.value = MY_PLAYER_NAME;
+    if (onlineModal) onlineModal.classList.remove('hide');
+  };
+  if (btnNavOnline) btnNavOnline.onclick = showOnlineModal;
+  if (btnChangeName) btnChangeName.onclick = showOnlineModal;
   if (btnOnlineCancel) btnOnlineCancel.onclick = hideOnlineModal;
   if (closeOnlineModal) closeOnlineModal.onclick = hideOnlineModal;
 
@@ -4889,13 +4927,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       MY_PLAYER_NAME = val || '運転士';
       try { localStorage.setItem('shiomi_online_name', MY_PLAYER_NAME); } catch(e) {}
       hideOnlineModal();
-      IS_ONLINE = true;
-      initOnlineClient();
-      currentDutyView = 'viewLoop';
-      showHomeView('viewLoop');
-      const loopHeader = document.querySelector('#viewLoop .view-header h2');
-      if (loopHeader) loopHeader.innerHTML = '🌐 オンライン乗務 <span style="font-size:16px;color:#38bdf8;">(汐見環状線)</span>';
-      toast('オンライン接続中…種別と開始駅を選んでください', 'ok');
+      toast('プレイヤー名を「' + MY_PLAYER_NAME + '」に変更しました', 'ok');
+      updateOnlineHud();
     };
   }
 
