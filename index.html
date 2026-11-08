@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>汐見環状線 ワンマン運転</title>
+<title>汐見環状線 3Dトレインシミュレーター | 本格ブラウザ電車運転ゲーム</title>
+<meta name="description" content="ブラウザですぐ遊べる本格3D電車運転シミュレーター「汐見環状線 3Dトレインシミュレーター」。全85駅・方向別三複線の大環状線と4つの支線を運転！大阪メトロ風車内放送・ドア上3画面LCD搭載。">
+<meta name="keywords" content="汐見環状線,汐見環状線3D,トレインシミュレーター,電車運転シミュレーター,3D電車ゲーム,ブラウザゲーム,鉄道シミュレーター">
+<meta property="og:title" content="汐見環状線 3Dトレインシミュレーター">
+<meta property="og:description" content="ブラウザで遊べる本格3D電車運転シミュレーター。全85駅の大環状線と4つの支線をリアルに運転！">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://riku06568.github.io/train-driver-3d/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap" rel="stylesheet">
@@ -171,8 +177,8 @@ html,body{overscroll-behavior:none}
     <!-- View 1: Main Title Screen -->
     <div id="viewMain" class="home-view">
       <div class="brand-center">
-        <div class="led">汐見環状線</div>
-        <div class="sub" style="margin-top:10px;">方向別三複線の大環状線　ワンマン運転・ATO</div>
+        <div class="led">汐見環状線 3D</div>
+        <div class="sub" style="margin-top:10px;">本格3Dトレインシミュレーター　全85駅・三複線の大環状線</div>
       </div>
 
       <div class="main-menu-buttons">
@@ -271,7 +277,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 ワンマン運転 (v49)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v49)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>大阪メトロ風 機械合成音声（Nanami Neural TTS）</span></div>
@@ -3146,7 +3152,7 @@ function drawSpeed(){
 }
 function drawInfo(){
   const x=CANV.I.x,now=nowMs();x.fillStyle='#061226';x.fillRect(0,0,512,384);x.textBaseline='alphabetic';
-  if(G.phase==='title'){header(x,'汐見環状線　ワンマン運転');x.textAlign='center';x.fillStyle='#8fd6ff';x.font='700 26px '+FONT;x.fillText('ホーム画面で路線を選んでください',256,200);
+  if(G.phase==='title'){header(x,'汐見環状線 3Dトレインシミュレーター');x.textAlign='center';x.fillStyle='#8fd6ff';x.font='700 26px '+FONT;x.fillText('ホーム画面で路線を選んでください',256,200);
   }else{header(x,ROUTES[G.route].name+'　ワンマン');x.textAlign='left';
     const si=G.atStation!==null?G.atStation:G.depCheck;
     if(si!==null&&si!==undefined){const st=stOf(si);x.fillStyle=G.waiting?'#ffd23f':'#9fb0c8';x.font='500 20px '+FONT;x.fillText(G.waiting?'待ち合わせ中（後続 '+G.waiting.n+' 本）':'停車中'+(st.type==='twin'?'　'+PLATNO[G.key]+'番線':''),16,80);
