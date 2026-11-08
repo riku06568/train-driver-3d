@@ -4844,6 +4844,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   for(const st of sts){const [a,b]=XY(st.s);const m=st.cls==='M';x.fillStyle=m?'#ffd23f':st.cls==='X'?'#ff8a80':st.cls==='R'?'#ffc27a':'#e8eef6';const r=m?5.5:2.2;x.beginPath();x.arc(a,b,r,0,Math.PI*2);x.fill();
     if(m||st.i===0){x.fillStyle='#fff';x.font='700 12px '+FONT;x.fillText(st.name+(st.i===cfg.shin?'（新幹線）':''),a+(a>cx?8:-8-x.measureText(st.name+(st.i===cfg.shin?'（新幹線）':'')).width),b+4);}}
 
+  const SVCLOOK_NAMES = { A: '普通', B: '普通', C: '快速', D: '快速', E: '快速特急', F: '快速特急' };
   if (window.ONLINE_PLAYERS) {
     for (const pid in window.ONLINE_PLAYERS) {
       const p = window.ONLINE_PLAYERS[pid];
@@ -4868,7 +4869,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         x.shadowBlur = 0;
         
         // 3. Clear badge with pointer
-        const svcLabel = (SVCLOOK[p.key] ? SVCLOOK[p.key][1] : '環状線') + ' ' + (p.dir > 0 ? '外回り' : '内回り');
+        const svcLabel = (SVCLOOK_NAMES[p.key] || '環状線') + ' ' + (p.dir > 0 ? '外回り' : '内回り');
         const locLabel = p.stName ? '・' + p.stName : '';
         const tagText = '🚃 ' + p.name + ' (' + svcLabel + locLabel + ')';
         
@@ -4934,7 +4935,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     x.font = 'bold 12px ' + FONT;
     x.fillText('👥 走行中の運転士 (' + onlineDriverList.length + '名)', 20, 28);
     onlineDriverList.forEach((p, idx) => {
-      const svc = (SVCLOOK[p.key] ? SVCLOOK[p.key][1] : '環状線') + ' ' + (p.dir > 0 ? '外' : '内');
+      const svc = (SVCLOOK_NAMES[p.key] || '環状線') + ' ' + (p.dir > 0 ? '外' : '内');
       const loc = p.stName ? ' ' + p.stName + '付近' : '';
       x.fillStyle = '#e2e8f0';
       x.font = '11px ' + FONT;
