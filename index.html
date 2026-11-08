@@ -163,12 +163,43 @@ html,body{overscroll-behavior:none}
 #qualRow button{flex:1;min-width:80px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
 #qualRow button.on{border-color:#ffd23f;background:#3a2f0e;color:#ffd23f}
 #qualRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
+
+/* Online Mode Styles */
+.online-menu-btn{background:linear-gradient(135deg,rgba(14,116,144,0.92),rgba(3,105,161,0.95));border:2px solid #38bdf8;padding:18px 24px;box-shadow:0 8px 28px rgba(14,165,233,0.4)}
+.online-menu-btn:hover,.online-menu-btn:focus-visible{transform:translateY(-3px) scale(1.02);border-color:#7dd3fc;box-shadow:0 12px 36px rgba(56,189,248,0.6)}
+.home-modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(4,8,16,0.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.home-modal.hide{display:none!important}
+.home-modal-box{width:min(460px,92vw);background:#0f172a;border:2px solid #38bdf8;border-radius:18px;padding:22px;color:#e2e8f0;box-shadow:0 12px 40px rgba(0,0,0,0.7)}
+.home-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.home-modal-header h3{margin:0;font-size:20px;font-weight:800;color:#fff}
+.modal-close{background:transparent;border:0;color:#94a3b8;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.modal-close:hover{color:#fff;background:rgba(255,255,255,0.1)}
+.modal-btn{flex:1;height:48px;border-radius:12px;border:0;font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:transform 0.15s,opacity 0.15s}
+.modal-btn:hover{transform:translateY(-1px);opacity:0.95}
+
+.online-hud-btn{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));z-index:40;height:38px;padding:0 14px;border-radius:19px;border:1px solid #38bdf8;background:rgba(12,24,44,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#38bdf8;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.5);transition:background 0.15s,transform 0.15s}
+.online-hud-btn:hover{background:rgba(14,116,144,0.95);color:#fff;transform:scale(1.02)}
+#onlinePanel{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#onlinePanel.hide{display:none!important}
+.op-box{width:min(480px,94vw);max-height:85vh;display:flex;flex-direction:column;background:#0f172a;border:1px solid #38bdf8;border-radius:16px;padding:18px;color:#e2e8f0;box-shadow:0 16px 48px rgba(0,0,0,0.7)}
+.op-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid #334155;font-weight:800;font-size:17px;color:#fff}
+.op-header button{background:transparent;border:0;color:#94a3b8;font-size:20px;cursor:pointer}
+.op-list{overflow-y:auto;margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.op-item{background:rgba(30,41,59,0.7);border:1px solid #334155;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.op-item.is-me{border-color:#38bdf8;background:rgba(14,116,144,0.25)}
+.op-item-top{display:flex;align-items:center;justify-content:space-between}
+.op-item-name{font-weight:800;font-size:15px;color:#fff}
+.op-item-svc{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:#1e293b}
+.op-item-info{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#94a3b8}
+
 @media (prefers-reduced-motion:reduce){.card{transition:none}}
 </style>
 </head>
 <body>
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
 <button id="btnTitleReturn" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
+<button id="btnOnlineHud" class="online-hud-btn hide">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
+<div id="onlinePanel" class="hide"><div class="op-box"><div class="op-header"><span>🌐 オンライン乗務員一覧</span><button id="opClose">✕</button></div><div id="opList" class="op-list"></div></div></div>
 <div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・動作</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div><button class="qclose" id="qualClose">閉じる</button></div></div>
 <div id="home">
   <div id="homeBg"></div>
@@ -182,10 +213,17 @@ html,body{overscroll-behavior:none}
       </div>
 
       <div class="main-menu-buttons">
+        <button id="btnNavOnline" class="menu-btn online-menu-btn">
+          <span class="m-icon">🌐</span>
+          <div class="m-info">
+            <span class="m-title">オンライン乗務（環状線）</span>
+            <span class="m-desc">全85駅で他プレイヤーと同時走行・リアルタイム位置共有</span>
+          </div>
+        </button>
         <button id="btnNavDuty" class="menu-btn primary-menu-btn">
           <span class="m-icon">🚃</span>
           <div class="m-info">
-            <span class="m-title">乗務開始</span>
+            <span class="m-title">乗務開始（シングル）</span>
             <span class="m-desc">環状線・支線の運転台へ</span>
           </div>
         </button>
@@ -289,6 +327,39 @@ html,body{overscroll-behavior:none}
       </div>
     </div>
 
+    <!-- Online Name Input Modal -->
+    <div id="onlineModal" class="home-modal hide">
+      <div class="home-modal-box">
+        <div class="home-modal-header">
+          <h3>🌐 オンライン乗務（汐見環状線）</h3>
+          <button id="closeOnlineModal" class="modal-close">✕</button>
+        </div>
+        <div class="home-modal-body">
+          <p style="font-size:13px; color:#94a3b8; margin:0 0 14px; line-height:1.5;">
+            汐見環状線（各停・快速・快特）の同一マップで、他プレイヤーとリアルタイムで一緒に走ります。
+          </p>
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:13px; font-weight:700; color:#e2e8f0; margin-bottom:6px;">
+              運転席に表示する名前（プレイヤー名）：
+            </label>
+            <input type="text" id="onlineNameInput" maxlength="10" placeholder="例: 汐見ライナー"
+              style="width:100%; box-sizing:border-box; padding:12px 14px; background:#0c1424; border:1px solid #38bdf8; border-radius:10px; color:#fff; font-size:16px; font-weight:700; outline:none;">
+          </div>
+          <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:12px; font-size:12px; color:#cbd5e1; line-height:1.6; margin-bottom:18px;">
+            <div style="color:#38bdf8; font-weight:700; margin-bottom:4px;">✨ オンライン仕様：</div>
+            <div>・環状線のみで各駅停車・快速・快速特急が同じ線路上を走行</div>
+            <div>・運転席・列車の上にプレイヤー名プレートが表示</div>
+            <div>・他プレイヤーの前後1km以内は接近防止のためスポーン不可</div>
+            <div>・AI列車・ホーム乗客は少なめの快適設定</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button id="btnOnlineCancel" class="modal-btn" style="background:#1e293b; color:#94a3b8;">戻る</button>
+            <button id="btnOnlineProceed" class="modal-btn primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; border:1px solid #38bdf8;">乗務開始へ</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 <div id="loading" class="hide">路線を準備しています…</div>
@@ -309,6 +380,7 @@ html,body{overscroll-behavior:none}
 <div id="condUI" class="hide"><div class="lt" id="cHint"></div><div class="lb"><button id="cExit" style="background:#34445e;color:#fff">ホームに出る</button><button id="cOpen">戸開</button><button id="cClose" style="background:#c22f28;color:#fff">戸閉</button><button id="cMelo" style="background:#e0a21a">発車メロディ</button><button id="cPromo" style="background:#f2d27a">乗降促進</button><button id="cSig" style="background:#1f7a4a;color:#fff">合図（発車）</button></div></div>
 <div id="leanUI" class="hide"><div class="lt">窓から顔を出しています：すぐ横の操作箱のボタン（戸開・戸閉・メロディ）を押します／ドラッグで見回し</div><div class="lb"><button id="leanBackB" style="background:#34445e;color:#fff">運転席に戻る</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="assets/js/mqtt.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -425,6 +497,281 @@ function lapTime(cfg,stations,kind){ // rough timetable estimate for one lap / o
   const stops=stopsOf(stations,kind),vc={local:21,rapid:29,ltd:32,branch:18}[kind],dw={local:30,rapid:35,ltd:40,branch:30}[kind];let t=0;
   for(let i=0;i<stops.length;i++){const a=stops[i],b=stops[(i+1)%stops.length];if(kind==='branch'&&i===stops.length-1)break;const d=mod(b.s-a.s,cfg.L);t+=d/vc+28+(b.cls==='M'?dw+10:dw);}return t;}
 function fmtDur(sec){const m=Math.round(sec/60);return m>=60?Math.floor(m/60)+'時間'+(m%60)+'分':m+'分';}
+
+/* =====================================================================
+   Online Multiplayer State & Logic (汐見環状線 オンライン)
+   ===================================================================== */
+let IS_ONLINE = false;
+let MY_PLAYER_NAME = localStorage.getItem('shiomi_online_name') || '運転士';
+let ONLINE_CLIENT = null;
+const ONLINE_CLIENT_ID = 'sh_' + Math.random().toString(16).slice(2, 10);
+const ONLINE_PLAYERS = {}; // pid -> player state
+window.ONLINE_PLAYERS = ONLINE_PLAYERS;
+let onlinePubInterval = null;
+
+function makeNameplateSprite(name, svcName) {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 140;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(11, 19, 34, 0.9)';
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(8, 8, 496, 124, 28);
+  } else {
+    ctx.rect(8, 8, 496, 124);
+  }
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 44px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('👤 ' + name, 256, 48);
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText(svcName || '汐見環状線', 256, 96);
+  
+  const tex = new THREE.CanvasTexture(c);
+  tex.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(6.4, 1.75, 1);
+  return sprite;
+}
+
+function initOnlineClient() {
+  if (ONLINE_CLIENT && ONLINE_CLIENT.connected) return;
+  if (typeof mqtt === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js';
+    s.onload = () => initOnlineClient();
+    document.head.appendChild(s);
+    return;
+  }
+  const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+  try {
+    ONLINE_CLIENT = mqtt.connect(brokerUrl, {
+      clientId: ONLINE_CLIENT_ID,
+      clean: true,
+      connectTimeout: 6000,
+      keepalive: 15,
+      will: {
+        topic: 'shiomi3d/v1/players/' + ONLINE_CLIENT_ID,
+        payload: JSON.stringify({ id: ONLINE_CLIENT_ID, offline: true }),
+        qos: 0,
+        retain: false
+      }
+    });
+    
+    ONLINE_CLIENT.on('connect', () => {
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#');
+      updateOnlineHud();
+      if (typeof drawHomeMap === 'function') drawHomeMap();
+    });
+    
+    ONLINE_CLIENT.on('message', (topic, message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        if (!data || data.id === ONLINE_CLIENT_ID) return;
+        if (data.offline) {
+          removeRemotePlayer(data.id);
+          return;
+        }
+        handleRemotePlayerUpdate(data);
+      } catch (e) {}
+    });
+  } catch (e) {
+    console.error('MQTT error:', e);
+  }
+}
+
+function handleRemotePlayerUpdate(data) {
+  const now = Date.now();
+  let p = ONLINE_PLAYERS[data.id];
+  if (!p) {
+    p = {
+      id: data.id,
+      name: data.name || 'ゲスト運転士',
+      service: data.service,
+      key: data.key,
+      dir: data.dir || 1,
+      s: data.s,
+      v: data.v || 0,
+      door: data.door || 'closed',
+      doorSide: data.doorSide || 1,
+      doorFrac: data.doorFrac || 0,
+      stName: data.stName || '',
+      smoothS: data.s,
+      lastSeen: now,
+      tr: null
+    };
+    ONLINE_PLAYERS[data.id] = p;
+  } else {
+    p.name = data.name || p.name;
+    p.service = data.service || p.service;
+    p.key = data.key || p.key;
+    p.dir = data.dir != null ? data.dir : p.dir;
+    p.s = data.s;
+    p.v = data.v != null ? data.v : p.v;
+    p.door = data.door;
+    p.doorSide = data.doorSide;
+    p.doorFrac = data.doorFrac;
+    p.stName = data.stName;
+    p.lastSeen = now;
+  }
+  updateOnlineHud();
+  if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
+  if (typeof drawHomeMap === 'function') drawHomeMap();
+}
+
+function removeRemotePlayer(id) {
+  const p = ONLINE_PLAYERS[id];
+  if (!p) return;
+  if (p.tr && p.tr.grp && p.tr.grp.parent) {
+    p.tr.grp.parent.remove(p.tr.grp);
+    p.tr = null;
+  }
+  delete ONLINE_PLAYERS[id];
+  updateOnlineHud();
+  if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
+  if (typeof drawHomeMap === 'function') drawHomeMap();
+}
+
+function updateOnlineHud() {
+  const badge = document.getElementById('onlineCountBadge');
+  const hudBtn = document.getElementById('btnOnlineHud');
+  const count = (IS_ONLINE ? 1 : 0) + Object.keys(ONLINE_PLAYERS).length;
+  if (badge) badge.textContent = count;
+  if (hudBtn && IS_ONLINE) hudBtn.classList.remove('hide');
+
+  const opList = document.getElementById('opList');
+  if (!opList) return;
+  let html = '';
+  if (IS_ONLINE && typeof G !== 'undefined' && G && G.phase === 'play') {
+    const stObj = G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null);
+    const myLoc = G.atStation !== null ? (stObj ? stObj.name + ' 停車中' : '停車中') : (stObj ? stObj.name + 'へ走行中' : '走行中');
+    const mySpd = Math.round(G.v * 3.6);
+    const svcName = SERVICES[G.route] ? SERVICES[G.route].name : '汐見環状線';
+    html += `
+      <div class="op-item is-me">
+        <div class="op-item-top">
+          <span class="op-item-name">👤 ${MY_PLAYER_NAME} <span style="font-size:11px;color:#38bdf8;font-weight:700;">(あなた)</span></span>
+          <span class="op-item-svc" style="color:#38bdf8;">${svcName}</span>
+        </div>
+        <div class="op-item-info">
+          <span>📍 ${myLoc}</span>
+          <span>⚡ ${mySpd} km/h</span>
+        </div>
+      </div>
+    `;
+  }
+  for (const pid in ONLINE_PLAYERS) {
+    const p = ONLINE_PLAYERS[pid];
+    const spd = Math.round((p.v || 0) * 3.6);
+    const loc = p.stName ? (p.v > 0.5 ? p.stName + '付近 走行中' : p.stName + ' 停車中') : '走行中';
+    const svcLook = p.key && typeof SVCLOOK !== 'undefined' && SVCLOOK[p.key] ? SVCLOOK[p.key][1] : '環状線';
+    let distText = '';
+    if (typeof G !== 'undefined' && G && G.s != null && p.s != null) {
+      const d = Math.round(Math.abs(mod(p.s - G.s + 36000, 72000) - 36000));
+      distText = ` (距離: ${d < 1000 ? d + 'm' : (d / 1000).toFixed(1) + 'km'})`;
+    }
+    html += `
+      <div class="op-item">
+        <div class="op-item-top">
+          <span class="op-item-name">👤 ${p.name}</span>
+          <span class="op-item-svc">${svcLook}</span>
+        </div>
+        <div class="op-item-info">
+          <span>📍 ${loc}${distText}</span>
+          <span>⚡ ${spd} km/h</span>
+        </div>
+      </div>
+    `;
+  }
+  if (!html) {
+    html = '<div style="text-align:center;color:#64748b;padding:24px;">現在接続中の他の乗務員はいません</div>';
+  }
+  opList.innerHTML = html;
+}
+
+function checkOnlineStationBlocked(st, serviceKey) {
+  if (!IS_ONLINE) return null;
+  const L = 72000;
+  for (const pid in ONLINE_PLAYERS) {
+    const p = ONLINE_PLAYERS[pid];
+    if (p.key === serviceKey && p.s != null) {
+      const d = Math.abs(mod(p.s - st.s + L / 2, L) - L / 2);
+      if (d < 1000) {
+        return { name: p.name, dist: Math.round(d) };
+      }
+    }
+  }
+  return null;
+}
+
+let curOnlineStList = null, curOnlineService = null;
+function updateStationSelectButtons() {
+  if (!curOnlineStList || !curOnlineService) return;
+  const g = document.getElementById('stGrid');
+  if (!g) return;
+  const btns = g.querySelectorAll('button');
+  curOnlineStList.forEach((st, idx) => {
+    const bt = btns[idx];
+    if (!bt) return;
+    const blocked = checkOnlineStationBlocked(st, curOnlineService.key);
+    if (blocked) {
+      bt.disabled = true;
+      bt.style.opacity = '0.45';
+      bt.style.cursor = 'not-allowed';
+      bt.style.borderColor = '#ef4444';
+      bt.innerHTML = st.name + '<small style="color:#ef4444;font-weight:700;">⛔ 接近中: ' + blocked.name + ' (' + blocked.dist + 'm)</small>';
+    } else {
+      bt.disabled = false;
+      bt.style.opacity = '1';
+      bt.style.cursor = 'pointer';
+      bt.style.borderColor = '';
+      bt.innerHTML = st.name + '<small>' + ({M:'主要駅',X:'快特停車',R:'快速停車',L:'',J:'乗換駅',Q:'2面4線',T:'通過線',I:'島式'}[st.cls] || '') + '</small>';
+    }
+  });
+}
+
+function startOnlinePublishLoop() {
+  if (onlinePubInterval) clearInterval(onlinePubInterval);
+  onlinePubInterval = setInterval(() => {
+    if (!IS_ONLINE || !ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
+    if (typeof G === 'undefined' || !G || G.phase !== 'play') return;
+    const stObj = G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null);
+    const payload = {
+      id: ONLINE_CLIENT_ID,
+      name: MY_PLAYER_NAME,
+      service: G.route,
+      key: G.key,
+      dir: G.dir,
+      s: G.s,
+      v: G.v,
+      door: G.door ? G.door.state : 'closed',
+      doorSide: G.door ? G.door.side : 1,
+      doorFrac: G.door ? G.door.frac : 0,
+      stName: stObj ? stObj.name : '',
+      ts: Date.now()
+    };
+    ONLINE_CLIENT.publish('shiomi3d/v1/players/' + ONLINE_CLIENT_ID, JSON.stringify(payload));
+  }, 250);
+}
+
+function stopOnlinePublishLoop() {
+  if (onlinePubInterval) {
+    clearInterval(onlinePubInterval);
+    onlinePubInterval = null;
+  }
+  if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+    ONLINE_CLIENT.publish('shiomi3d/v1/players/' + ONLINE_CLIENT_ID, JSON.stringify({ id: ONLINE_CLIENT_ID, offline: true }));
+  }
+}
+
 /* =====================================================================
    boot: builds the chosen line (loop or branch) and starts the game
    ===================================================================== */
@@ -2028,9 +2375,9 @@ function spawnOneWait(st,k,doors,list,q,already,pReuse){ /* already=true: 最初
 function spawnWait(st,k){if(st.sp[k])return;if(physDup(st,k)){st.sp[k]=true;return;} /* 列は各停と共有 */
   const T=TK[k],doors=doorList(st.s+T.so,T.dir<0,greenCarsFor(k),carsFor(k)),q={},list=st.wait[k]||(st.wait[k]=[]);
   /* 最初からホームに少しだけいる（一気に大量スポーンしない） */
-  const seed=isRushHour()?irand(32,52):isQuietHour()?irand(2,6):irand(6,14);
+  const seed=IS_ONLINE?irand(1,3):(isRushHour()?irand(32,52):isQuietHour()?irand(2,6):irand(6,14));
   for(let i=0;i<seed;i++)spawnOneWait(st,k,doors,list,q,true);
-  const walkN=isRushHour()?irand(6,12):irand(1,3);
+  const walkN=IS_ONLINE?0:(isRushHour()?irand(6,12):irand(1,3));
   for(let i=0;i<walkN;i++)spawnOneWait(st,k,doors,list,q,false);
   st.sp[k]=true;st.arrT=st.arrT||{};st.arrT[k]=rand(0.4,1.8);
   if(!st.staff)spawnStaff(st);
@@ -2321,12 +2668,12 @@ function addCrew(tr,two){if(!tr||!tr.cars||tr.crew)return;tr.crew=[];const c0=tr
   const drv=new THREE.Mesh(SSITG[0],upperMat);drv.position.set(XE,1.83-0.84,ZE+0.3-CARHALF);drv.rotation.y=Math.PI;c0.add(drv);tr.crew.push(drv);
   if(two){const cd=new THREE.Mesh(SSTANDG[1]||SSTANDG[0],upperMat);cd.position.set(0.35,1.16,CARHALF-1.35);cd.rotation.y=-0.6;cL.add(cd);tr.crew.push(cd);}
   for(const m of tr.crew)m.layers.mask=c0.layers.mask;}
-const POOL_CNT=BRANCH?10:6;
+const POOL_CNT=IS_ONLINE?1:(BRANCH?10:6);
 for(const k of KEYS){POOL[k]=[];for(let i=0;i<POOL_CNT;i++){const TWO=KIND[k]==='ltd'&&i%2===1; /* 快速特急は2本に1本ツーマン */const tr=buildTrain('',TK[k].dir<0,SVCLOOK[k][0],true,greenCarsFor(k),carsFor(k),B3?(KIND[k]!=='rapid'&&i%2===0):undefined); /* 天宮支線：快速と各停の2本に1本は本線と同じ電車 */
   setLook(tr,k);const ai=mkAI('P'+k+i,tr,{key:k,dir:TK[k].dir,vmax:BRANCH?(KIND[k]==='rapid'?22:18):VMAX[k]});ai.twoMan=TWO;POOL[k].push(ai);addCrew(tr,TWO);}}
 addCrew(followT,false);
 /* 運転間隔（秒）：本線 各停 日中5分/ラッシュ2分/深夜20分、快速 8/1.5/15分、快特 4/1/30分。支線（本数2倍） 日中5分/ラッシュ3分/深夜10分 */
-function hdwSec(k){const h=hourNow(),kd=KIND[k]||'local',rush=isRushHour(),night=h>=22||h<5.5;if(h>=1&&h<4.5&&(BRANCH||kd==='ltd'))return 99999; /* 環状線の各停・快速は24時間運転 */
+function hdwSec(k){if(IS_ONLINE)return 99999;const h=hourNow(),kd=KIND[k]||'local',rush=isRushHour(),night=h>=22||h<5.5;if(h>=1&&h<4.5&&(BRANCH||kd==='ltd'))return 99999; /* 環状線の各停・快速は24時間運転 */
   if(BRANCH)return (rush?3:night?10:5)*60;const T={local:[5,2,20],rapid:[8,1.5,15],ltd:[4,1,30]}[kd]||[5,2,20];return (rush?T[1]:night?T[2]:T[0])*60;}
 function spacingNow(k){const kd=KIND[k]||'local',v=BRANCH?(kd==='rapid'?14:11):({local:13,rapid:17,ltd:22})[kd]||13;
   return hdwSec(k)*v*(B3&&!PAX&&TK[k].dir!==G.dir?0.5:1);} /* 天宮支線：対向列車は2倍 */
@@ -4186,11 +4533,44 @@ function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,fals
   for(const ch of CHUNKS){if(!ch.built||!ch.g)continue;const sp=chunkSphere(ch);if(!sp){ch.g.visible=true;continue;}
     ch.g.visible=_frus.intersectsSphere(sp)&&(cp.distanceTo(sp.center)-sp.radius)<far;}
   const trs=[ownTrain];for(const a of OT)trs.push(a.tr);for(const t of cityTrains)trs.push(t);for(const t of depotTrains)trs.push(t);
+  if (IS_ONLINE) { for (const pid in ONLINE_PLAYERS) if (ONLINE_PLAYERS[pid].tr) trs.push(ONLINE_PLAYERS[pid].tr); }
   for(const tr of trs){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=car.position.distanceTo(cp)<far+14;}}
 function frameBody(now){
   updQuality(now-last);
   const dt=Math.min(0.05,(now-last)/1000);last=now;frameN++;
   try{update(dt,now);}catch(e){LOOPERR.n++;console.error('update error',e);if(now-LOOPERR.shown>20000){LOOPERR.shown=now;try{toast('一時的な不具合を自動で回復しました','warn');}catch(_){}}} /* 更新で失敗しても描画は続ける */
+  if (IS_ONLINE && typeof scene !== 'undefined') {
+    const L = CFG.L;
+    const nowMsTime = Date.now();
+    for (const pid in ONLINE_PLAYERS) {
+      const p = ONLINE_PLAYERS[pid];
+      if (nowMsTime - p.lastSeen > 6000) {
+        removeRemotePlayer(pid);
+        continue;
+      }
+      if (!p.tr && p.key) {
+        const k = p.key;
+        const flip = TK[k].dir < 0;
+        const liv = SVCLOOK[k][0];
+        const tr = buildTrain('', flip, liv, true, greenCarsFor(k), carsFor(k));
+        setLook(tr, k);
+        const plate = makeNameplateSprite(p.name, SVCLOOK[k][1]);
+        plate.position.set(0, 4.6, -CARHALF + 2.5);
+        tr.cars[0].add(plate);
+        tr.nameplate = plate;
+        p.tr = tr;
+        p.smoothS = p.s;
+      }
+      if (p.tr && p.s != null) {
+        let ds = sdiff(p.smoothS, p.s);
+        p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 10) + (p.v || 0) * dt * (p.dir || 1), L);
+        placeTrain(p.tr, p.smoothS, TK[p.key].off, TK[p.key].y);
+        if (p.door) {
+          setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
+        }
+      }
+    }
+  }
   const ms=monStation(),side=ms?localSide(ms):0;
   const MQ=monQuads();
   for(const k of ['L','R']){if(!MON[k])continue;const sd=(k==='L'?-1:1)*SIDEINV;MON[k].screens.forEach((sc,h)=>{const want=side===sd&&MQ[h]?RT[k+h].texture:CANV.NS.tex;if(sc.mat.map!==want){sc.mat.map=want;sc.mat.needsUpdate=true;}});}
@@ -4368,6 +4748,16 @@ window.__applyQ=()=>{const dpr=window.devicePixelRatio||1;
 })();
 requestAnimationFrame(frame);
 startRoute(SVC,START_I);
+if (IS_ONLINE) {
+  const myPlate = makeNameplateSprite(MY_PLAYER_NAME, SVCLOOK[G.key][1]);
+  myPlate.position.set(0, 4.6, -CARHALF + 2.5);
+  ownTrain.cars[0].add(myPlate);
+  ownTrain.nameplate = myPlate;
+  startOnlinePublishLoop();
+  const hudBtn = document.getElementById('btnOnlineHud');
+  if (hudBtn) hudBtn.classList.remove('hide');
+  updateOnlineHud();
+}
 window.__T={enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks};
 }
 /* ================= home screen (before the world is built) ================= */
@@ -4396,6 +4786,25 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     if(m||st.i===0){x.fillStyle='#fff';x.font='700 12px '+FONT;x.fillText(st.name+(st.i===cfg.shin?'（新幹線）':''),a+(a>cx?8:-8-x.measureText(st.name+(st.i===cfg.shin?'（新幹線）':'')).width),b+4);}}
   x.setTransform(1,0,0,1,0,0);
   x.font='500 12px '+FONT;[['#14935f','各駅停車'],['#e8731e','快速'],['#c8322b','快速特急'],['#ffd23f','主要駅']].forEach(([c,t],i)=>{x.fillStyle=c;x.fillRect(W-100,14+i*20,14,10);x.fillStyle='#cfd6e4';x.fillText(t,W-80,23+i*20);});
+  if (window.ONLINE_PLAYERS) {
+    for (const pid in window.ONLINE_PLAYERS) {
+      const p = window.ONLINE_PLAYERS[pid];
+      if (p.s != null) {
+        const [a, b] = XY(p.s);
+        x.save();
+        x.fillStyle = '#38bdf8';
+        x.shadowColor = '#00f2fe';
+        x.shadowBlur = 12;
+        x.beginPath();
+        x.arc(a, b, 7, 0, Math.PI * 2);
+        x.fill();
+        x.fillStyle = '#ffffff';
+        x.font = '700 12px ' + FONT;
+        x.fillText('👤 ' + p.name, a + 10, b + 4);
+        x.restore();
+      }
+    }
+  }
   x.fillStyle='#98a7bf';x.fillText('全長 約'+Math.round(cfg.L/1000)+'km　'+sts.length+'駅',12,H-12);}
   drawHomeMap();
   /* 路線図は指で動かせる（1本指で移動・2本指で拡大）。ここでのスワイプはページの「戻る」にならないよう、すべてこの図で受け取る */
@@ -4450,7 +4859,61 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   showHomeView('viewMain');
 
   const btnNavDuty = document.getElementById('btnNavDuty');
-  if (btnNavDuty) btnNavDuty.onclick = () => showHomeView('viewDutySelect');
+  if (btnNavDuty) btnNavDuty.onclick = () => {
+    IS_ONLINE = false;
+    const loopHeader = document.querySelector('#viewLoop .view-header h2');
+    if (loopHeader) loopHeader.textContent = '本線　汐見環状線';
+    showHomeView('viewDutySelect');
+  };
+  const btnNavOnline = document.getElementById('btnNavOnline');
+  const onlineModal = document.getElementById('onlineModal');
+  const onlineNameInput = document.getElementById('onlineNameInput');
+  const btnOnlineCancel = document.getElementById('btnOnlineCancel');
+  const btnOnlineProceed = document.getElementById('btnOnlineProceed');
+  const closeOnlineModal = document.getElementById('closeOnlineModal');
+
+  if (onlineNameInput) onlineNameInput.value = MY_PLAYER_NAME;
+  const hideOnlineModal = () => { if (onlineModal) onlineModal.classList.add('hide'); };
+  if (btnNavOnline) {
+    btnNavOnline.onclick = () => {
+      if (onlineNameInput) onlineNameInput.value = MY_PLAYER_NAME;
+      if (onlineModal) onlineModal.classList.remove('hide');
+    };
+  }
+  if (btnOnlineCancel) btnOnlineCancel.onclick = hideOnlineModal;
+  if (closeOnlineModal) closeOnlineModal.onclick = hideOnlineModal;
+
+  if (btnOnlineProceed) {
+    btnOnlineProceed.onclick = () => {
+      const val = onlineNameInput.value.trim();
+      MY_PLAYER_NAME = val || '運転士';
+      try { localStorage.setItem('shiomi_online_name', MY_PLAYER_NAME); } catch(e) {}
+      hideOnlineModal();
+      IS_ONLINE = true;
+      initOnlineClient();
+      currentDutyView = 'viewLoop';
+      showHomeView('viewLoop');
+      const loopHeader = document.querySelector('#viewLoop .view-header h2');
+      if (loopHeader) loopHeader.innerHTML = '🌐 オンライン乗務 <span style="font-size:16px;color:#38bdf8;">(汐見環状線)</span>';
+      toast('オンライン接続中…種別と開始駅を選んでください', 'ok');
+    };
+  }
+
+  const btnOnlineHud = document.getElementById('btnOnlineHud');
+  const onlinePanel = document.getElementById('onlinePanel');
+  const opClose = document.getElementById('opClose');
+  if (btnOnlineHud) {
+    btnOnlineHud.onclick = () => {
+      updateOnlineHud();
+      if (onlinePanel) onlinePanel.classList.toggle('hide');
+    };
+  }
+  if (opClose) {
+    opClose.onclick = () => {
+      if (onlinePanel) onlinePanel.classList.add('hide');
+    };
+  }
+
   const btnNavSettings = document.getElementById('btnNavSettings');
   if (btnNavSettings) btnNavSettings.onclick = () => showHomeView('viewSettings');
   const btnNavCredits = document.getElementById('btnNavCredits');
@@ -4469,7 +4932,10 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (btnSelectBranch) btnSelectBranch.onclick = () => { currentDutyView = 'viewBranch'; showHomeView('viewBranch'); };
 
   const btnBackToDutyFromLoop = document.getElementById('btnBackToDutyFromLoop');
-  if (btnBackToDutyFromLoop) btnBackToDutyFromLoop.onclick = () => showHomeView('viewDutySelect');
+  if (btnBackToDutyFromLoop) btnBackToDutyFromLoop.onclick = () => {
+    if (IS_ONLINE) showHomeView('viewMain');
+    else showHomeView('viewDutySelect');
+  };
   const btnBackToDutyFromBranch = document.getElementById('btnBackToDutyFromBranch');
   if (btnBackToDutyFromBranch) btnBackToDutyFromBranch.onclick = () => showHomeView('viewDutySelect');
 
@@ -4560,14 +5026,59 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   for(const b of document.querySelectorAll('#crewGrid button'))b.addEventListener('click',()=>{CREWSEL=b.dataset.c;try{localStorage.setItem('td_crew',CREWSEL);}catch(e){}
     document.getElementById('crewSel').classList.add('hide');if(crewFor)pickStationGo(crewFor);});
   document.getElementById('crewBack').addEventListener('click',()=>{document.getElementById('crewSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
-  function pickStationGo(id){const S=SERVICES[id];document.getElementById('home').classList.add('hide');document.getElementById('stSel').classList.remove('hide');
-    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(S.kind==='ltd'?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'');document.getElementById('stSelSub').textContent=S.kind==='staff'?'勤務する駅を選んでください':S.kind==='pax'?'見学する駅を選んでください':(S.branch?'片道':'一周')+' 約'+fmtDur(timeOf(S))+'　開始する駅を選んでください';
-    const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2; /* 港見支線は起点・終点からだけ */const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
-    for(const st of list){const bt=document.createElement('button');if(st.cls==='M')bt.className='big';bt.innerHTML=st.name+'<small>'+({M:'主要駅',X:'快特停車',R:'快速停車',L:'',J:'乗換駅',Q:'2面4線',T:'通過線',I:'島式'}[st.cls]||'')+'</small>';
-      bt.addEventListener('click',()=>{unlockMedia(S.kind==='pax'||S.kind==='staff');document.getElementById('stSel').classList.add('hide');document.getElementById('loading').classList.remove('hide');
-        setTimeout(()=>{try{boot(S.line||'loop',id,st.i);document.getElementById('loading').classList.add('hide');}
-          catch(err){console.error(err);const ld=document.getElementById('loading');ld.style.flexDirection='column';ld.style.padding='20px';ld.style.textAlign='center';
-            ld.textContent='読み込み中にエラーが発生しました：'+(err&&err.message||err);}},60);});g.appendChild(bt);}}
+  function pickStationGo(id){
+    const S=SERVICES[id];
+    curOnlineStList = null;
+    curOnlineService = S;
+    document.getElementById('home').classList.add('hide');
+    document.getElementById('stSel').classList.remove('hide');
+    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(S.kind==='ltd'?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (IS_ONLINE ? ' [🌐 オンライン]' : '');
+    document.getElementById('stSelSub').textContent=IS_ONLINE ? '【オンライン乗務】他列車から1km以上離れた駅を選択してください' : (S.kind==='staff'?'勤務する駅を選んでください':S.kind==='pax'?'見学する駅を選んでください':(S.branch?'片道':'一周')+' 約'+fmtDur(timeOf(S))+'　開始する駅を選んでください');
+    const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2;
+    const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
+    curOnlineStList = list;
+    for(const st of list){
+      const bt=document.createElement('button');
+      if(st.cls==='M')bt.className='big';
+      const blocked = checkOnlineStationBlocked(st, S.key);
+      if (blocked) {
+        bt.disabled = true;
+        bt.style.opacity = '0.45';
+        bt.style.cursor = 'not-allowed';
+        bt.style.borderColor = '#ef4444';
+        bt.innerHTML = st.name + '<small style="color:#ef4444;font-weight:700;">⛔ ' + blocked.name + '接近中 (' + blocked.dist + 'm)</small>';
+      } else {
+        bt.innerHTML=st.name+'<small>'+({M:'主要駅',X:'快特停車',R:'快速停車',L:'',J:'乗換駅',Q:'2面4線',T:'通過線',I:'島式'}[st.cls]||'')+'</small>';
+      }
+      bt.addEventListener('click',()=>{
+        if (IS_ONLINE) {
+          const freshBlocked = checkOnlineStationBlocked(st, S.key);
+          if (freshBlocked) {
+            toast('他列車（' + freshBlocked.name + 'さん）が1km以内に接近したため選択できません', 'warn');
+            updateStationSelectButtons();
+            return;
+          }
+        }
+        unlockMedia(S.kind==='pax'||S.kind==='staff');
+        document.getElementById('stSel').classList.add('hide');
+        document.getElementById('loading').classList.remove('hide');
+        setTimeout(()=>{
+          try{
+            boot(S.line||'loop',id,st.i);
+            document.getElementById('loading').classList.add('hide');
+          }catch(err){
+            console.error(err);
+            const ld=document.getElementById('loading');
+            ld.style.flexDirection='column';
+            ld.style.padding='20px';
+            ld.style.textAlign='center';
+            ld.textContent='読み込み中にエラーが発生しました：'+(err&&err.message||err);
+          }
+        },60);
+      });
+      g.appendChild(bt);
+    }
+  }
   {const QD={light:'軽い：重いときは自動で描く細かさを下げ、見えない物（カメラの後ろ・霧の向こう）を描かずにさくさく動かします。低スペックのパソコンやスマホ向け。',
       normal:'普通：描く細かさを固定して、すべてを毎回描きます（前のバージョンと同じ）。',
       heavy:'重い：最高画質。高解像度で描き、ホームカメラの映像も高精細・毎フレーム更新、車内の乗客も遠くまで表示します。高性能な端末向け。'};
