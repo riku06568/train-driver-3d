@@ -4414,16 +4414,16 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   // service cards with lap time
   const times={local:lapTime(cfg,sts,'local'),rapid:lapTime(cfg,sts,'rapid'),ltd:lapTime(cfg,sts,'ltd'),branch:lapTime(bcfg,bsts,'branch'),pax:0};
   const timeOf=S=>S.line?lapTime(LN[S.line].cfg,LN[S.line].sts,'branch'):times[S.kind];
-  /* ランダム背景写真 */
+  /* ランダム背景写真（ゲーム実機のスクリーンショット） */
   const BG_PHOTOS = [
-    'assets/bg/game_cab_day.webp',
-    'assets/bg/game_cab_night.webp',
-    'assets/bg/game_cab_sunset.webp',
-    'assets/bg/game_inside_passenger.webp',
-    'assets/bg/game_outside_sunset.webp',
-    'assets/bg/game_outside_station.webp',
-    'assets/bg/game_outside_coastal.webp',
-    'assets/bg/game_outside_night.webp'
+    'assets/bg/game_cab_day.webp?v=2',
+    'assets/bg/game_cab_night.webp?v=2',
+    'assets/bg/game_cab_sunset.webp?v=2',
+    'assets/bg/game_inside_passenger.webp?v=2',
+    'assets/bg/game_outside_sunset.webp?v=2',
+    'assets/bg/game_platform.webp?v=2',
+    'assets/bg/game_station_night.webp?v=2',
+    'assets/bg/game_elevated_view.webp?v=2'
   ];
   let bgIdx = Math.floor(Math.random() * BG_PHOTOS.length);
   const homeBg = document.getElementById('homeBg');
