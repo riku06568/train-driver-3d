@@ -18,7 +18,8 @@ canvas#gl{position:fixed;top:0;left:0;display:block}
 .hide{display:none!important}
 
 /* Start Menu Redesign & Background Photos */
-#home{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto;touch-action:pan-y;overscroll-behavior:contain;background:#080c16}
+#home{position:fixed;inset:0;z-index:10;display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(32px + env(safe-area-inset-bottom,0px));overflow:auto;touch-action:pan-y;overscroll-behavior:contain;background:#080c16}
+#viewMain{margin:auto 0;width:100%}
 #homeBg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.68) saturate(1.15);transition:background-image 1.2s ease-in-out;transform:scale(1.02)}
 #homeBgOverlay{position:fixed;inset:0;z-index:1;background:radial-gradient(ellipse at 50% 25%,rgba(10,16,28,0.65) 0%,rgba(5,8,15,0.92) 100%);pointer-events:none}
 #home .wrap{position:relative;z-index:2;width:100%;max-width:760px}
