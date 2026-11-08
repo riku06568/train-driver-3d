@@ -146,8 +146,8 @@ html,body{overscroll-behavior:none}
 #meloBtn{pointer-events:auto;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));height:54px;padding:0 22px;border-radius:27px;border:2px solid #ffd23f;background:#e0a21a;color:#111;font:inherit;font-weight:800;font-size:17px;cursor:pointer}
 #crewRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}#crewRow .ql{font-weight:700;margin-right:4px}#crewRow button{flex:1;min-width:90px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:14px;cursor:pointer}#crewRow button.on{border-color:#ffd23f;background:#3a2f0e;color:#ffd23f}#crewRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
 #qualFab{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 12px;border-radius:19px;border:1px solid var(--edge);background:rgba(12,20,34,.88);color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
-#liveBtn{position:fixed;top:calc(54px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 12px;border-radius:19px;border:1px solid var(--edge);background:rgba(12,20,34,.88);color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
-#liveBtn.on{background:#7a5a10;border-color:#ffd23f;color:#ffe9a8}#liveBtn.hide{display:none}
+#btnTitleReturn{position:fixed;top:calc(54px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(255,255,255,0.25);background:rgba(12,20,34,0.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.4);transition:background 0.15s,transform 0.15s}
+#btnTitleReturn:hover{background:rgba(28,44,72,0.95);border-color:#5a95f5;transform:scale(1.02)}
 #qualSheet{position:fixed;inset:0;z-index:41;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}#qualSheet.hide{display:none}
 #qualSheet .qbox{width:min(440px,92vw);background:#121a2a;border:1px solid var(--edge);border-radius:16px;padding:16px;color:#eef2f8}#qualSheet .qt{font-weight:800;font-size:18px;margin-bottom:10px}
 #qualSheet .qbtns{display:flex;gap:8px}#qualSheet .qbtns button{flex:1;height:58px;border-radius:12px;border:1px solid var(--edge);background:var(--panel);color:#fff;font:inherit;font-weight:800;font-size:18px;cursor:pointer}#qualSheet .qbtns button.on{border-color:#ffd23f;background:#3a2f0e;color:#ffd23f}
@@ -162,7 +162,7 @@ html,body{overscroll-behavior:none}
 </head>
 <body>
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
-<button id="liveBtn" class="hide">🎙 肉声放送 OFF</button>
+<button id="btnTitleReturn" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
 <div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・動作</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div><button class="qclose" id="qualClose">閉じる</button></div></div>
 <div id="home">
   <div id="homeBg"></div>
@@ -1246,6 +1246,7 @@ const TM={
   ifloor:new THREE.MeshLambertMaterial({color:0x8d887a,emissive:0x8d887a,emissiveIntensity:0.3,side:DS}),
   ilight:new THREE.MeshBasicMaterial({color:0xfdfcf4,side:DS}),
   iled:new THREE.MeshBasicMaterial({map:null,side:DS}),
+  iledR:new THREE.MeshBasicMaterial({map:null,side:DS}),
   iad:new THREE.MeshBasicMaterial({map:null,side:DS}),
   iledF:new THREE.MeshBasicMaterial({map:null}),
   gseat:new THREE.MeshLambertMaterial({color:0x2e6b45,emissive:0x2e6b45,emissiveIntensity:0.22}),
@@ -1253,7 +1254,7 @@ const TM={
   grack:new THREE.MeshLambertMaterial({color:0xb9bec4,emissive:0x777777,emissiveIntensity:0.2}),
   pole:new THREE.MeshPhongMaterial({color:0x8a9097,shininess:60})
 };
-const DLED=mkCanvas(512,274),ADS=mkCanvas(512,274);TM.iled.map=DLED.tex;TM.iledF.map=DLED.tex;TM.iad.map=ADS.tex;
+const DLED=mkCanvas(512,274),DLED_R=mkCanvas(512,274),ADS=mkCanvas(512,274);TM.iled.map=DLED.tex;TM.iledF.map=DLED.tex;TM.iledR.map=DLED_R.tex;TM.iad.map=ADS.tex;
 /* 支線の古い電車：ドア上の電光掲示板（流れる文字）とドア開閉予告灯（ランプ） */
 const OLED=mkCanvas(512,64);TM.ioled=new THREE.MeshBasicMaterial({map:OLED.tex,side:DS});
 TM.ilampL=new THREE.MeshBasicMaterial({color:0x3a0e0a,side:DS});TM.ilampR=new THREE.MeshBasicMaterial({color:0x3a0e0a,side:DS});
@@ -1359,7 +1360,7 @@ function carTemplate(front,rear,panto,staticDoors,green,old){
             if(sg===lcdSide)pl('iled',0.58,0.33,IX-sg*0.008,3.23,z,iry);
             else{pl('ioled',0.86,0.14,IX-sg*0.008,3.30,z,iry);pl(sg>0?'ilampR':'ilampL',0.44,0.05,IX-sg*0.008,3.14,z,iry);}});}
         else for(const z of LY.doors.concat(LY.lcdSeat)){ /* ドア上・座席上：3画面（端=広告、中央=案内） */
-          pl('iad',0.42,0.26,IX-sg*0.008,3.23,z-0.52,iry);pl('iled',0.48,0.28,IX-sg*0.008,3.23,z,iry);pl('iad',0.42,0.26,IX-sg*0.008,3.23,z+0.52,iry);}
+          pl(sg>0?'iad':'iledR',0.42,0.26,IX-sg*0.008,3.23,z-0.52,iry);pl('iled',0.48,0.28,IX-sg*0.008,3.23,z,iry);pl(sg>0?'iledR':'iad',0.42,0.26,IX-sg*0.008,3.23,z+0.52,iry);}
         for(const [a,b] of LY.seats){box('iseat',0.46,0.42,b-a-0.3,sg*1.1,1.37,(a+b)/2);box('iseat',0.08,0.45,b-a-0.3,sg*1.31,1.8,(a+b)/2);
           if(MINI&&old){let q=0;for(let z2=a+0.6;z2<b-0.5;z2+=1.3,q++)pl('pad'+((q+(sg>0?3:0))%6),0.9,0.24,IX-sg*0.01,3.18,z2,iry); /* 窓上の紙の広告 */
             if(sg>0)for(let z2=a+0.9;z2<b-0.6;z2+=2.2,q++){put('pad'+(q%6),UNIT_PLANE,0,3.12,z2-0.003,0,0,0,0.6,0.42,1);put('pad'+((q+2)%6),UNIT_PLANE,0,3.12,z2+0.003,0,Math.PI,0,0.6,0.42,1);}}} /* 中吊り広告（表と裏に別々の広告） */
@@ -1763,13 +1764,13 @@ const SM=OWNOLD?OLDI:TM;
       if(sg===lcdSide){const a=cplane(0.58,0.33,TM.iled,x-sg*0.045,3.23,dz);a.rotation.y=iry;}
       else{const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;}});
     else for(const dz of DOORC){ /* ドア上3画面 */
-      const aL=cplane(0.42,0.26,TM.iad,x-sg*0.045,3.23,dz-0.52);aL.rotation.y=iry;
+      const aL=cplane(0.42,0.26,sg>0?TM.iad:TM.iledR,x-sg*0.045,3.23,dz-0.52);aL.rotation.y=iry;
       const aC=cplane(0.48,0.28,TM.iled,x-sg*0.045,3.23,dz);aC.rotation.y=iry;
-      const aR=cplane(0.42,0.26,TM.iad,x-sg*0.045,3.23,dz+0.52);aR.rotation.y=iry;}
+      const aR=cplane(0.42,0.26,sg>0?TM.iledR:TM.iad,x-sg*0.045,3.23,dz+0.52);aR.rotation.y=iry;}
     if(!OWNOLD)for(const z of SEATC){ /* 座席上3画面 */
-      const aL=cplane(0.42,0.26,TM.iad,x-sg*0.045,3.23,z-0.52);aL.rotation.y=iry;
+      const aL=cplane(0.42,0.26,sg>0?TM.iad:TM.iledR,x-sg*0.045,3.23,z-0.52);aL.rotation.y=iry;
       const aC=cplane(0.48,0.28,TM.iled,x-sg*0.045,3.23,z);aC.rotation.y=iry;
-      const aR=cplane(0.42,0.26,TM.iad,x-sg*0.045,3.23,z+0.52);aR.rotation.y=iry;}}
+      const aR=cplane(0.42,0.26,sg>0?TM.iledR:TM.iad,x-sg*0.045,3.23,z+0.52);aR.rotation.y=iry;}}
   cbox(2.74,2.26,0.06,SM.iwall,0,2.28,Z1);cbox(0.9,1.9,0.07,TM.door,0,2.1,Z1-0.01);
 }
 {const v=cplane(0.7,0.26,CM.visor,-0.75,3.3,0.3);v.rotation.x=-0.6;}
@@ -1936,7 +1937,7 @@ function liveAvail(){return !PAX&&!BRANCH&&KIND[G.key]==='local'&&G.phase==='pla
 function liveSay(ja){const ss=SS();if(!ss||!ja)return;try{if(!jaVoice)pickVoice();ss.resume();const u=mkU(ja,'ann');u.rate=0.93;u.pitch=0.82;u.volume=1;ss.speak(u);}catch(e){}}
 function toggleLive(){LIVE=!LIVE;try{localStorage.setItem('td_live',LIVE?'1':'0');}catch(e){}toast(LIVE?'肉声放送 ON：駅の案内を自分の声で行います':'肉声放送 OFF','info');
   if(LIVE&&liveAvail()){G.liveDep=G.v>4?G.nv:null;G.liveAppr=null;G.liveArr=G.atStation;}updLive();}
-function updLive(){const b=document.getElementById('liveBtn');if(b){b.classList.toggle('hide',!liveAvail()||G.walkOn);b.textContent='🎙 肉声放送 '+(LIVE?'ON':'OFF');b.classList.toggle('on',LIVE);}
+function updLive(){const b=document.getElementById('btnTitleReturn');if(b){b.classList.toggle('hide',G.walkOn);}
   if(!LIVE||!liveAvail())return;const nst=stOf(G.nv),d=stopDist(G.nv),dirTxt=G.dir>0?'そとまわり':'うちまわり';
   if(G.v>4&&G.liveDep!==G.nv){G.liveDep=G.nv;liveSay('ご乗車、ありがとうございます。この電車は、しおみかんじょうせん、'+dirTxt+'、各駅停車です。次は、'+nst.yomi+'、'+nst.yomi+'です。');}  /* 発車したら */
   if(G.v>3&&d<480&&d>80&&G.liveAppr!==G.nv){G.liveAppr=G.nv;liveSay('まもなく、'+nst.yomi+'、'+nst.yomi+'です。お出口は、'+(localSide(nst)>0?'右側':'左側')+'です。'+transferText(nst));}  /* 駅に近づいたら */
@@ -2896,8 +2897,12 @@ function boundFor(){
   if(G.list){const st=STATIONS[G.list[G.list.length-1]];return {ja:st.yomi+'行き',en:'bound for '+enName(st),jn:st.name+'行'};}
   const bigs=[],b0=G.atStation!==null?G.atStation+1:G.nv;for(let k=0;k<NST&&bigs.length<2;k++){const st=stOf(b0+k);if(st.big&&!bigs.includes(st))bigs.push(st);}
   return {ja:bigs.map(b=>b.yomi).join('、')+'方面',en:'for '+enList(bigs.map(enName)),jn:bigs.map(b=>b.name).join('・')+'方面'};}
-function nextAnn(prefix){const st=stOf(G.nv),sd=localSide(st)<0?'左':'右',end=G.nv>=lastStop();return '次は、'+(end?'終点、':'')+st.yomi+'、'+st.yomi+'でございます。お出口は、'+sd+'側です。'+transferText(st);}
-function nextAnnEn(){const st=stOf(G.nv),end=G.nv>=lastStop();return 'The next station is '+enName(st)+(end?', the last stop':'')+'. The doors on the '+(localSide(st)<0?'left':'right')+' side will open.'+transferEn(st);}
+function nextAnn(prefix){const st=stOf(G.nv),sd=localSide(st)<0?'左':'右',end=G.nv>=lastStop();
+  const p=prefix||'次は、';
+  return p+(end?'終点、':'')+st.yomi+'、'+st.yomi+'でございます。お出口は、'+sd+'側です。'+transferText(st);}
+function nextAnnEn(prefix){const st=stOf(G.nv),end=G.nv>=lastStop(),sd=localSide(st)<0?'left':'right';
+  if(prefix==='まもなく、')return 'We will soon make a brief stop at '+enName(st)+(end?', the last stop':'')+'. The doors on the '+sd+' side will open.'+transferEn(st);
+  return 'The next station is '+enName(st)+(end?', the last stop':'')+'. The doors on the '+sd+' side will open.'+transferEn(st);}
 /* four kinds of broadcast from the touch panel */
 function broadcast(n,sys){if(G.phase!=='play')return;if(G.crew==='twoD'&&!sys){toast('ツーマン運転：放送は車掌が行います','warn');return;}chime();let tag='',soundKey=null;
   if(n===0){const stopped=G.atStation!==null||(G.depCheck!==null&&G.v===0);
@@ -3090,14 +3095,22 @@ function physics(dt){
   if(G.depCheck!==null&&G.v>0.3){G.leftSt=stOf(G.depCheck);G.depCheck=null;G.depAt=G.s;}
   if(G.atStation===null){const d=stopDist(G.nv),key=G.nv;
     const prevS=G.nv>0?stOf(G.nv-1).s:stOf(0).s,gap=Math.abs(G.dir*sdiff(prevS,stopS(G.nv)))||1000,shortGap=gap<1150;
-    if(G.dir*(G.s-G.depAt)>150&&G.depCheck===null&&d>250)if(!G.said['next'+key]){G.said['next'+key]=true;if(shortGap)G.said['soon'+key]=true;
-    const kd=BRANCH?'branch':KIND[G.key],big=stOf(G.nv)&&stOf(G.nv).big;
-    const leftSt=G.leftSt||stOf(Math.max(0,G.nv-1));
-    if(big&&(kd==='local'||kd==='rapid')){setTimeout(()=>sayJE(nextAnn('次は、'),nextAnnEn()),100); /* 車内チャイムなし */
-      {const gk=guideKindFor(G.key,leftSt);if(gk&&!(LIVE&&liveAvail()))scheduleGuideAfterSpeech(gk,()=>!PAX);}}
-    else{annJE(nextAnn('次は、'),nextAnnEn());
-      {const gk=guideKindFor(G.key,leftSt);if(gk&&!(LIVE&&liveAvail()))scheduleGuideAfterSpeech(gk,()=>!PAX);}}}
-    /* 自動まもなく放送を削除 */
+    /* 発車後タイマーの加算 */
+    if(G.atStation===null&&G.v>1){if(G.depTimer===undefined||G.depTimer===null)G.depTimer=0;G.depTimer+=dt;}
+    else if(G.atStation!==null){G.depTimer=0;}
+
+    /* 発車30秒後の案内放送（次は、〇〇） */
+    if(G.depTimer>=30&&G.depCheck===null&&!G.said['dep30_'+key]&&G.v>2){
+      G.said['dep30_'+key]=true;
+      const leftSt=G.leftSt||stOf(Math.max(0,G.nv-1));
+      const gk=guideKindFor(G.key,leftSt);
+      if(gk){scheduleGuideAfterSpeech(gk,()=>!PAX);setTimeout(()=>sayJE(nextAnn('次は、'),nextAnnEn('次は、')),200);}
+      else{annJE(nextAnn('次は、'),nextAnnEn('次は、'));}}
+
+    /* 駅到着400メートル前のまもなく放送（まもなく、〇〇） */
+    if(d<=400&&d>50&&G.v>3&&!G.said['appr400_'+key]){
+      G.said['appr400_'+key]=true;
+      sayJE(nextAnn('まもなく、'),nextAnnEn('まもなく、'));}
     if(G.prevV>0&&G.v===0&&Math.abs(d)<25)say(Math.abs(d)<1?'停止位置、よし。':'停止位置。','drv');
     if(d<-30&&G.nv<=lastStop())G.nv++;}
 }
@@ -3774,7 +3787,26 @@ function drawInfoPanel(){const x=DLED.x,W=512,H=274,inf=curTrainInfo();
   x.fillStyle=col;x.fillRect(0,H-46,W,46);x.fillStyle='#fff';
   fitText(x,inf.at?'まもなく発車します':(sd<0?'左側':'右側')+'のドアが開きます　Doors open on the '+(sd<0?'left':'right'),W/2,H-23,W-24,24,'700','center');
   for(let q=0;q<5;q++){x.fillStyle=q===page?'#fff':'rgba(255,255,255,.35)';x.beginPath();x.arc(W-70+q*14,H-38,4,0,Math.PI*2);x.fill();}
-  DLED.tex.needsUpdate=true;}
+  
+  /* 右画面（DLED_R）：この先の停車駅一覧・路線図・乗換案内 */
+  {const rx=DLED_R.x;rx.fillStyle='#0a1422';rx.fillRect(0,0,W,H);
+    rx.fillStyle=col;rx.fillRect(0,0,W,46);rx.fillStyle='#fff';rx.textBaseline='middle';
+    fitText(rx,'この先の停車駅　Stops ahead',14,24,340,24,'700');
+    rx.textAlign='right';rx.font='700 22px '+FONT;rx.fillText(hms(nowMs()),W-14,24);rx.textAlign='left';
+    if(inf&&st){
+      const rows=etaList(4);
+      rows.forEach((r,i2)=>{const y=80+i2*38;
+        rx.fillStyle=i2===0?'#1a3c6e':'#142033';rx.fillRect(14,y-16,W-28,34);
+        rx.fillStyle=i2===0?'#ffd23f':'#5a95f5';rx.fillRect(14,y-16,6,34);
+        rx.fillStyle='#fff';fitText(rx,(i2===0?'▶ ':'')+r.st.name,28,y,280,24,'700');
+        const rI=stationInfo(r.st);
+        if(rI&&rI.tl&&rI.tl.length){rx.fillStyle='#ffd23f';fitText(rx,rI.tl[0],220,y,140,18,'500');}
+        rx.fillStyle='#8fd6ff';rx.textAlign='right';rx.font='700 22px '+FONT;rx.fillText(hms(+r.at),W-22,y);rx.textAlign='left';});
+      rx.fillStyle=col;rx.fillRect(0,H-40,W,40);rx.fillStyle='#fff';
+      fitText(rx,inf.at?'まもなく発車します':'次の停車駅：'+st.name+' ('+st.kana+')',W/2,H-20,W-24,20,'700','center');
+    }else{rx.fillStyle='#9fb0c8';fitText(rx,'ご乗車ありがとうございます',W/2,150,W-40,24,'500','center');}
+    DLED_R.tex.needsUpdate=true;}
+DLED.tex.needsUpdate=true;}
 /* ================= 側面の電光掲示板 ================= */
 const SLED={N:8,W:512,H:92,slots:[],drawT:0};
 const SLED_GRID=(()=>{const c=document.createElement('canvas');c.width=512;c.height=92;const x=c.getContext('2d');x.fillStyle='rgba(0,0,0,0.38)';for(let yy=0;yy<92;yy+=4)x.fillRect(0,yy,512,1);for(let xx=0;xx<512;xx+=4)x.fillRect(xx,0,1,92);return c;})();
@@ -4528,7 +4560,14 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     document.getElementById('qualClose').addEventListener('click',()=>sh.classList.add('hide'));sh.addEventListener('click',e=>{if(e.target===sh)sh.classList.add('hide');});
     for(const ev of ['pointerdown','touchstart'])sh.addEventListener(ev,e=>e.stopPropagation(),{passive:true});
     upd();}
-  document.getElementById('stBack').addEventListener('click',()=>{document.getElementById('stSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
+  
+  const btr = document.getElementById('btnTitleReturn');
+  if (btr) btr.addEventListener('click', () => {
+    if (confirm('乗務を終了してタイトル画面に戻りますか？')) {
+      location.href = location.pathname;
+    }
+  });
+document.getElementById('stBack').addEventListener('click',()=>{document.getElementById('stSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
 })();
 window.__boot=boot;
 })();
