@@ -16,8 +16,42 @@ html,body{height:100%;margin:0;overflow:hidden;background:#10141f;color:var(--in
   font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif}
 canvas#gl{position:fixed;top:0;left:0;display:block}
 .hide{display:none!important}
-#home{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));
-  background:radial-gradient(ellipse at 50% 0%,rgba(20,147,95,.25),transparent 60%),linear-gradient(rgba(8,12,22,.72),rgba(8,12,22,.9));overflow:auto;touch-action:pan-y;overscroll-behavior:contain}
+
+/* Start Menu Redesign & Background Photos */
+#home{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto;touch-action:pan-y;overscroll-behavior:contain;background:#080c16}
+#homeBg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.68) saturate(1.15);transition:background-image 1.2s ease-in-out;transform:scale(1.02)}
+#homeBgOverlay{position:fixed;inset:0;z-index:1;background:radial-gradient(ellipse at 50% 25%,rgba(10,16,28,0.65) 0%,rgba(5,8,15,0.92) 100%);pointer-events:none}
+#home .wrap{position:relative;z-index:2;width:100%;max-width:760px}
+.brand-center{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:24px}
+.main-menu-buttons{display:flex;flex-direction:column;gap:14px;max-width:440px;margin:0 auto 24px}
+.menu-btn{position:relative;display:flex;align-items:center;gap:18px;background:rgba(18,28,48,0.88);border:1px solid rgba(130,160,210,0.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:14px;padding:16px 22px;color:#e4edf8;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s,background 0.15s;text-align:left}
+.menu-btn:hover,.menu-btn:focus-visible{transform:translateY(-2px);border-color:#6da2ec;background:rgba(28,44,76,0.95);box-shadow:0 8px 24px rgba(40,110,220,0.3);outline:none}
+.primary-menu-btn{background:linear-gradient(135deg,rgba(20,147,95,0.88),rgba(12,85,54,0.95));border:2px solid #28c983;padding:20px 24px;box-shadow:0 8px 28px rgba(20,147,95,0.45)}
+.primary-menu-btn:hover,.primary-menu-btn:focus-visible{transform:translateY(-3px) scale(1.02);border-color:#5affb5;box-shadow:0 12px 36px rgba(40,201,131,0.6)}
+.m-icon{font-size:32px;line-height:1}
+.m-info{display:flex;flex-direction:column;gap:2px}
+.m-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:0.05em}
+.m-desc{font-size:13px;color:rgba(230,240,255,0.75)}
+.footer-note{font-size:11.5px;color:rgba(200,215,235,0.6);text-align:center;margin-top:14px}
+.view-header{display:flex;align-items:center;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+.view-header h2{margin:0;font-size:24px;color:#fff}
+.duty-cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:20px 0 24px}
+.duty-cat-card{position:relative;text-align:left;background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:22px 20px 18px;color:var(--ink);cursor:pointer;overflow:hidden;transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s}
+.duty-cat-card:hover,.duty-cat-card:focus-visible{transform:translateY(-2px);border-color:var(--c,#3a82ee);box-shadow:0 8px 24px rgba(0,0,0,0.4);outline:none}
+.duty-cat-card.cat-loop{--c:#14935f}
+.duty-cat-card.cat-branch{--c:#2aa6d8}
+.duty-cat-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--c)}
+.duty-cat-card h3{margin:4px 0 8px;font-size:24px;color:#fff}
+.duty-cat-card p{margin:0 0 14px;font-size:13.5px;color:var(--dim);line-height:1.6}
+.duty-cat-card .meta{display:flex;gap:6px;flex-wrap:wrap}
+.duty-cat-card .meta span{font-size:12px;border:1px solid var(--edge);border-radius:99px;padding:2px 10px;color:var(--ink)}
+.cat-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.1);color:var(--c)}
+.credits-box{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:20px 24px;margin-top:14px}
+.credit-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.cr-item{display:flex;flex-direction:column;gap:2px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px}
+.cr-item strong{font-size:14px;color:#e4edf8}
+.cr-item span{font-size:13px;color:var(--dim)}
+
 html,body{overscroll-behavior:none}
 .wrap{width:100%;max-width:760px}
 .brand{display:flex;align-items:flex-end;gap:14px;margin-bottom:6px;flex-wrap:wrap}
@@ -130,15 +164,124 @@ html,body{overscroll-behavior:none}
 <button id="liveBtn" class="hide">🎙 肉声放送 OFF</button>
 <div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・動作</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div><button class="qclose" id="qualClose">閉じる</button></div></div>
 <div id="home">
+  <div id="homeBg"></div>
+  <div id="homeBgOverlay"></div>
   <div class="wrap">
-    <div class="brand"><div class="led">汐見環状線</div></div>
-    <div class="sub">方向別三複線の大環状線　ワンマン運転・ATO　時刻と空は端末の時計と連動</div>
-    <div id="qualRow"><span class="ql">画質・動作</span><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button><div class="qd" id="qualDesc"></div></div>
-    <canvas id="homeMap" width="720" height="360"></canvas>
-    <div style="font-size:12px;opacity:.7;margin:-8px 0 12px">路線図は指でずらして見られます（2本指で拡大・ダブルタップで元に戻す）</div>
-    <div class="cards" id="cards"></div>
-    <div class="help">駅に着いたら「戸開」→ 左右のモニターで乗り降りを確認 →「乗降促進」→「戸閉」→「ATO」で次の駅へ。<br>ドラッグで360度見回し、モニターはタップで拡大。中央下のタッチパネルで乗降促進・放送・警笛。「完全オート」で全部自動。停車中は運転室の壁のボタンを長押しするとホームに出られます。</div>
-    <div style="font-size:11px;opacity:.55;margin-top:14px;text-align:center">車内放送音声：大阪メトロ風 機械合成音声（Nanami Neural TTS）</div>
+    <!-- View 1: Main Title Screen -->
+    <div id="viewMain" class="home-view">
+      <div class="brand-center">
+        <div class="led">汐見環状線</div>
+        <div class="sub" style="margin-top:10px;">方向別三複線の大環状線　ワンマン運転・ATO</div>
+      </div>
+
+      <div class="main-menu-buttons">
+        <button id="btnNavDuty" class="menu-btn primary-menu-btn">
+          <span class="m-icon">🚃</span>
+          <div class="m-info">
+            <span class="m-title">乗務開始</span>
+            <span class="m-desc">環状線・支線の運転台へ</span>
+          </div>
+        </button>
+        <button id="btnNavSettings" class="menu-btn">
+          <span class="m-icon">⚙️</span>
+          <div class="m-info">
+            <span class="m-title">設定・操作</span>
+            <span class="m-desc">画質設定・運転操作ガイド</span>
+          </div>
+        </button>
+        <button id="btnNavCredits" class="menu-btn">
+          <span class="m-icon">ℹ️</span>
+          <div class="m-info">
+            <span class="m-title">クレジット</span>
+            <span class="m-desc">制作・技術・音声情報</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="footer-note">車内放送音声：大阪メトロ風 機械合成音声（Nanami Neural TTS）</div>
+    </div>
+
+    <!-- View 2: Duty Route Category Selection (環状線 vs 支線) -->
+    <div id="viewDutySelect" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackToMain" class="backbtn">← タイトルに戻る</button>
+        <h2>乗務路線の選択</h2>
+      </div>
+      <div class="sub">乗務する路線を選択してください</div>
+
+      <div class="duty-cat-grid">
+        <button id="btnSelectLoop" class="duty-cat-card cat-loop">
+          <div class="cat-badge">本線</div>
+          <h3>🔁 汐見環状線</h3>
+          <p>全85駅・方向別三複線（内回り・外回り）。各駅停車・快速・快速特急が走る都心大環状線。</p>
+          <div class="meta"><span>全85駅</span><span>一周 約1時間21分〜2時間57分</span><span>三複線</span></div>
+        </button>
+
+        <button id="btnSelectBranch" class="duty-cat-card cat-branch">
+          <div class="cat-badge">支線</div>
+          <h3>🔀 各支線（4路線）</h3>
+          <p>白峰支線・紫雲地下線・天宮高架線・港見支線。単線ローカルから地下鉄・長大高架線まで多彩な4路線。</p>
+          <div class="meta"><span>4路線</span><span>単線・地下鉄・高架線</span></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- View 3A: Loop Line Services -->
+    <div id="viewLoop" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackToDutyFromLoop" class="backbtn">← 路線選択に戻る</button>
+        <h2>汐見環状線 種別選択</h2>
+      </div>
+      <div class="sub">乗務する種別を選択してください</div>
+      <canvas id="homeMap" width="720" height="360"></canvas>
+      <div style="font-size:12px;opacity:.7;margin:-8px 0 12px">路線図は指でずらして見られます（2本指で拡大・ダブルタップで元に戻す）</div>
+      <div class="cards" id="cardsLoop"></div>
+    </div>
+
+    <!-- View 3B: Branch Lines Services -->
+    <div id="viewBranch" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackToDutyFromBranch" class="backbtn">← 路線選択に戻る</button>
+        <h2>支線・種別選択</h2>
+      </div>
+      <div class="sub">乗務する支線と種別を選択してください</div>
+      <div class="cards" id="cardsBranch"></div>
+    </div>
+
+    <!-- View 4: Settings & Guide -->
+    <div id="viewSettings" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackFromSettings" class="backbtn">← 閉じる</button>
+        <h2>設定・操作</h2>
+      </div>
+      <div id="qualRow"><span class="ql">画質・動作</span><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button><div class="qd" id="qualDesc"></div></div>
+      <div class="help" style="margin-top:20px;">
+        <h3 style="color:#fff;margin:0 0 8px;font-size:16px;">運転操作ガイド</h3>
+        駅に着いたら「戸開」→ 左右のモニターで乗り降りを確認 →「乗降促進」→「戸閉」→「ATO」で次の駅へ。<br>
+        ドラッグで360度見回し、モニターはタップで拡大。中央下のタッチパネルで乗降促進・放送・警笛。「完全オート」で全部自動。<br>
+        停車中は運転室の壁のボタンを長押しするとホームに出られます（ホーム見学）。
+      </div>
+    </div>
+
+    <!-- View 5: Credits -->
+    <div id="viewCredits" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackFromCredits" class="backbtn">← 閉じる</button>
+        <h2>クレジット</h2>
+      </div>
+      <div class="credits-box">
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 ワンマン運転 (v49)</h3>
+        <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
+        <div class="credit-list">
+          <div class="cr-item"><strong>車内放送音声</strong><span>大阪メトロ風 機械合成音声（Nanami Neural TTS）</span></div>
+          <div class="cr-item"><strong>3D描画エンジン</strong><span>three.js (WebGL)</span></div>
+          <div class="cr-item"><strong>フォント</strong><span>Google Fonts（DotGothic16 / Zen Kaku Gothic New）</span></div>
+          <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線</span></div>
+        </div>
+        <p style="font-size:11.5px;opacity:0.6;margin-top:18px;">※ 本作に登場する駅名、路線名、団体名等はすべて架空のものであり、実在の人物・団体・鉄道会社とは一切関係ありません。</p>
+      </div>
+    </div>
+
   </div>
 </div>
 <div id="loading" class="hide">路線を準備しています…</div>
@@ -4218,13 +4361,87 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   // service cards with lap time
   const times={local:lapTime(cfg,sts,'local'),rapid:lapTime(cfg,sts,'rapid'),ltd:lapTime(cfg,sts,'ltd'),branch:lapTime(bcfg,bsts,'branch'),pax:0};
   const timeOf=S=>S.line?lapTime(LN[S.line].cfg,LN[S.line].sts,'branch'):times[S.kind];
-  const cont=document.getElementById('cards');
-  for(const [id,S] of Object.entries(SERVICES)){const b=document.createElement('button');b.className='card';b.style.setProperty('--c',S.col);
-    const LS=S.line?LN[S.line]:null,n=LS?LS.sts.length:(S.kind==='pax'||S.kind==='staff')?sts.length:stopsOf(sts,S.kind).length;
-    if(S.kind==='staff')continue;
-    if(S.kind==='pax'){b.innerHTML='<div class="no">'+S.short+'</div><h2>'+S.name.replace('　',' ')+'</h2><p>ホームを歩いて見学。階段から別のホームへ、電車にも乗れます。</p><div class="meta"><span>全'+n+'駅</span><span>歩いて見学</span></div>';b.addEventListener('click',()=>pickStation(id));cont.appendChild(b);continue;}
-    b.innerHTML='<div class="no">'+S.short+'</div><h2>'+S.name.replace('　',' ')+'</h2><p>'+(S.line==='branch4'?'港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（ほぼアナログ）。':S.line==='branch2'?'紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。':S.line==='branch3'?(S.rapid?'天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。':'天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。'):S.branch?'白峰〜奥峰の支線（複線・各駅停車）。':S.kind==='local'?'全駅に停車。方向別三複線のいちばん外側を走ります。':S.kind==='rapid'?'主要駅と40駅に停車。外側から2番目の線路。':'主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。')+'</p><div class="meta"><span>'+n+'駅</span><span>'+(S.branch?'片道':'一周')+' 約'+fmtDur(timeOf(S))+'</span></div>';
-    b.addEventListener('click',()=>pickStation(id));cont.appendChild(b);}
+  /* ランダム背景写真 */
+  const BG_PHOTOS = [
+    'assets/bg/game_cab_day.webp',
+    'assets/bg/game_cab_night.webp',
+    'assets/bg/game_cab_sunset.webp',
+    'assets/bg/game_inside_passenger.webp',
+    'assets/bg/game_outside_sunset.webp',
+    'assets/bg/game_outside_station.webp',
+    'assets/bg/game_outside_coastal.webp',
+    'assets/bg/game_outside_night.webp'
+  ];
+  let bgIdx = Math.floor(Math.random() * BG_PHOTOS.length);
+  const homeBg = document.getElementById('homeBg');
+  if (homeBg) {
+    homeBg.style.backgroundImage = 'url("' + BG_PHOTOS[bgIdx] + '")';
+    setInterval(() => {
+      bgIdx = (bgIdx + 1 + Math.floor(Math.random() * (BG_PHOTOS.length - 1))) % BG_PHOTOS.length;
+      homeBg.style.backgroundImage = 'url("' + BG_PHOTOS[bgIdx] + '")';
+    }, 12000);
+  }
+
+  /* 画面遷移制御 */
+  const VIEWS = ['viewMain', 'viewDutySelect', 'viewLoop', 'viewBranch', 'viewSettings', 'viewCredits'];
+  let currentDutyView = 'viewLoop';
+  function showHomeView(id) {
+    for (const v of VIEWS) {
+      const el = document.getElementById(v);
+      if (el) el.classList.toggle('hide', v !== id);
+    }
+    if (id === 'viewLoop') {
+      setTimeout(() => { if (typeof drawHomeMap === 'function') drawHomeMap(); }, 50);
+    }
+  }
+  showHomeView('viewMain');
+
+  const btnNavDuty = document.getElementById('btnNavDuty');
+  if (btnNavDuty) btnNavDuty.onclick = () => showHomeView('viewDutySelect');
+  const btnNavSettings = document.getElementById('btnNavSettings');
+  if (btnNavSettings) btnNavSettings.onclick = () => showHomeView('viewSettings');
+  const btnNavCredits = document.getElementById('btnNavCredits');
+  if (btnNavCredits) btnNavCredits.onclick = () => showHomeView('viewCredits');
+
+  const btnBackToMain = document.getElementById('btnBackToMain');
+  if (btnBackToMain) btnBackToMain.onclick = () => showHomeView('viewMain');
+  const btnBackFromSettings = document.getElementById('btnBackFromSettings');
+  if (btnBackFromSettings) btnBackFromSettings.onclick = () => showHomeView('viewMain');
+  const btnBackFromCredits = document.getElementById('btnBackFromCredits');
+  if (btnBackFromCredits) btnBackFromCredits.onclick = () => showHomeView('viewMain');
+
+  const btnSelectLoop = document.getElementById('btnSelectLoop');
+  if (btnSelectLoop) btnSelectLoop.onclick = () => { currentDutyView = 'viewLoop'; showHomeView('viewLoop'); };
+  const btnSelectBranch = document.getElementById('btnSelectBranch');
+  if (btnSelectBranch) btnSelectBranch.onclick = () => { currentDutyView = 'viewBranch'; showHomeView('viewBranch'); };
+
+  const btnBackToDutyFromLoop = document.getElementById('btnBackToDutyFromLoop');
+  if (btnBackToDutyFromLoop) btnBackToDutyFromLoop.onclick = () => showHomeView('viewDutySelect');
+  const btnBackToDutyFromBranch = document.getElementById('btnBackToDutyFromBranch');
+  if (btnBackToDutyFromBranch) btnBackToDutyFromBranch.onclick = () => showHomeView('viewDutySelect');
+
+  /* 路線別カード生成 */
+  const contLoop = document.getElementById('cardsLoop');
+  const contBranch = document.getElementById('cardsBranch');
+  for (const [id, S] of Object.entries(SERVICES)) {
+    const b = document.createElement('button');
+    b.className = 'card';
+    b.style.setProperty('--c', S.col);
+    const LS = S.line ? LN[S.line] : null, n = LS ? LS.sts.length : (S.kind === 'pax' || S.kind === 'staff') ? sts.length : stopsOf(sts, S.kind).length;
+    if (S.kind === 'staff') continue;
+    const isBranch = Boolean(S.branch || S.line);
+    if (S.kind === 'pax') {
+      b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>ホームを歩いて見学。階段から別のホームへ、電車にも乗れます。</p><div class="meta"><span>全' + n + '駅</span><span>歩いて見学</span></div>';
+      b.addEventListener('click', () => { currentDutyView = isBranch ? 'viewBranch' : 'viewLoop'; pickStation(id); });
+      if (isBranch && contBranch) contBranch.appendChild(b);
+      else if (!isBranch && contLoop) contLoop.appendChild(b);
+      continue;
+    }
+    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（ほぼアナログ）。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と40駅に停車。外側から2番目の線路。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span></div>';
+    b.addEventListener('click', () => { currentDutyView = isBranch ? 'viewBranch' : 'viewLoop'; pickStation(id); });
+    if (isBranch && contBranch) contBranch.appendChild(b);
+    else if (!isBranch && contLoop) contLoop.appendChild(b);
+  }
   /* 乗客モード：駅を選ぶ前に自分の見た目を選ぶ */
   let avFor=null;
   const AVSKIN=['#e8c49a','#e0b894','#d6a87c','#c59468','#f0d3b4'],AVHAIR=['#1d1a18','#2b211c','#3a2b20','#5a4a3a','#8a7a68'],
@@ -4279,7 +4496,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     seg('眼鏡','glasses',[[false,'なし'],[true,'あり']]);
     drawAvPrev();}
   document.getElementById('avGo').addEventListener('click',()=>{document.getElementById('avSel').classList.add('hide');if(avFor)pickStationGo(avFor);});
-  document.getElementById('avBack').addEventListener('click',()=>{document.getElementById('avSel').classList.add('hide');document.getElementById('home').classList.remove('hide');});
+  document.getElementById('avBack').addEventListener('click',()=>{document.getElementById('avSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
   /* 快速特急：開始駅を選ぶ前に乗務（ワンマン／ツーマン運転士／ツーマン車掌）を選ぶ */
   let crewFor=null;
   function pickStation(id){const S=SERVICES[id];
@@ -4289,7 +4506,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     pickStationGo(id);}
   for(const b of document.querySelectorAll('#crewGrid button'))b.addEventListener('click',()=>{CREWSEL=b.dataset.c;try{localStorage.setItem('td_crew',CREWSEL);}catch(e){}
     document.getElementById('crewSel').classList.add('hide');if(crewFor)pickStationGo(crewFor);});
-  document.getElementById('crewBack').addEventListener('click',()=>{document.getElementById('crewSel').classList.add('hide');document.getElementById('home').classList.remove('hide');});
+  document.getElementById('crewBack').addEventListener('click',()=>{document.getElementById('crewSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
   function pickStationGo(id){const S=SERVICES[id];document.getElementById('home').classList.add('hide');document.getElementById('stSel').classList.remove('hide');
     document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(S.kind==='ltd'?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'');document.getElementById('stSelSub').textContent=S.kind==='staff'?'勤務する駅を選んでください':S.kind==='pax'?'見学する駅を選んでください':(S.branch?'片道':'一周')+' 約'+fmtDur(timeOf(S))+'　開始する駅を選んでください';
     const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2; /* 港見支線は起点・終点からだけ */const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
@@ -4310,7 +4527,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     document.getElementById('qualClose').addEventListener('click',()=>sh.classList.add('hide'));sh.addEventListener('click',e=>{if(e.target===sh)sh.classList.add('hide');});
     for(const ev of ['pointerdown','touchstart'])sh.addEventListener(ev,e=>e.stopPropagation(),{passive:true});
     upd();}
-  document.getElementById('stBack').addEventListener('click',()=>{document.getElementById('stSel').classList.add('hide');document.getElementById('home').classList.remove('hide');});
+  document.getElementById('stBack').addEventListener('click',()=>{document.getElementById('stSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
 })();
 window.__boot=boot;
 })();
