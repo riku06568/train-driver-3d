@@ -790,20 +790,22 @@ function updateStationSelectButtons() {
 
 function publishPresence() {
   if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
-  const isDriving = typeof G !== 'undefined' && G && G.phase === 'play';
-  const stObj = isDriving ? (G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null)) : null;
+  const curG = (typeof G !== 'undefined' ? G : (window.G || (window.__T ? window.__T.G : null)));
+  const isDriving = curG && curG.phase === 'play';
+  const stFn = typeof stOf === 'function' ? stOf : (window.stOf || (window.__T ? window.__T.stOf : null));
+  const stObj = (isDriving && stFn) ? (curG.atStation !== null ? stFn(curG.atStation) : (curG.nv != null ? stFn(curG.nv) : null)) : null;
   const payload = {
     id: ONLINE_CLIENT_ID,
     name: MY_PLAYER_NAME,
     state: isDriving ? 'driving' : 'title',
-    service: isDriving ? G.route : null,
-    key: isDriving ? G.key : null,
-    dir: isDriving ? G.dir : 1,
-    s: isDriving ? G.s : null,
-    v: isDriving ? G.v : 0,
-    door: (isDriving && G.door) ? G.door.state : 'closed',
-    doorSide: (isDriving && G.door) ? G.door.side : 1,
-    doorFrac: (isDriving && G.door) ? G.door.frac : 0,
+    service: isDriving ? curG.route : null,
+    key: isDriving ? curG.key : null,
+    dir: isDriving ? curG.dir : 1,
+    s: isDriving ? curG.s : null,
+    v: isDriving ? curG.v : 0,
+    door: (isDriving && curG.door) ? curG.door.state : 'closed',
+    doorSide: (isDriving && curG.door) ? curG.door.side : 1,
+    doorFrac: (isDriving && curG.door) ? curG.door.frac : 0,
     stName: stObj ? stObj.name : '',
     ts: Date.now()
   };
@@ -2313,6 +2315,7 @@ function aimCamQ(st,Q){const T=TK[G.key],sd=T.side(st),F=st.s+T.so,dr=G.dir,base
 const G={s:STATIONS[0].s,v:0,notch:-4,bc:300,mr:830,comp:false,phase:'title',nv:0,atStation:0,depCheck:null,
   door:{state:'closed',frac:0,side:-1,local:-1},flowPending:false,flowV:-1,runnerPlanned:false,runnerSpawned:false,runnerT:0,
   promoted:{},said:{},roll:0,lat:0,asked:false,promoOn:false,waiting:null,walkOn:false,hold:null,panel:'main',panelZoomed:false,auto:false,autoT:0,autoPh:'',mainKey:'A',arrKey:null,plan:{},hornT:0,clackDist:0,lastInterlock:0,lookY:0,lookP:0,zoom:null,msg:null,prevV:0,ato:false,depAt:0};
+window.G = G;
 const ROUTES=SERVICES;
 let PAX=false; // passenger mode
 let RIDE=null; // train the passenger is riding
@@ -2321,6 +2324,7 @@ Object.assign(G,{key:'A',dir:1,list:null,start:0,route:'out',mainKey:'A'});
 const stopIdx=v=>G.list?G.list[clamp(v,0,G.list.length-1)]:G.cyc[mod(G.cpos+v,G.cyc.length)];
 G.cyc=STATIONS.map(s=>s.i);G.cpos=0;
 const stOf=v=>STATIONS[stopIdx(v)];
+window.stOf = stOf;
 
 /* ================= voice ================= */
 let jaVoice=null,enVoice=null,speechOK=false;const keepU=[];
