@@ -547,6 +547,7 @@ function makeNameplateSprite(name, svcName) {
 }
 
 const BROKER_URLS = [
+  'wss://public.cloud.shiftr.io:443/mqtt',
   'wss://broker.emqx.io:8084/mqtt',
   'wss://broker.hivemq.com:8884/mqtt'
 ];
@@ -568,22 +569,29 @@ function initOnlineClient() {
     return;
   }
   const brokerUrl = BROKER_URLS[currentBrokerIdx];
+  const opts = {
+    clientId: ONLINE_CLIENT_ID,
+    clean: true,
+    connectTimeout: 5000,
+    keepalive: 15,
+    will: {
+      topic: 'shiomi3d/v1/players/' + ONLINE_CLIENT_ID,
+      payload: JSON.stringify({ id: ONLINE_CLIENT_ID, offline: true }),
+      qos: 0,
+      retain: false
+    }
+  };
+  if (brokerUrl.includes('shiftr.io')) {
+    opts.username = 'public';
+    opts.password = 'public';
+  }
   try {
-    ONLINE_CLIENT = mqtt.connect(brokerUrl, {
-      clientId: ONLINE_CLIENT_ID,
-      clean: true,
-      connectTimeout: 8000,
-      keepalive: 15,
-      will: {
-        topic: 'shiomi3d/v1/players/' + ONLINE_CLIENT_ID,
-        payload: JSON.stringify({ id: ONLINE_CLIENT_ID, offline: true }),
-        qos: 0,
-        retain: false
-      }
-    });
+    ONLINE_CLIENT = mqtt.connect(brokerUrl, opts);
     
     ONLINE_CLIENT.on('connect', () => {
-      ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#');
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#', { qos: 0 });
+      startOnlinePublishLoop();
+      publishPresence();
       updateOnlineHud();
       if (typeof drawHomeMap === 'function') drawHomeMap();
     });
@@ -780,28 +788,33 @@ function updateStationSelectButtons() {
   });
 }
 
+function publishPresence() {
+  if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
+  const isDriving = typeof G !== 'undefined' && G && G.phase === 'play';
+  const stObj = isDriving ? (G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null)) : null;
+  const payload = {
+    id: ONLINE_CLIENT_ID,
+    name: MY_PLAYER_NAME,
+    state: isDriving ? 'driving' : 'title',
+    service: isDriving ? G.route : null,
+    key: isDriving ? G.key : null,
+    dir: isDriving ? G.dir : 1,
+    s: isDriving ? G.s : null,
+    v: isDriving ? G.v : 0,
+    door: (isDriving && G.door) ? G.door.state : 'closed',
+    doorSide: (isDriving && G.door) ? G.door.side : 1,
+    doorFrac: (isDriving && G.door) ? G.door.frac : 0,
+    stName: stObj ? stObj.name : '',
+    ts: Date.now()
+  };
+  try {
+    ONLINE_CLIENT.publish('shiomi3d/v1/players/' + ONLINE_CLIENT_ID, JSON.stringify(payload), { qos: 0 });
+  } catch(e) {}
+}
+
 function startOnlinePublishLoop() {
   if (onlinePubInterval) clearInterval(onlinePubInterval);
-  onlinePubInterval = setInterval(() => {
-    if (!IS_ONLINE || !ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
-    if (typeof G === 'undefined' || !G || G.phase !== 'play') return;
-    const stObj = G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null);
-    const payload = {
-      id: ONLINE_CLIENT_ID,
-      name: MY_PLAYER_NAME,
-      service: G.route,
-      key: G.key,
-      dir: G.dir,
-      s: G.s,
-      v: G.v,
-      door: G.door ? G.door.state : 'closed',
-      doorSide: G.door ? G.door.side : 1,
-      doorFrac: G.door ? G.door.frac : 0,
-      stName: stObj ? stObj.name : '',
-      ts: Date.now()
-    };
-    ONLINE_CLIENT.publish('shiomi3d/v1/players/' + ONLINE_CLIENT_ID, JSON.stringify(payload));
-  }, 250);
+  onlinePubInterval = setInterval(publishPresence, 200);
 }
 
 function stopOnlinePublishLoop() {
@@ -4581,8 +4594,12 @@ function frameBody(now){
     const nowMsTime = Date.now();
     for (const pid in ONLINE_PLAYERS) {
       const p = ONLINE_PLAYERS[pid];
-      if (nowMsTime - p.lastSeen > 10000) {
+      if (nowMsTime - p.lastSeen > 8000) {
         removeRemotePlayer(pid);
+        continue;
+      }
+      if (p.s == null) {
+        if (p.tr && p.tr.grp) p.tr.grp.visible = false;
         continue;
       }
       const k = (p.key && TK[p.key]) ? p.key : 'A';
@@ -4599,16 +4616,14 @@ function frameBody(now){
         p.tr = tr;
         p.smoothS = p.s != null ? p.s : 0;
         placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
-        for (const car of p.tr.cars) car.visible = true;
       }
-      if (p.tr && p.s != null) {
-        let ds = sdiff(p.smoothS, p.s);
-        p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 12), L);
-        placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
-        for (const car of p.tr.cars) car.visible = true;
-        if (p.door) {
-          setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
-        }
+      p.tr.grp.visible = true;
+      for (const car of p.tr.cars) car.visible = true;
+      let ds = sdiff(p.smoothS, p.s);
+      p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 15), L);
+      placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+      if (p.door) {
+        setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
       }
     }
   }
