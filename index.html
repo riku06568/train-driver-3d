@@ -1928,7 +1928,7 @@ function mkU(text,kind,vol){if(kind!=='en')text=text.replace(/ATO/g,'エーテ�
   if(kind==='en'){u.lang='en-US';if(enVoice)u.voice=enVoice;}else{u.lang='ja-JP';if(jaVoice)u.voice=jaVoice;}
   keepU.push(u);if(keepU.length>16)keepU.shift();return u;}
 function unlockSpeech(){const ss=SS();if(window.__speechOK)speechOK=true;if(!ss||speechOK)return;speechOK=true;try{pickVoice();ss.cancel();ss.resume();ss.speak(mkU('運転を開始します。','sys'));}catch(e){}}
-function say(text,kind,urgent,vol){if(kind==='ann'||kind==='en'||kind==='drv')return; /* drv＝指差し確認の喚呼：音声なし */const ss=SS();if(!ss||!text)return;
+function say(text,kind,urgent,vol){if(kind==='drv')return; /* drv＝指差し確認の喚呼：音声なし */const ss=SS();if(!ss||!text)return;
   try{if(!jaVoice)pickVoice();if(urgent)ss.cancel();
 
     ss.resume();ss.speak(mkU(text,kind,vol));}catch(e){}}
@@ -2320,12 +2320,13 @@ function addCrew(tr,two){if(!tr||!tr.cars||tr.crew)return;tr.crew=[];const c0=tr
   const drv=new THREE.Mesh(SSITG[0],upperMat);drv.position.set(XE,1.83-0.84,ZE+0.3-CARHALF);drv.rotation.y=Math.PI;c0.add(drv);tr.crew.push(drv);
   if(two){const cd=new THREE.Mesh(SSTANDG[1]||SSTANDG[0],upperMat);cd.position.set(0.35,1.16,CARHALF-1.35);cd.rotation.y=-0.6;cL.add(cd);tr.crew.push(cd);}
   for(const m of tr.crew)m.layers.mask=c0.layers.mask;}
-for(const k of KEYS){POOL[k]=[];for(let i=0;i<6;i++){const TWO=KIND[k]==='ltd'&&i%2===1; /* 快速特急は2本に1本ツーマン */const tr=buildTrain('',TK[k].dir<0,SVCLOOK[k][0],true,greenCarsFor(k),carsFor(k),B3?(KIND[k]!=='rapid'&&i%2===0):undefined); /* 天宮支線：快速と各停の2本に1本は本線と同じ電車 */
+const POOL_CNT=BRANCH?10:6;
+for(const k of KEYS){POOL[k]=[];for(let i=0;i<POOL_CNT;i++){const TWO=KIND[k]==='ltd'&&i%2===1; /* 快速特急は2本に1本ツーマン */const tr=buildTrain('',TK[k].dir<0,SVCLOOK[k][0],true,greenCarsFor(k),carsFor(k),B3?(KIND[k]!=='rapid'&&i%2===0):undefined); /* 天宮支線：快速と各停の2本に1本は本線と同じ電車 */
   setLook(tr,k);const ai=mkAI('P'+k+i,tr,{key:k,dir:TK[k].dir,vmax:BRANCH?(KIND[k]==='rapid'?22:18):VMAX[k]});ai.twoMan=TWO;POOL[k].push(ai);addCrew(tr,TWO);}}
 addCrew(followT,false);
-/* 運転間隔（秒）：本線 各停 日中5分/ラッシュ2分/深夜20分、快速 8/1.5/15分、快特 4/1/30分。支線 日中10分/ラッシュ6分/深夜20分 */
+/* 運転間隔（秒）：本線 各停 日中5分/ラッシュ2分/深夜20分、快速 8/1.5/15分、快特 4/1/30分。支線（本数2倍） 日中5分/ラッシュ3分/深夜10分 */
 function hdwSec(k){const h=hourNow(),kd=KIND[k]||'local',rush=isRushHour(),night=h>=22||h<5.5;if(h>=1&&h<4.5&&(BRANCH||kd==='ltd'))return 99999; /* 環状線の各停・快速は24時間運転 */
-  if(BRANCH)return (rush?6:night?20:10)*60;const T={local:[5,2,20],rapid:[8,1.5,15],ltd:[4,1,30]}[kd]||[5,2,20];return (rush?T[1]:night?T[2]:T[0])*60;}
+  if(BRANCH)return (rush?3:night?10:5)*60;const T={local:[5,2,20],rapid:[8,1.5,15],ltd:[4,1,30]}[kd]||[5,2,20];return (rush?T[1]:night?T[2]:T[0])*60;}
 function spacingNow(k){const kd=KIND[k]||'local',v=BRANCH?(kd==='rapid'?14:11):({local:13,rapid:17,ltd:22})[kd]||13;
   return hdwSec(k)*v*(B3&&!PAX&&TK[k].dir!==G.dir?0.5:1);} /* 天宮支線：対向列車は2倍 */
 function spacingNowOld(k){const h=hourNow(),kd=KIND[k]||'local';if(BRANCH)return h>=6&&h<22?1800:3600/Math.max(0.08,freqF(h));const day={local:700,rapid:1500,ltd:3400}[kd];return h>=7&&h<20?day:day*2/Math.max(0.08,freqF(h));}
@@ -2808,7 +2809,7 @@ function openDoor(local,sys){if(sigStopped()){toast('停止信号で止まって
   if(d>17.9||d<-6.5){toast('ホームがありません','warn');return;}
   if(local!==localSide(st)){toast('ホームは'+(localSide(st)<0?'左':'右')+'側です','warn');return;}
   G.atStation=v;D.local=local;D.side=local*G.dir;D.state='opening';G.flowPending=true;doorOpenSnd();toast(st.name+' に到着','ok');
-  const end=v>=lastStop();setTimeout(()=>sayJE(st.yomi+'、'+st.yomi+'です。'+(end?'終点です。ご乗車ありがとうございました。':'')+transferText(st),enName(st)+'.'+(end?' This is the last stop.':'')+transferEn(st)),400);
+  const end=v>=lastStop();if(!G.said['arr_'+v]){G.said['arr_'+v]=true;setTimeout(()=>sayJE(arriveAnn(st,end),arriveAnnEn(st,end)),400);}
   if(!G.list&&(st.cls==='M'||st.i===0)&&G.nv>0)askStation(st,false);
 }
 function closeDoor(local,sys){if(G.crew==='twoD'&&!sys){toast('ツーマン運転：ドアは車掌が扱います','warn');return;}if(OWNOLD&&!G.lean){toast('戸閉は乗務員室のドア近く：窓から顔を出して操作します','warn');return;}
@@ -2909,6 +2910,12 @@ function nextAnn(prefix){const st=stOf(G.nv),sd=localSide(st)<0?'左':'右',end=
 function nextAnnEn(prefix){const st=stOf(G.nv),end=G.nv>=lastStop(),sd=localSide(st)<0?'left':'right';
   if(prefix==='まもなく、')return 'We will soon make a brief stop at '+enName(st)+(end?', the last stop':'')+'. The doors on the '+sd+' side will open.'+transferEn(st);
   return 'The next station is '+enName(st)+(end?', the last stop':'')+'. The doors on the '+sd+' side will open.'+transferEn(st);}
+function arriveAnn(st,end){st=st||stOf(G.nv);if(end===undefined)end=(G.nv>=lastStop());const sd=localSide(st)<0?'左':'右';
+  if(end)return 'ご乗車ありがとうございました。終点、'+st.yomi+'、'+st.yomi+'でございます。お忘れ物のないよう、ご注意ください。'+transferText(st);
+  return st.yomi+'、'+st.yomi+'でございます。ご乗車ありがとうございました。お忘れ物のないよう、ご注意ください。お出口は、'+sd+'側です。'+transferText(st);}
+function arriveAnnEn(st,end){st=st||stOf(G.nv);if(end===undefined)end=(G.nv>=lastStop());const sd=localSide(st)<0?'left':'right';
+  if(end)return 'Thank you for riding with us. This is '+enName(st)+', terminal. Please make sure you have all your belongings.'+transferEn(st);
+  return 'This is '+enName(st)+', '+enName(st)+'. Thank you for riding with us. Please make sure you have all your belongings. The doors on the '+sd+' side will open.'+transferEn(st);}
 /* four kinds of broadcast from the touch panel */
 function broadcast(n,sys){if(G.phase!=='play')return;if(G.crew==='twoD'&&!sys){toast('ツーマン運転：放送は車掌が行います','warn');return;}chime();let tag='',soundKey=null;
   if(n===0){const stopped=G.atStation!==null||(G.depCheck!==null&&G.v===0);
@@ -3117,7 +3124,13 @@ function physics(dt){
     if(d<=400&&d>50&&G.v>3&&!G.said['appr400_'+key]){
       G.said['appr400_'+key]=true;
       sayJE(nextAnn('まもなく、'),nextAnnEn('まもなく、'));}
-    if(G.prevV>0&&G.v===0&&Math.abs(d)<25)say(Math.abs(d)<1?'停止位置、よし。':'停止位置。','drv');
+    if(G.prevV>0&&G.v===0&&Math.abs(d)<25){
+      say(Math.abs(d)<1?'停止位置、よし。':'停止位置。','drv');
+      if(!G.said['arr_'+key]&&d>-6.5&&d<17.9){
+        G.said['arr_'+key]=true;
+        setTimeout(()=>sayJE(arriveAnn(),arriveAnnEn()),500);
+      }
+    }
     if(d<-30&&G.nv<=lastStop())G.nv++;}
 }
 function updFlow(dt){
@@ -3512,7 +3525,7 @@ function rideWalk(dt){const a=RIDE.a;let mx=W.mv.x,my=W.mv.y;if(W.keys.KeyW||W.k
   camera.position.set(RIDE.lx,eye,RIDE.lz);camera.rotation.set(W.pitch,W.yaw,0);G.s=a.s;W.s=a.s;updAvatar(dt);
   if(RIDE.prev==='dwell'&&a.state==='run'){const m=rideAnn(a,'次は、');RIDE.soon=false;if(m)setTimeout(()=>annJE(m.ja,m.en),2500);}
   if(!RIDE.soon&&a.state==='run'){const nx=aiStop(a);if(nx&&nx.D<600){RIDE.soon=true;const m=rideAnn(a,'まもなく、');if(m)sayJE(m.ja,m.en);}}
-  if(RIDE.prev==='run'&&a.state==='dwell'){const s0=a.stSt;setTimeout(()=>sayJE(s0.yomi+'、'+s0.yomi+'です。'+transferText(s0),enName(s0)+'.'+transferEn(s0)),300);}
+  if(RIDE.prev==='run'&&a.state==='dwell'){const s0=a.stSt,end=BRANCH&&((a.dir>0&&s0.i===NST-1)||(a.dir<0&&s0.i===0));setTimeout(()=>sayJE(arriveAnn(s0,end),arriveAnnEn(s0,end)),300);}
   RIDE.prev=a.state;}
 /* ================= people inside trains (seats, standing, walking in/out) ================= */
 const INTP=[],INTW=[];
