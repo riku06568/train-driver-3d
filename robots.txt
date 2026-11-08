@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://riku06568.github.io/train-driver-3d/sitemap.xml
