@@ -13,3 +13,5 @@ PC・スマートフォンのブラウザで開けます（WebGL / three.js を�
 - 単一の `index.html`（HTML + CSS + JavaScript）で動作します。
 - 3D 描画は three.js r128（cdnjs の CDN）を読み込みます。オフラインでは動作しません。
 - フォントは Google Fonts（DotGothic16 / Zen Kaku Gothic New）を使用しています。
+- 車内放送：全路線・全種別（16系統）に大阪メトロ風の案内放送を導入（合成音声：Nanami Neural TTS）。
+
