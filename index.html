@@ -4843,6 +4843,74 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   stub(cfg.junction,'#5aa832','白峰支線',66);stub(64,'#7a3fa0','紫雲地下線',80,[7,4]);stub(81,'#2aa6d8','天宮高架線',58);stub(17,'#2a5caa','港見支線',44,[3,3]);
   for(const st of sts){const [a,b]=XY(st.s);const m=st.cls==='M';x.fillStyle=m?'#ffd23f':st.cls==='X'?'#ff8a80':st.cls==='R'?'#ffc27a':'#e8eef6';const r=m?5.5:2.2;x.beginPath();x.arc(a,b,r,0,Math.PI*2);x.fill();
     if(m||st.i===0){x.fillStyle='#fff';x.font='700 12px '+FONT;x.fillText(st.name+(st.i===cfg.shin?'（新幹線）':''),a+(a>cx?8:-8-x.measureText(st.name+(st.i===cfg.shin?'（新幹線）':'')).width),b+4);}}
+
+  if (window.ONLINE_PLAYERS) {
+    for (const pid in window.ONLINE_PLAYERS) {
+      const p = window.ONLINE_PLAYERS[pid];
+      if (p.s != null) {
+        const [a, b] = XY(p.s);
+        const pulse = 1 + 0.3 * Math.sin(Date.now() / 180);
+        x.save();
+        
+        // 1. Pulsing radar ripple
+        x.fillStyle = 'rgba(56, 189, 248, 0.35)';
+        x.beginPath();
+        x.arc(a, b, 14 * pulse, 0, Math.PI * 2);
+        x.fill();
+        
+        // 2. Center glowing dot
+        x.fillStyle = '#38bdf8';
+        x.shadowColor = '#00f2fe';
+        x.shadowBlur = 14;
+        x.beginPath();
+        x.arc(a, b, 7, 0, Math.PI * 2);
+        x.fill();
+        x.shadowBlur = 0;
+        
+        // 3. Clear badge with pointer
+        const svcLabel = (SVCLOOK[p.key] ? SVCLOOK[p.key][1] : '環状線') + ' ' + (p.dir > 0 ? '外回り' : '内回り');
+        const locLabel = p.stName ? '・' + p.stName : '';
+        const tagText = '🚃 ' + p.name + ' (' + svcLabel + locLabel + ')';
+        
+        x.font = 'bold 12px ' + FONT;
+        const tw = x.measureText(tagText).width;
+        const th = 22;
+        const tx = Math.min(W - tw - 18, Math.max(8, a - (tw + 16) / 2));
+        const ty = (b < 60) ? b + 16 : b - 32;
+        
+        // Connecting line
+        x.strokeStyle = '#38bdf8';
+        x.lineWidth = 1.5;
+        x.beginPath();
+        x.moveTo(a, b);
+        x.lineTo(tx + (tw + 16) / 2, (b < 60) ? ty : ty + th);
+        x.stroke();
+        
+        // Pill background
+        x.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        x.strokeStyle = '#38bdf8';
+        x.lineWidth = 1.5;
+        if (x.roundRect) {
+          x.beginPath();
+          x.roundRect(tx, ty, tw + 16, th, 6);
+          x.fill();
+          x.stroke();
+        } else {
+          x.fillRect(tx, ty, tw + 16, th);
+          x.strokeRect(tx, ty, tw + 16, th);
+        }
+        
+        // Text
+        x.fillStyle = '#ffffff';
+        x.textAlign = 'left';
+        x.textBaseline = 'middle';
+        x.fillText(tagText, tx + 8, ty + th / 2);
+        
+        x.restore();
+      }
+    }
+  }
+
   x.setTransform(1,0,0,1,0,0);
   x.font='500 12px '+FONT;[['#14935f','各駅停車'],['#e8731e','快速'],['#c8322b','快速特急'],['#ffd23f','主要駅']].forEach(([c,t],i)=>{x.fillStyle=c;x.fillRect(W-100,14+i*20,14,10);x.fillStyle='#cfd6e4';x.fillText(t,W-80,23+i*20);});
 
@@ -4873,73 +4941,6 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       x.fillText('• ' + p.name + ' [' + svc + ']' + loc, 24, 48 + idx * 20);
     });
     x.restore();
-  }
-
-  if (window.ONLINE_PLAYERS) {
-    for (const pid in window.ONLINE_PLAYERS) {
-      const p = window.ONLINE_PLAYERS[pid];
-      if (p.s != null) {
-        const [a, b] = XY(p.s);
-        const pulse = 1 + 0.3 * Math.sin(Date.now() / 180);
-        x.save();
-        
-        // 1. Pulsing radar ripple
-        x.fillStyle = 'rgba(56, 189, 248, 0.28)';
-        x.beginPath();
-        x.arc(a, b, 14 * pulse, 0, Math.PI * 2);
-        x.fill();
-        
-        // 2. Center glowing dot
-        x.fillStyle = '#38bdf8';
-        x.shadowColor = '#00f2fe';
-        x.shadowBlur = 12;
-        x.beginPath();
-        x.arc(a, b, 7, 0, Math.PI * 2);
-        x.fill();
-        x.shadowBlur = 0;
-        
-        // 3. Clear badge with pointer
-        const svcLabel = (SVCLOOK[p.key] ? SVCLOOK[p.key][1] : '環状線') + ' ' + (p.dir > 0 ? '外回り' : '内回り');
-        const locLabel = p.stName ? '・' + p.stName : '';
-        const tagText = '🚃 ' + p.name + ' (' + svcLabel + locLabel + ')';
-        
-        x.font = 'bold 12px ' + FONT;
-        const tw = x.measureText(tagText).width;
-        const th = 22;
-        const tx = Math.min(W - tw - 18, Math.max(8, a - (tw + 16) / 2));
-        const ty = (b < 60) ? b + 16 : b - 32;
-        
-        // Connecting line
-        x.strokeStyle = '#38bdf8';
-        x.lineWidth = 1.5;
-        x.beginPath();
-        x.moveTo(a, b);
-        x.lineTo(tx + (tw + 16) / 2, (b < 60) ? ty : ty + th);
-        x.stroke();
-        
-        // Pill background
-        x.fillStyle = 'rgba(15, 23, 42, 0.92)';
-        x.strokeStyle = '#38bdf8';
-        x.lineWidth = 1.5;
-        if (x.roundRect) {
-          x.beginPath();
-          x.roundRect(tx, ty, tw + 16, th, 6);
-          x.fill();
-          x.stroke();
-        } else {
-          x.fillRect(tx, ty, tw + 16, th);
-          x.strokeRect(tx, ty, tw + 16, th);
-        }
-        
-        // Text
-        x.fillStyle = '#ffffff';
-        x.textAlign = 'left';
-        x.textBaseline = 'middle';
-        x.fillText(tagText, tx + 8, ty + th / 2);
-        
-        x.restore();
-      }
-    }
   }
   x.fillStyle='#98a7bf';x.fillText('全長 約'+Math.round(cfg.L/1000)+'km　'+sts.length+'駅',12,H-12);}
   drawHomeMap();
