@@ -266,6 +266,13 @@ html,body{overscroll-behavior:none}
             <span class="m-desc">制作・技術・音声情報</span>
           </div>
         </button>
+        <button id="btnNavFeedback" class="menu-btn">
+          <span class="m-icon">📮</span>
+          <div class="m-info">
+            <span class="m-title">ご意見箱</span>
+            <span class="m-desc">感想・ご要望・不具合報告（作者に直接届きます）</span>
+          </div>
+        </button>
       </div>
 
       <div class="footer-note">車内放送音声：大阪メトロ風 機械合成音声（Nanami Neural TTS）</div>
@@ -349,6 +356,36 @@ html,body{overscroll-behavior:none}
           <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線</span></div>
         </div>
         <p style="font-size:11.5px;opacity:0.6;margin-top:18px;">※ 本作に登場する駅名、路線名、団体名等はすべて架空のものであり、実在の人物・団体・鉄道会社とは一切関係ありません。</p>
+      </div>
+    </div>
+
+    <!-- View 6: Feedback (ご意見箱) -->
+    <div id="viewFeedback" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackFromFeedback" class="backbtn">← タイトルに戻る</button>
+        <h2>📮 ご意見箱</h2>
+      </div>
+      <div class="sub">ゲームの感想・追加してほしい路線や機能・不具合報告などをお気軽にお寄せください！<br>送信された内容は開発者に直接届きます。（※返信用メールアドレスは任意です）</div>
+
+      <div style="background:rgba(18,28,48,0.92);border:1px solid rgba(130,160,210,0.3);border-radius:16px;padding:22px;max-width:540px;margin:16px auto;box-shadow:0 8px 32px rgba(0,0,0,0.4);text-align:left;">
+        <form id="feedbackForm" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label style="display:block;font-size:13.5px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">お名前・ニックネーム（任意）</label>
+            <input type="text" id="fbName" maxlength="30" placeholder="名無し運転士" style="width:100%;box-sizing:border-box;background:#0c1424;border:1px solid #334155;border-radius:8px;padding:12px;color:#fff;font-size:15px;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:13.5px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">メールアドレス（返信を希望する場合のみ・任意）</label>
+            <input type="email" id="fbEmail" maxlength="100" placeholder="example@mail.com" style="width:100%;box-sizing:border-box;background:#0c1424;border:1px solid #334155;border-radius:8px;padding:12px;color:#fff;font-size:15px;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:13.5px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">ご意見・ご感想・ご要望 <span style="color:#ef4444;">*</span></label>
+            <textarea id="fbMessage" required rows="5" maxlength="2000" placeholder="例：〇〇駅の到着放送がリアルで良かったです！〇〇支線の本数をもっと増やしてほしいです、など" style="width:100%;box-sizing:border-box;background:#0c1424;border:1px solid #334155;border-radius:8px;padding:12px;color:#fff;font-size:15px;outline:none;resize:vertical;line-height:1.5;"></textarea>
+          </div>
+          <button type="submit" id="fbSubmitBtn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;padding:14px 20px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(2,132,199,0.4);transition:all 0.2s;">
+            📨 意見を送信する
+          </button>
+          <div id="fbStatus" style="font-size:14px;text-align:center;min-height:20px;line-height:1.5;"></div>
+        </form>
       </div>
     </div>
 
@@ -5183,7 +5220,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   }
 
   /* 画面遷移制御 */
-  const VIEWS = ['viewMain', 'viewDutySelect', 'viewLoop', 'viewBranch', 'viewSettings', 'viewCredits'];
+  const VIEWS = ['viewMain', 'viewDutySelect', 'viewLoop', 'viewBranch', 'viewSettings', 'viewCredits', 'viewFeedback'];
   let currentDutyView = 'viewLoop';
   function showHomeView(id) {
     for (const v of VIEWS) {
@@ -5249,6 +5286,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (btnNavSettings) btnNavSettings.onclick = () => showHomeView('viewSettings');
   const btnNavCredits = document.getElementById('btnNavCredits');
   if (btnNavCredits) btnNavCredits.onclick = () => showHomeView('viewCredits');
+  const btnNavFeedback = document.getElementById('btnNavFeedback');
+  if (btnNavFeedback) btnNavFeedback.onclick = () => showHomeView('viewFeedback');
 
   const btnBackToMain = document.getElementById('btnBackToMain');
   if (btnBackToMain) btnBackToMain.onclick = () => showHomeView('viewMain');
@@ -5256,6 +5295,64 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (btnBackFromSettings) btnBackFromSettings.onclick = () => showHomeView('viewMain');
   const btnBackFromCredits = document.getElementById('btnBackFromCredits');
   if (btnBackFromCredits) btnBackFromCredits.onclick = () => showHomeView('viewMain');
+  const btnBackFromFeedback = document.getElementById('btnBackFromFeedback');
+  if (btnBackFromFeedback) btnBackFromFeedback.onclick = () => showHomeView('viewMain');
+
+  /* 意見箱フォーム送信（メールアドレス非公開・安全送信） */
+  const fbForm = document.getElementById('feedbackForm');
+  if (fbForm) {
+    fbForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('fbSubmitBtn');
+      const status = document.getElementById('fbStatus');
+      const name = document.getElementById('fbName').value.trim() || '名無し運転士';
+      const email = document.getElementById('fbEmail').value.trim();
+      const message = document.getElementById('fbMessage').value.trim();
+      if (!message) return;
+
+      btn.disabled = true;
+      btn.textContent = '送信中...';
+      status.style.color = '#38bdf8';
+      status.textContent = '送信しています...';
+
+      const payload = {
+        name: name,
+        message: message,
+        _subject: '【汐見環状線3D】ご意見箱から新しいメッセージが届きました (' + name + 'さん)'
+      };
+      if (email) payload.email = email;
+
+      try {
+        const res = await fetch('https://formsubmit.co/ajax/77c0266b3c001f710fb0460bf4ef7d9e', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success === 'true' || json.success === true) {
+          status.style.color = '#22c55e';
+          status.textContent = '✨ ご意見を送信しました！ありがとうございます。';
+          document.getElementById('fbMessage').value = '';
+          btn.textContent = '送信完了';
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = '📨 意見を送信する';
+          }, 3000);
+        } else {
+          throw new Error(json.message || '送信に失敗しました');
+        }
+      } catch(err) {
+        console.error(err);
+        status.style.color = '#ef4444';
+        status.textContent = '⚠️ 送信に失敗しました。通信環境をご確認のうえ再度お試しください。';
+        btn.disabled = false;
+        btn.textContent = '📨 意見を送信する';
+      }
+    });
+  }
 
   const btnSelectLoop = document.getElementById('btnSelectLoop');
   if (btnSelectLoop) btnSelectLoop.onclick = () => { currentDutyView = 'viewLoop'; showHomeView('viewLoop'); };
