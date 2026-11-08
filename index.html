@@ -10,7 +10,7 @@
 <title>汐見環状線 3Dトレインシミュレーター | 本格ブラウザ電車運転ゲーム</title>
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://riku06568.github.io/train-driver-3d/">
-<meta name="description" content="ブラウザですぐ遊べる本格3D電車運転シミュレーター「汐見環状線 3Dトレインシミュレーター」。全85駅・方向別三複線の大環状線と4つの支線を運転！大阪メトロ風車内放送・ドア上3画面LCD搭載。">
+<meta name="description" content="ブラウザですぐ遊べる本格3D電車運転シミュレーター「汐見環状線 3Dトレインシミュレーター」。全85駅・方向別三複線の大環状線と4つの支線を運転！自動車内放送・ドア上3画面LCD搭載。">
 <meta name="keywords" content="汐見環状線,汐見環状線3D,トレインシミュレーター,電車運転シミュレーター,3D電車ゲーム,ブラウザゲーム,鉄道シミュレーター">
 <meta property="og:title" content="汐見環状線 3Dトレインシミュレーター">
 <meta property="og:description" content="ブラウザで遊べる本格3D電車運転シミュレーター。全85駅の大環状線と4つの支線をリアルに運転！">
@@ -275,7 +275,7 @@ html,body{overscroll-behavior:none}
         </button>
       </div>
 
-      <div class="footer-note">車内放送音声：大阪メトロ風 機械合成音声（Nanami Neural TTS）</div>
+      <div class="footer-note">車内放送音声：機械合成音声（Nanami Neural TTS）</div>
     </div>
 
     <!-- View 2: Duty Route Category Selection (環状線 vs 支線) -->
@@ -297,8 +297,8 @@ html,body{overscroll-behavior:none}
         <button id="btnSelectBranch" class="duty-cat-card cat-branch">
           <div class="cat-badge">支線</div>
           <h3>🔀 各支線（4路線）</h3>
-          <p>白峰支線・紫雲地下線・天宮高架線・港見支線。単線ローカルから地下鉄・長大高架線まで多彩な4路線。</p>
-          <div class="meta"><span>4路線</span><span>単線・地下鉄・高架線</span></div>
+          <p>白峰支線・紫雲地下線・天宮高架線・港見支線。白峰・紫雲・天宮はオンライン対応。港見支線は短距離のためオフライン専用です。</p>
+          <div class="meta"><span>4路線</span><span>3路線オンライン対応</span><span>港見支線オフライン専用</span></div>
         </button>
       </div>
     </div>
@@ -350,7 +350,7 @@ html,body{overscroll-behavior:none}
         <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v49)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
-          <div class="cr-item"><strong>車内放送音声</strong><span>大阪メトロ風 機械合成音声（Nanami Neural TTS）</span></div>
+          <div class="cr-item"><strong>車内放送音声</strong><span>機械合成音声（Nanami Neural TTS）</span></div>
           <div class="cr-item"><strong>3D描画エンジン</strong><span>three.js (WebGL)</span></div>
           <div class="cr-item"><strong>フォント</strong><span>Google Fonts（DotGothic16 / Zen Kaku Gothic New）</span></div>
           <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線</span></div>
@@ -365,17 +365,13 @@ html,body{overscroll-behavior:none}
         <button id="btnBackFromFeedback" class="backbtn">← タイトルに戻る</button>
         <h2>📮 ご意見箱</h2>
       </div>
-      <div class="sub">ゲームの感想・追加してほしい路線や機能・不具合報告などをお気軽にお寄せください！<br>送信された内容は開発者に直接届きます。（※返信用メールアドレスは任意です）</div>
+      <div class="sub">ゲームの感想・追加してほしい路線や機能・不具合報告などをお気軽にお寄せください！<br>送信された内容は作者に直接届きます。</div>
 
       <div style="background:rgba(18,28,48,0.92);border:1px solid rgba(130,160,210,0.3);border-radius:16px;padding:22px;max-width:540px;margin:16px auto;box-shadow:0 8px 32px rgba(0,0,0,0.4);text-align:left;">
         <form id="feedbackForm" style="display:flex;flex-direction:column;gap:14px;">
           <div>
             <label style="display:block;font-size:13.5px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">お名前・ニックネーム（任意）</label>
             <input type="text" id="fbName" maxlength="30" placeholder="名無し運転士" style="width:100%;box-sizing:border-box;background:#0c1424;border:1px solid #334155;border-radius:8px;padding:12px;color:#fff;font-size:15px;outline:none;">
-          </div>
-          <div>
-            <label style="display:block;font-size:13.5px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">メールアドレス（返信を希望する場合のみ・任意）</label>
-            <input type="email" id="fbEmail" maxlength="100" placeholder="example@mail.com" style="width:100%;box-sizing:border-box;background:#0c1424;border:1px solid #334155;border-radius:8px;padding:12px;color:#fff;font-size:15px;outline:none;">
           </div>
           <div>
             <label style="display:block;font-size:13.5px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">ご意見・ご感想・ご要望 <span style="color:#ef4444;">*</span></label>
@@ -693,6 +689,7 @@ function handleRemotePlayerUpdate(data) {
     p = {
       id: data.id,
       name: data.name || 'ゲスト運転士',
+      line: data.line || 'loop',
       service: data.service,
       key: data.key,
       dir: data.dir || 1,
@@ -765,6 +762,7 @@ function handleRemotePlayerUpdate(data) {
     }
 
     p.name = data.name || p.name;
+    p.line = data.line || p.line || 'loop';
     p.service = data.service || p.service;
     p.key = data.key || p.key;
     p.dir = data.dir != null ? data.dir : p.dir;
@@ -813,7 +811,7 @@ function updateOnlineHud() {
   const count = 1 + Object.keys(ONLINE_PLAYERS).length;
   if (badge) badge.textContent = count;
   if (titleCount) titleCount.textContent = count;
-  if (hudBtn) hudBtn.classList.remove('hide');
+  if (hudBtn) hudBtn.classList.toggle('hide', !IS_ONLINE);
   if (typeof drawHomeMap === 'function') drawHomeMap();
 
   const opList = document.getElementById('opList');
@@ -823,7 +821,9 @@ function updateOnlineHud() {
     const stObj = G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null);
     const myLoc = G.atStation !== null ? (stObj ? stObj.name + ' 停車中' : '停車中') : (stObj ? stObj.name + 'へ走行中' : '走行中');
     const mySpd = Math.round(G.v * 3.6);
-    const svcName = SERVICES[G.route] ? SERVICES[G.route].name : '汐見環状線';
+    const myLine = typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop';
+    const myLineName = myLine === 'branch' ? '白峰支線' : myLine === 'branch2' ? '紫雲地下線' : myLine === 'branch3' ? '天宮高架線' : '汐見環状線';
+    const svcName = SERVICES[G.route] ? SERVICES[G.route].name : myLineName;
     html += `
       <div class="op-item is-me">
         <div class="op-item-top">
@@ -841,11 +841,17 @@ function updateOnlineHud() {
     const p = ONLINE_PLAYERS[pid];
     const spd = Math.round((p.v || 0) * 3.6);
     const loc = p.stName ? (p.v > 0.5 ? p.stName + '付近 走行中' : p.stName + ' 停車中') : '走行中';
-    const svcLook = p.key && typeof SVCLOOK !== 'undefined' && SVCLOOK[p.key] ? SVCLOOK[p.key][1] : '環状線';
+    const pLine = p.line || 'loop';
+    const pLineName = pLine === 'branch' ? '白峰支線' : pLine === 'branch2' ? '紫雲地下線' : pLine === 'branch3' ? '天宮高架線' : pLine === 'branch4' ? '港見支線' : '汐見環状線';
+    const curLine = typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop';
+    const svcLook = p.service && SERVICES[p.service] ? SERVICES[p.service].short : pLineName;
     let distText = '';
-    if (typeof G !== 'undefined' && G && G.s != null && p.s != null) {
-      const d = Math.round(Math.abs(mod(p.s - G.s + 36000, 72000) - 36000));
+    if (typeof G !== 'undefined' && G && G.s != null && p.s != null && pLine === curLine) {
+      const curL = typeof CFG !== 'undefined' && CFG ? CFG.L : 72000;
+      const d = Math.round(Math.abs(mod(p.s - G.s + curL / 2, curL) - curL / 2));
       distText = ` (距離: ${d < 1000 ? d + 'm' : (d / 1000).toFixed(1) + 'km'})`;
+    } else if (pLine !== curLine) {
+      distText = ` (${pLineName})`;
     }
     html += `
       <div class="op-item">
@@ -866,12 +872,15 @@ function updateOnlineHud() {
   opList.innerHTML = html;
 }
 
-function checkOnlineStationBlocked(st, serviceKey) {
-  if (!IS_ONLINE) return null;
-  const L = 72000;
+function checkOnlineStationBlocked(st, serviceKey, lineId) {
+  const targetLine = lineId || 'loop';
+  if (targetLine === 'branch4') return null;
+  const cfg = lineConfig(targetLine);
+  const L = (cfg && cfg.L) ? cfg.L : 72000;
   for (const pid in ONLINE_PLAYERS) {
     const p = ONLINE_PLAYERS[pid];
-    if (p.key === serviceKey && p.s != null) {
+    const pLine = p.line || 'loop';
+    if (pLine === targetLine && p.key === serviceKey && p.s != null) {
       const d = Math.abs(mod(p.s - st.s + L / 2, L) - L / 2);
       if (d < 1000) {
         return { name: p.name, dist: Math.round(d) };
@@ -884,13 +893,15 @@ function checkOnlineStationBlocked(st, serviceKey) {
 let curOnlineStList = null, curOnlineService = null;
 function updateStationSelectButtons() {
   if (!curOnlineStList || !curOnlineService) return;
+  const isMinatomi = (curOnlineService.line === 'branch4');
+  const isOnlineSvc = !isMinatomi && curOnlineService.kind !== 'pax' && curOnlineService.kind !== 'staff';
   const g = document.getElementById('stGrid');
   if (!g) return;
   const btns = g.querySelectorAll('button');
   curOnlineStList.forEach((st, idx) => {
     const bt = btns[idx];
     if (!bt) return;
-    const blocked = checkOnlineStationBlocked(st, curOnlineService.key);
+    const blocked = isOnlineSvc ? checkOnlineStationBlocked(st, curOnlineService.key, curOnlineService.line || 'loop') : null;
     if (blocked) {
       bt.disabled = true;
       bt.style.opacity = '0.45';
@@ -911,12 +922,15 @@ function publishPresence() {
   if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
   const curG = (typeof G !== 'undefined' ? G : (window.G || (window.__T ? window.__T.G : null)));
   const isDriving = curG && curG.phase === 'play';
+  const curLine = typeof CFG !== 'undefined' && CFG && CFG.id ? CFG.id : 'loop';
+  if (isDriving && curLine === 'branch4') return; // 港見支線は短距離のためオンライン配信を行わない
   const stFn = typeof stOf === 'function' ? stOf : (window.stOf || (window.__T ? window.__T.stOf : null));
   const stObj = (isDriving && stFn) ? (curG.atStation !== null ? stFn(curG.atStation) : (curG.nv != null ? stFn(curG.nv) : null)) : null;
   const payload = {
     id: ONLINE_CLIENT_ID,
     name: MY_PLAYER_NAME,
     state: isDriving ? 'driving' : 'title',
+    line: isDriving ? curLine : null,
     service: isDriving ? curG.route : null,
     key: isDriving ? curG.key : null,
     dir: isDriving ? curG.dir : 1,
@@ -955,7 +969,7 @@ function stopOnlinePublishLoop() {
    boot: builds the chosen line (loop or branch) and starts the game
    ===================================================================== */
 function boot(LINE_ID,SVC,START_I){
-IS_ONLINE = (LINE_ID === 'loop');
+IS_ONLINE = (LINE_ID !== 'branch4' && SVC && !SVC.startsWith('pax'));
 initOnlineClient();
 const CFG=lineConfig(LINE_ID);const ST0=layoutStations(CFG);const L=CFG.L,BRANCH=!!CFG.branch,MINI=!!CFG.mini;
 const {px,pz,th}=genPath(L,CFG.R||0);
@@ -4817,6 +4831,12 @@ function frameBody(now){
         removeRemotePlayer(pid);
         continue;
       }
+      const pLine = p.line || 'loop';
+      if (pLine !== (typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop')) {
+        if (p.tr && p.tr.grp) p.tr.grp.visible = false;
+        if (p.snd && p.snd.g) p.snd.g.gain.setTargetAtTime(0, (window.__AC && window.__AC.currentTime) || 0, 0.8);
+        continue;
+      }
       if (p.s == null) {
         if (p.tr && p.tr.grp) p.tr.grp.visible = false;
         continue;
@@ -5078,7 +5098,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (window.ONLINE_PLAYERS) {
     for (const pid in window.ONLINE_PLAYERS) {
       const p = window.ONLINE_PLAYERS[pid];
-      if (p.s != null) {
+      if (p.s != null && (!p.line || p.line === 'loop')) {
         const [a, b] = XY(p.s);
         const pulse = 1 + 0.3 * Math.sin(Date.now() / 180);
         x.save();
@@ -5306,7 +5326,6 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       const btn = document.getElementById('fbSubmitBtn');
       const status = document.getElementById('fbStatus');
       const name = document.getElementById('fbName').value.trim() || '名無し運転士';
-      const email = document.getElementById('fbEmail').value.trim();
       const message = document.getElementById('fbMessage').value.trim();
       if (!message) return;
 
@@ -5320,7 +5339,6 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         message: message,
         _subject: '【汐見環状線3D】ご意見箱から新しいメッセージが届きました (' + name + 'さん)'
       };
-      if (email) payload.email = email;
 
       try {
         const res = await fetch('https://formsubmit.co/ajax/77c0266b3c001f710fb0460bf4ef7d9e', {
@@ -5377,14 +5395,18 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const LS = S.line ? LN[S.line] : null, n = LS ? LS.sts.length : (S.kind === 'pax' || S.kind === 'staff') ? sts.length : stopsOf(sts, S.kind).length;
     if (S.kind === 'staff') continue;
     const isBranch = Boolean(S.branch || S.line);
+    const isMinatomi = S.line === 'branch4';
     if (S.kind === 'pax') {
-      b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>ホームを歩いて見学。階段から別のホームへ、電車にも乗れます。</p><div class="meta"><span>全' + n + '駅</span><span>歩いて見学</span></div>';
+      b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>ホームを歩いて見学。階段から別のホームへ、電車にも乗れます。</p><div class="meta"><span>全' + n + '駅</span><span>歩いて見学</span>' + (isMinatomi ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン</span>' : '') + '</div>';
       b.addEventListener('click', () => { currentDutyView = isBranch ? 'viewBranch' : 'viewLoop'; pickStation(id); });
       if (isBranch && contBranch) contBranch.appendChild(b);
       else if (!isBranch && contLoop) contLoop.appendChild(b);
       continue;
     }
-    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（ほぼアナログ）。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と40駅に停車。外側から2番目の線路。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span></div>';
+    const modeBadge = isMinatomi 
+      ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン専用</span>'
+      : '<span style="border-color:#38bdf8;color:#38bdf8;">🌐 オンライン対応</span>';
+    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と40駅に停車。外側から2番目の線路。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
     b.addEventListener('click', () => { currentDutyView = isBranch ? 'viewBranch' : 'viewLoop'; pickStation(id); });
     if (isBranch && contBranch) contBranch.appendChild(b);
     else if (!isBranch && contLoop) contLoop.appendChild(b);
@@ -5456,19 +5478,21 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   document.getElementById('crewBack').addEventListener('click',()=>{document.getElementById('crewSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
   function pickStationGo(id){
     const S=SERVICES[id];
+    const isMinatomi = (S.line === 'branch4');
+    const isOnlineSvc = !isMinatomi && S.kind !== 'pax' && S.kind !== 'staff';
     curOnlineStList = null;
     curOnlineService = S;
     document.getElementById('home').classList.add('hide');
     document.getElementById('stSel').classList.remove('hide');
-    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(S.kind==='ltd'?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (IS_ONLINE ? ' [🌐 オンライン]' : '');
-    document.getElementById('stSelSub').textContent=IS_ONLINE ? '【オンライン乗務】他列車から1km以上離れた駅を選択してください' : (S.kind==='staff'?'勤務する駅を選んでください':S.kind==='pax'?'見学する駅を選んでください':(S.branch?'片道':'一周')+' 約'+fmtDur(timeOf(S))+'　開始する駅を選んでください');
+    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(S.kind==='ltd'?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (isOnlineSvc ? ' [🌐 オンライン]' : ' [📴 オフライン]');
+    document.getElementById('stSelSub').textContent=isOnlineSvc ? '【オンライン乗務】他列車から1km以上離れた駅を選択してください' : (isMinatomi ? '【オフライン運転】港見支線は短距離（16km・4駅）のためオフライン専用です。開始駅を選択してください' : S.kind==='staff'?'勤務する駅を選んでください':S.kind==='pax'?'見学する駅を選んでください':(S.branch?'片道':'一周')+' 約'+fmtDur(timeOf(S))+'　開始する駅を選んでください');
     const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2;
     const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
     curOnlineStList = list;
     for(const st of list){
       const bt=document.createElement('button');
       if(st.cls==='M')bt.className='big';
-      const blocked = checkOnlineStationBlocked(st, S.key);
+      const blocked = isOnlineSvc ? checkOnlineStationBlocked(st, S.key, S.line || 'loop') : null;
       if (blocked) {
         bt.disabled = true;
         bt.style.opacity = '0.45';
@@ -5479,8 +5503,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         bt.innerHTML=st.name+'<small>'+({M:'主要駅',X:'快特停車',R:'快速停車',L:'',J:'乗換駅',Q:'2面4線',T:'通過線',I:'島式'}[st.cls]||'')+'</small>';
       }
       bt.addEventListener('click',()=>{
-        if (IS_ONLINE) {
-          const freshBlocked = checkOnlineStationBlocked(st, S.key);
+        if (isOnlineSvc) {
+          const freshBlocked = checkOnlineStationBlocked(st, S.key, S.line || 'loop');
           if (freshBlocked) {
             toast('他列車（' + freshBlocked.name + 'さん）が1km以内に接近したため選択できません', 'warn');
             updateStationSelectButtons();
