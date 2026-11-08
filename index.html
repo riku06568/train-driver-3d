@@ -1890,6 +1890,7 @@ if(OWNOLD)for(const side of [-1,1]){const g=new THREE.Group();g.position.set(sid
 function relayoutLean(){for(const side of [-1,1]){const g=LEANP[side];if(!g)continue;const car=ownTrain.cars[0];car.add(g);
   if(ownTrain.rev){g.position.set(-side*1.46,2.52,CARHALF-1.9);g.rotation.y=Math.atan2(side*0.866,-0.5)+Math.PI;}else{g.position.set(side*1.46,2.52,1.9-CARHALF);g.rotation.y=Math.atan2(side*0.866,-0.5);}}}
 const EYE_L={p:CONDV?new THREE.Vector3(XE+0.05,YE+0.18,ZE+0.12):new THREE.Vector3(XE,YE,ZE),pitch:CONDV?-0.14:-0.19} /* 車掌は立って乗務（目線が高い） */,EYE_P={p:new THREE.Vector3(XE,YE+0.12,ZE+0.75),pitch:-0.3};
+camera.position.copy(EYE_L.p);camera.rotation.set(EYE_L.pitch,0,0);
 rig.updateMatrixWorld(true);
 const ZOOM={};
 for(const k in MON){const c=new THREE.Vector3(),q=new THREE.Quaternion();MON[k].g.getWorldPosition(c);MON[k].g.getWorldQuaternion(q);ZOOM[k]={c,n:new THREE.Vector3(0,0,1).applyQuaternion(q),sc:(k==='L'||k==='R')?MONBIG:1};}
