@@ -2870,15 +2870,31 @@ window.stOf = stOf;
 
 /* ================= voice ================= */
 let jaVoice=null,enVoice=null,speechOK=false;const keepU=[];
-/* ================= voice (完全事前録音音声化：OS合成音声は使用しない) ================= */
-const SS=()=>null;
-function pickVoice(){}
-function mkU(text,kind,vol){return null;}
-function unlockSpeech(){}
-function say(text,kind,urgent,vol){}
-function sayJE(ja,en,urgent){}
-function sayManual(ja,en){}
-function liveSay(ja){}
+const SS=()=>typeof window!=='undefined'?(window.speechSynthesis||null):null;
+function pickVoice(){try{const vs=SS().getVoices();jaVoice=vs.find(v=>/^ja(-|_|$)/i.test(v.lang))||vs.find(v=>/japan|日本/i.test(v.name))||null;
+  enVoice=vs.find(v=>/^en(-|_)US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;}catch(e){}}
+if(SS()){pickVoice();try{SS().addEventListener('voiceschanged',pickVoice);}catch(e){SS().onvoiceschanged=pickVoice;}}
+const VOICE={sta:{pitch:1.3,rate:1.05},ann:{pitch:1.12,rate:1.02},sys:{pitch:1.0,rate:1.05},drv:{pitch:0.8,rate:1.0},en:{pitch:1.02,rate:0.98}};
+function mkU(text,kind,vol){if(kind!=='en')text=text.replace(/ATO/g,'エーティーオー').replace(/ATS/g,'エーティーエス');const u=new SpeechSynthesisUtterance(text),v=VOICE[kind||'sys'];u.pitch=v.pitch;u.rate=v.rate;u.volume=(kind==='ann'||kind==='sta')?1:(vol===undefined?1:Math.max(0.55,Math.min(1,vol*1.6)));
+  if(kind==='en'){u.lang='en-US';if(enVoice)u.voice=enVoice;}else{u.lang='ja-JP';if(jaVoice)u.voice=jaVoice;}
+  keepU.push(u);if(keepU.length>16)keepU.shift();return u;}
+function unlockSpeech(){const ss=SS();if(window.__speechOK)speechOK=true;if(!ss||speechOK)return;speechOK=true;try{pickVoice();ss.cancel();ss.resume();}catch(e){}}
+function say(text,kind,urgent,vol){if(kind==='drv')return;const ss=SS();if(!ss||!text)return;
+  try{if(!jaVoice)pickVoice();if(urgent)ss.cancel();
+    ss.resume();ss.speak(mkU(text,kind,vol));}catch(e){}}
+function sayJE(ja,en,urgent){
+  const ss=SS();if(!ss)return;
+  try{
+    if(!jaVoice)pickVoice();
+    if(urgent)ss.cancel();
+    ss.resume();
+    if(ja)ss.speak(mkU(ja,'ann'));
+    if(en)ss.speak(mkU(en,'en'));
+  }catch(e){}
+}
+function sayManual(ja,en){sayJE(ja,en,true);}
+function liveSay(ja){say(ja,'ann',true);}
+setInterval(()=>{try{const ss=SS();if(ss&&ss.speaking&&ss.paused)ss.resume();}catch(e){}},1000);
 function toggleLive(){LIVE=!LIVE;try{localStorage.setItem('td_live',LIVE?'1':'0');}catch(e){}toast(LIVE?'肉声放送 ON：駅の案内を自分の声で行います':'肉声放送 OFF','info');
   if(LIVE&&liveAvail()){G.liveDep=G.v>4?G.nv:null;G.liveAppr=null;G.liveArr=G.atStation;}updLive();}
 function updLive(){const b=document.getElementById('btnTitleReturn');if(b){b.classList.toggle('hide',G.walkOn);}
@@ -4029,16 +4045,19 @@ function updCondUI(){const ui=document.getElementById('condUI');if(!ui)return;ui
 /* 停止信号で止まっている（駅の停止位置より手前）か */
 function sigStopped(){if(G.atStation!==null||G.depCheck!==null||G.v>0.3)return false;const d=stopDist(G.nv);return !!(G.sig&&G.sig.asp==='R'&&G.sig.dist<90&&d>2.5);}
 function toggleAuto(){if(G.crew==='twoC'){toast('車掌乗務中は運転士が運転します','info');return;}if(BRANCH){toast('支線の電車に完全オートはありません','warn');return;}G.auto=!G.auto;G.autoPh='';G.autoT=0;toast(G.auto?'完全オート ON':'完全オート OFF',G.auto?'ok':'warn',G.auto?'完全オート、開始。':'完全オート、解除。');}
-function triggerNextStationAnnounce(manual){
+function triggerNextStationAnnounce(mode){
   if(G.phase!=='play')return;
   const nst=stOf(G.nv);
-  const sideStr=localSide(nst)<0?'左側':'右側';
+  if(!nst)return;
   chime();
-  toast('📢 次駅放送：「次は、'+(nst?nst.name:'')+'、'+(nst?nst.name:'')+'です。お出口は'+sideStr+'です」','info');
-  const leftSt=G.leftSt||stOf(Math.max(0,G.nv-1));
-  const gk=guideKindFor(G.key,leftSt);
-  if(gk)scheduleGuide(gk,700);
-  else scheduleGuide('lo',700);
+  const isSoon=mode==='soon';
+  const prefix=isSoon?'まもなく、':'次は、';
+  const ja=nextAnn(prefix);
+  const en=nextAnnEn(prefix);
+  toast((isSoon?'📢 まもなく放送：':'📢 次駅放送：')+ja,'info');
+  setTimeout(()=>{
+    sayJE(ja,en,true);
+  },400);
 }
 
 function panelAct(u,v){ // touch panel hit (u,v in 0..1)
@@ -4048,7 +4067,7 @@ function panelAct(u,v){ // touch panel hit (u,v in 0..1)
     const i=(y<168?0:2)+(x<256?0:1);if(G.panel==='ann')broadcast(i);else promote(i);back();return;}
 
   if(G.tabNextAnn && x < 2 * (512 / 3)){
-    triggerNextStationAnnounce(true);
+    triggerNextStationAnnounce(G.tabAnnMode || 'next');
     G.tabNextAnn = false;
     drawPanel();
     return;
@@ -4166,41 +4185,30 @@ function physics(dt){
     if(G.atStation===null&&G.v>1){if(G.depTimer===undefined||G.depTimer===null)G.depTimer=0;G.depTimer+=dt;}
     else if(G.atStation!==null){G.depTimer=0;}
 
-    /* タブレット自動切り替え：発車後は「次駅放送」ボタン、駅手前600mで「乗降促進＆放送」に戻る */
+    /* タブレット自動切り替え：発車直後（次駅放送）、駅手前600m（まもなく放送） */
     const isDepartedRun = G.v > 1.2 && G.door && G.door.state === 'closed' && G.atStation === null;
-    if (isDepartedRun && d > 600 && !G.tabDepSwitched) {
-      G.tabDepSwitched = true;
+    if (isDepartedRun && d > 600 && !G.tabDepAnnDone) {
+      G.tabDepAnnDone = true;
+      G.tabAnnMode = 'next';
       G.tabNextAnn = true;
       if (typeof drawPanel === 'function') drawPanel();
     }
-    if (d <= 600 && G.tabNextAnn) {
-      G.tabNextAnn = false;
+    if (d <= 600 && d > 25 && isDepartedRun && !G.tabSoonAnnDone) {
+      G.tabSoonAnnDone = true;
+      G.tabAnnMode = 'soon';
+      G.tabNextAnn = true;
       if (typeof drawPanel === 'function') drawPanel();
     }
 
-    /* 発車30秒後の案内放送（次は、〇〇） */
-    if(G.depTimer>=30&&G.depCheck===null&&!G.said['dep30_'+key]&&G.v>2){
-      G.said['dep30_'+key]=true;
-      const leftSt=G.leftSt||stOf(Math.max(0,G.nv-1));
-      const gk=guideKindFor(G.key,leftSt);
-      if(gk){scheduleGuideAfterSpeech(gk,()=>!PAX);setTimeout(()=>sayJE(nextAnn('次は、'),nextAnnEn('次は、')),200);}
-      else{annJE(nextAnn('次は、'),nextAnnEn('次は、'));}}
-
-    /* 駅到着400メートル前のまもなく放送（まもなく、〇〇） */
-    if(d<=400&&d>50&&G.v>3&&!G.said['appr400_'+key]){
-      G.said['appr400_'+key]=true;
-      sayJE(nextAnn('まもなく、'),nextAnnEn('まもなく、'));}
+    /* 自動放送は消去（タブレットの「次駅放送」「まもなく放送」ボタンによる手動放送のみ） */
     if(G.prevV>0&&G.v===0&&Math.abs(d)<25){
       say(Math.abs(d)<1?'停止位置、よし。':'停止位置。','drv');
-      if(!G.said['arr_'+key]&&d>-6.5&&d<17.9){
-        G.said['arr_'+key]=true;
-        setTimeout(()=>sayJE(arriveAnn(),arriveAnnEn()),500);
-      }
     }
     if(d<-30&&G.nv<=lastStop())G.nv++;}
   if(G.v<0.2 || (G.door && G.door.state!=='closed') || G.atStation!==null){
-    G.tabDepSwitched=false;
-    if(G.tabNextAnn){G.tabNextAnn=false;if(typeof drawPanel==='function')drawPanel();}
+    G.tabDepAnnDone = false;
+    G.tabSoonAnnDone = false;
+    if(G.tabNextAnn){G.tabNextAnn=false;G.tabAnnMode=null;if(typeof drawPanel==='function')drawPanel();}
   }
 }
 function updFlow(dt){
@@ -4310,18 +4318,19 @@ function drawPanel(){const x=CANV.T.x,W=512,H=284;x.fillStyle='#07101e';x.fillRe
       if(sub){x.fillStyle='#d6dde8';x.font='500 17px '+FONT;x.fillText(sub,bx+122,by+76);}});}
   else if(G.tabNextAnn){
     const bw=2*(W/3)-10;
-    x.fillStyle='#1d4ed8';
+    const isSoon=G.tabAnnMode==='soon';
+    x.fillStyle=isSoon?'#0284c7':'#1d4ed8';
     x.fillRect(5,8,bw,H-16);
-    x.strokeStyle='#60a5fa';
+    x.strokeStyle=isSoon?'#38bdf8':'#60a5fa';
     x.lineWidth=4;
     x.strokeRect(8,11,bw-6,H-22);
     x.fillStyle='#fff';
-    x.font='700 42px '+FONT;
-    x.fillText('📢 次駅放送',5+bw/2,H/2-22);
+    x.font='700 40px '+FONT;
+    x.fillText(isSoon?'📢 まもなく放送':'📢 次駅放送',5+bw/2,H/2-22);
     const nst=stOf(G.nv);
     x.fillStyle='#bfdbfe';
     x.font='700 20px '+FONT;
-    x.fillText('次は '+(nst?nst.name:'')+'（タップで案内放送）',5+bw/2,H/2+28);
+    x.fillText((isSoon?'まもなく ':'次は ')+(nst?nst.name:'')+'（タップで放送）',5+bw/2,H/2+28);
 
     const bx=2*(W/3)+5,cw=W/3-10,hOn=nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
     x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 36px '+FONT;x.fillText('警笛',bx+cw/2,71);
@@ -4373,7 +4382,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   else if(G.crew==='twoD')setTimeout(()=>toast('ツーマン（運転士）：ドア・乗降促進・放送は車掌。ブザー（合図）が鳴ったら発車できます','info'),2500);
   const st=STATIONS[si];G.arrKey=null;
   G.s=st.s+TK[G.key].so;G.nv=G.list?Math.max(0,G.list.indexOf(si)):0;G.atStation=G.nv;G.depCheck=null;G.depAt=G.s;
-  G.tabNextAnn=false;G.tabDepSwitched=false;
+  G.tabNextAnn=false;G.tabDepSwitched=false;G.tabAnnMode=null;G.tabDepAnnDone=false;G.tabSoonAnnDone=false;
   ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;setLook(ownTrain,G.key);if(G.list)drawOwnDest();
   updChunks(G.s,true);
   for(const p of active.slice())freePerson(p);for(const s2 of STATIONS){s2.sp={};s2.staff=null;for(const k in s2.wait)s2.wait[k].length=0;}
@@ -5351,9 +5360,12 @@ function updateTutorialHUD() {
     if (descEl) descEl.textContent = '運転席の緑色の「ATO」ボタンを押すと、自動で加速して次の駅へ出発します！';
     if (subEl) subEl.textContent = '「完全オート」ボタンを押せば、以後の全操作（戸開閉・乗降促進・発車）も自動化できます。';
   } else if (G.tabNextAnn) {
-    if (stepEl) stepEl.innerHTML = '📢 【走行中】次駅案内放送を流せます';
-    if (descEl) descEl.textContent = '現在時速 ' + vKmh + ' km/h で走行中。中央下のタブレット「次駅放送」を押すと「次は ' + (nst ? nst.name : '') + '」案内を流せます。';
-    if (subEl) subEl.textContent = '※ 次駅放送を押すか、駅の手前600mに近づくと自動で通常の乗降促進・放送ボタンに戻ります。';
+    const isSoon = G.tabAnnMode === 'soon';
+    if (stepEl) stepEl.innerHTML = isSoon ? '📢 【まもなく到着】まもなく放送を流せます' : '📢 【走行中】次駅案内放送を流せます';
+    if (descEl) descEl.textContent = isSoon
+      ? ('駅まであと約 ' + Math.round(d) + ' m。タブレット「まもなく放送」を押すと「まもなく ' + (nst ? nst.name : '') + '」案内（英語放送つき）が流れます。')
+      : ('時速 ' + vKmh + ' km/h で走行中。タブレット「次駅放送」を押すと「次は ' + (nst ? nst.name : '') + '」案内（乗り換え・英語放送つき）が流れます。');
+    if (subEl) subEl.textContent = 'ボタンを押すと車内チャイムとともに音声放送が流れ、通常の乗降促進・放送ボタンに戻ります。';
   } else if (d <= 600) {
     if (stepEl) stepEl.innerHTML = '🏁 【まもなく到着】次は ' + (nst ? nst.name : '') + ' 駅';
     if (descEl) descEl.textContent = '駅まであと約 ' + Math.round(d) + ' m。ATOが自動で停止位置に合わせてブレーキをかけます。';
@@ -5644,7 +5656,8 @@ window.__T={enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom
 /* ================= home screen (before the world is built) ================= */
 // audio must be started inside the user's tap (iOS / Chrome autoplay rules)
 function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext||window.webkitAudioContext)();window.__AC=A;}if(window.__AC.state==='suspended')window.__AC.resume();try{preloadGuides();}catch(e){}
-    const o=window.__AC.createOscillator(),g=window.__AC.createGain();g.gain.value=0.0001;o.connect(g);g.connect(window.__AC.destination);o.start();o.stop(window.__AC.currentTime+0.05);}catch(e){}}
+    const o=window.__AC.createOscillator(),g=window.__AC.createGain();g.gain.value=0.0001;o.connect(g);g.connect(window.__AC.destination);o.start();o.stop(window.__AC.currentTime+0.05);}catch(e){}
+  try{const ss=window.speechSynthesis;if(ss){ss.cancel();ss.resume();const u=new SpeechSynthesisUtterance(' ');u.lang='ja-JP';ss.speak(u);window.__speechOK=true;}}catch(e){}}
 (function home(){
   initOnlineClient();
   const cfg=lineConfig('loop'),sts=layoutStations(cfg);const LN={};for(const id of ['branch','branch2','branch3','branch4']){const c=lineConfig(id);LN[id]={cfg:c,sts:layoutStations(c)};}const bcfg=LN.branch.cfg,bsts=LN.branch.sts;
