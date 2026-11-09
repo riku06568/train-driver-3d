@@ -280,7 +280,7 @@ html,body{overscroll-behavior:none}
         </div>
 
         <!-- 運転士証（累計走行距離・乗務時間カード） -->
-        <div id="driverCard" style="background:linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,41,59,0.92) 100%);border:1px solid rgba(56,189,248,0.35);border-radius:14px;padding:12px 16px;margin:0 0 14px;box-shadow:0 4px 16px rgba(0,0,0,0.35);display:flex;flex-direction:column;gap:8px;">
+        <div id="driverCard" style="background:linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,41,59,0.92) 100%);border:1px solid rgba(56,189,248,0.35);border-radius:14px;padding:12px 16px;margin:0 0 10px;box-shadow:0 4px 16px rgba(0,0,0,0.35);display:flex;flex-direction:column;gap:8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(56,189,248,0.2);padding-bottom:6px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:16px;">🆔</span>
@@ -306,6 +306,18 @@ html,body{overscroll-behavior:none}
               <div id="cardDriverTime" style="font-size:16px;font-weight:800;color:#22c55e;margin-top:2px;">0分</div>
             </div>
           </div>
+        </div>
+
+        <!-- チュートリアル設定＆最新版更新バッジ -->
+        <div style="background:rgba(15,23,42,0.88);border:1px solid rgba(56,189,248,0.35);border-radius:12px;padding:8px 14px;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;font-weight:700;color:#38bdf8;">💡 チュートリアル表示:</span>
+            <div style="display:flex;gap:4px;">
+              <button id="btnTitleTutOff" class="q-tut-btn" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">OFF</button>
+              <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
+            </div>
+          </div>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.3.1)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -4155,14 +4167,15 @@ function physics(dt){
     else if(G.atStation!==null){G.depTimer=0;}
 
     /* タブレット自動切り替え：発車後は「次駅放送」ボタン、駅手前600mで「乗降促進＆放送」に戻る */
-    if(G.v>2 && d>650 && !G.tabDepSwitched){
+    const isDepartedRun = G.v > 1.2 && G.door && G.door.state === 'closed' && G.atStation === null;
+    if (isDepartedRun && d > 600 && !G.tabDepSwitched) {
       G.tabDepSwitched = true;
       G.tabNextAnn = true;
-      if(typeof drawPanel==='function')drawPanel();
+      if (typeof drawPanel === 'function') drawPanel();
     }
-    if(d<=600 && G.tabNextAnn){
+    if (d <= 600 && G.tabNextAnn) {
       G.tabNextAnn = false;
-      if(typeof drawPanel==='function')drawPanel();
+      if (typeof drawPanel === 'function') drawPanel();
     }
 
     /* 発車30秒後の案内放送（次は、〇〇） */
@@ -4185,9 +4198,9 @@ function physics(dt){
       }
     }
     if(d<-30&&G.nv<=lastStop())G.nv++;}
-  if(G.atStation!==null||(G.depCheck!==null&&G.v===0)){
-    if(G.tabNextAnn){G.tabNextAnn=false;if(typeof drawPanel==='function')drawPanel();}
+  if(G.v<0.2 || (G.door && G.door.state!=='closed') || G.atStation!==null){
     G.tabDepSwitched=false;
+    if(G.tabNextAnn){G.tabNextAnn=false;if(typeof drawPanel==='function')drawPanel();}
   }
 }
 function updFlow(dt){
@@ -5249,6 +5262,11 @@ function update(dt,now){
     drawSideOverlay('L',ms,ms&&localSide(ms)*SIDEINV<0);drawSideOverlay('R',ms,ms&&localSide(ms)*SIDEINV>0);}}
   if(OWNOLD){updGauges(dt);if(G.lean&&G.v>0.05)leanBack();if(G.lean)updLeanUI();
     const mb=document.getElementById('meloBtn');if(mb){const on=nearMeloBox()&&(G.door.state==='open'||G.door.state==='opening');mb.classList.toggle('hide',!on);mb.textContent=G.promoOn?'再生中…':'発車メロディ';}}
+  updButtons(now);
+  if(typeof updateTutorialHUD==='function')updateTutorialHUD();
+  updAudio();audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
+}
+
 function updateTutorialHUD() {
   const hud = document.getElementById('gameTutorialHUD');
   if (!hud) return;
@@ -5346,11 +5364,7 @@ function updateTutorialHUD() {
     if (subEl) subEl.textContent = '警笛やミュージックホーンはタブレット右側からいつでも鳴らせます。';
   }
 }
-
-  updButtons(now);
-  updateTutorialHUD();
-  updAudio();audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
-}
+window.updateTutorialHUD = updateTutorialHUD;
 /* 自動画質：フレームが遅いときは描画解像度を少しずつ下げ、速くなったら戻す（ゲームの中身は変わらない） */
 const QUAL={max:Math.min(window.devicePixelRatio||1,1.1),min:0.5,pr:0,ema:16,t:0,lock:0,pend:null};QUAL.pr=QUAL.max;
 function updQuality(ms){if(QMODE!=='light')return;ms=Math.min(ms,100);QUAL.ema+=(ms-QUAL.ema)*0.06;QUAL.t+=ms;if(QUAL.lock>0){QUAL.lock-=ms;return;}if(QUAL.t<1200)return;QUAL.t=0;
@@ -6234,6 +6248,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     try { localStorage.setItem('shiomi_tutorial', on ? '1' : '0'); } catch(e) {}
     updTut();
     if (typeof updateTutorialHUD === 'function') updateTutorialHUD();
+    toast(on ? '💡 チュートリアル表示をONにしました' : '💡 チュートリアル表示をOFFにしました', 'info');
   }
   function updTut() {
     const btnOff = document.getElementById('btnTutOff');
@@ -6245,6 +6260,11 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const qOn = document.getElementById('qTutOn');
     if (qOff) qOff.classList.toggle('on', !TUTORIAL_ENABLED);
     if (qOn) qOn.classList.toggle('on', TUTORIAL_ENABLED);
+
+    const tOff = document.getElementById('btnTitleTutOff');
+    const tOn = document.getElementById('btnTitleTutOn');
+    if (tOff) tOff.classList.toggle('on', !TUTORIAL_ENABLED);
+    if (tOn) tOn.classList.toggle('on', TUTORIAL_ENABLED);
 
     const tips = document.querySelectorAll('.menu-tut-tip');
     tips.forEach(t => t.classList.toggle('hide', !TUTORIAL_ENABLED));
@@ -6258,6 +6278,14 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (qTutOff) qTutOff.addEventListener('click', () => setTutorialEnabled(false));
   const qTutOn = document.getElementById('qTutOn');
   if (qTutOn) qTutOn.addEventListener('click', () => setTutorialEnabled(true));
+  const tTutOff = document.getElementById('btnTitleTutOff');
+  if (tTutOff) tTutOff.addEventListener('click', () => setTutorialEnabled(false));
+  const tTutOn = document.getElementById('btnTitleTutOn');
+  if (tTutOn) tTutOn.addEventListener('click', () => setTutorialEnabled(true));
+  const bfr = document.getElementById('btnForceReload');
+  if (bfr) bfr.addEventListener('click', () => {
+    location.href = location.pathname + '?v=' + Date.now();
+  });
   updTut();
 
   const btr = document.getElementById('btnTitleReturn');
