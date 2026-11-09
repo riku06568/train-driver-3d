@@ -966,6 +966,78 @@ function stopOnlinePublishLoop() {
 }
 
 /* =====================================================================
+   Play Notification: 誰かが乗務開始したらGmailへ通知 (FormSubmit経由)
+   ===================================================================== */
+function sendPlayNotification(lineId, svcKey, startI, stName) {
+  try {
+    const now = Date.now();
+    const last = parseInt(sessionStorage.getItem('td_last_play_notify') || '0', 10);
+    if (now - last < 60000) return; // 1分以内の連打・リロードによる重複を防止
+    sessionStorage.setItem('td_last_play_notify', now.toString());
+
+    const svcObj = (typeof SERVICES !== 'undefined' && SERVICES[svcKey]) ? SERVICES[svcKey] : {};
+    const svcName = svcObj.name || svcKey || '乗務';
+    const lineNames = {
+      loop: '汐見環状線',
+      branch: '白峰支線',
+      branch2: '紫雲地下線',
+      branch3: '天宮高架線',
+      branch4: '港見支線'
+    };
+    const lineTitle = lineNames[lineId] || lineId || '汐見環状線';
+    const playerName = (typeof MY_PLAYER_NAME !== 'undefined' && MY_PLAYER_NAME) ? MY_PLAYER_NAME : (localStorage.getItem('shiomi_online_name') || '運転士');
+    const stationStr = stName || ((typeof STATIONS !== 'undefined' && STATIONS[startI]) ? STATIONS[startI].name : (startI + '番駅'));
+
+    const ua = navigator.userAgent || '';
+    let dev = 'パソコン (PC)';
+    if (/iPhone/i.test(ua)) dev = 'iPhone';
+    else if (/iPad/i.test(ua)) dev = 'iPad';
+    else if (/Android/i.test(ua)) dev = 'Androidスマートフォン';
+    else if (/Macintosh/i.test(ua)) dev = 'Mac';
+    else if (/Windows/i.test(ua)) dev = 'Windows PC';
+    else if (/Mobile/i.test(ua)) dev = 'スマートフォン';
+
+    const timeStr = new Date().toLocaleString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    const isOnlineMode = (typeof IS_ONLINE !== 'undefined' && IS_ONLINE);
+    const actStr = (svcObj.kind === 'pax') ? '見学を開始しました' : (svcObj.kind === 'staff') ? '勤務を開始しました' : '乗務を開始しました';
+
+    const payload = {
+      _subject: '【汐見環状線3D】' + playerName + 'さんが' + actStr + ' (' + svcName + ' / ' + stationStr + '駅)',
+      _captcha: 'false',
+      _template: 'table',
+      'プレイヤー名': playerName,
+      '路線名': lineTitle,
+      '運行種別': svcName,
+      '開始駅': stationStr + '駅',
+      '運行モード': isOnlineMode ? '🌐 オンライン乗務' : '📴 オフライン運転',
+      '操作端末': dev,
+      '開始時刻': timeStr
+    };
+
+    fetch('https://formsubmit.co/ajax/77c0266b3c001f710fb0460bf4ef7d9e', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      keepalive: true
+    }).catch(function() {});
+  } catch (e) {
+    console.warn('Play notify error:', e);
+  }
+}
+
+/* =====================================================================
    boot: builds the chosen line (loop or branch) and starts the game
    ===================================================================== */
 function boot(LINE_ID,SVC,START_I){
@@ -986,6 +1058,9 @@ const STATIONS=ST0.map(st=>Object.assign(st,{type:st.cls==='L'||st.cls==='T'?'si
   lines:BRANCH?(st.i===0?[['汐見環状線','しおみかんじょうせん',0x14935f],['汐見環状線 快速','しおみかんじょうせんかいそく',0xe8731e],['汐見環状線 快速特急','しおみかんじょうせんかいそくとっきゅう',0xc8322b]]:null):(CITYLINES_ALL[st.i]||null),
   sp:{},wait:{A:[],B:[],C:[],D:[],E:[],F:[]}}));
 const NST=STATIONS.length;
+const startStObj = STATIONS[START_I] || ST0[START_I] || null;
+const startStName = startStObj ? startStObj.name : '';
+sendPlayNotification(LINE_ID, SVC, START_I, startStName);
 const BIG=STATIONS.filter(st=>st.lines).map(st=>st.i);
 const RAPID=['快速線','かいそくせん',0xe8731e];
 const RSTOPS=STATIONS.filter(st=>st.cls!=='L'&&st.cls!=='J'&&st.cls!=='I').map(st=>st.i);
