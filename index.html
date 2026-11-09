@@ -317,7 +317,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.3.1)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.4.0)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -864,7 +864,7 @@ function makeNameplateSprite(name, svcName) {
   
   const tex = new THREE.CanvasTexture(c);
   tex.needsUpdate = true;
-  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true, depthWrite: false });
   const sprite = new THREE.Sprite(mat);
   sprite.scale.set(6.4, 1.75, 1);
   return sprite;
@@ -3497,8 +3497,8 @@ function soundRig(){if(SR||!AC)return SR;const mk=(type,f)=>{const n=AC.createBi
   const gw2=AC.createOscillator();gw2.type='sine';const gw2g=AC.createGain();gw2g.gain.value=0;gw2.connect(gw2g);gw2g.connect(master);gw2.start();
   const hum=AC.createOscillator();hum.type='square';const humf=mk('lowpass',220);const humg=AC.createGain();humg.gain.value=0;hum.connect(humf);humf.connect(humg);humg.connect(master);hum.start();
   SR={rg,rl,rbg,rb,hol,car,cf,cg,mot,mf,mg,sq,sg,gw,gwf,gwg,gw2,gw2g,hum,humf,humg};return SR;}
-function airHiss(vol,dur){if(!AC)return;const src=AC.createBufferSource();src.buffer=rumbleBuf;const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=1800;const g=AC.createGain();const t=AC.currentTime;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(Math.max(vol*9,0.8),t+0.05);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);src.connect(hp);hp.connect(g);g.connect(master);src.start(t);src.stop(t+dur+0.1);}
+function airHiss(vol,dur){if(!AC)return;try{const src=AC.createBufferSource();if(rumbleBuf)src.buffer=rumbleBuf;const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=1800;const g=AC.createGain();const t=AC.currentTime;
+  g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(Math.max(vol*9,0.8),t+0.05);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);src.connect(hp);hp.connect(g);g.connect(master);src.start(t);src.stop(t+dur+0.1);}catch(e){}}
 function tone(freq,start,dur,type,vol,dest){if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=freq;
   const t=AC.currentTime+start;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((vol||0.15)*7.5,t+0.02);g.gain.linearRampToValueAtTime(0,t+dur);
   o.connect(g);g.connect(dest||master);o.start(t);o.stop(t+dur+0.05);}
@@ -3519,10 +3519,10 @@ function listenerSealed(){if(RIDE)return !(RIDE.a.state==='dwell'&&RIDE.a.frac>0
 function updExtBus(){const b=getExtBus();if(!b)return;const t=AC.currentTime,sl=listenerSealed();
   b.gain.setTargetAtTime(sl?0.03:1,t,0.25);extLP.frequency.setTargetAtTime(sl?420:18000,t,0.25);}
 /* positional one-shot bus */
-function playAt(pos,fn){if(!AC)return;const cw=camera.getWorldPosition(new THREE.Vector3());const d=pos.distanceTo(cw);if(d>400)return;
+function playAt(pos,fn){if(!AC||!pos)return;try{const cw=camera.getWorldPosition(new THREE.Vector3());const d=pos.distanceTo(cw);if(!isFinite(d)||d>400)return;
   const dest=getExtBus()||master; /* 車内でドアが閉まっていれば extBus で小さくなる */
   const g=AC.createGain();g.gain.value=Math.min(3.5,5.5/(1+Math.pow(d/70,2)));let out=g;try{const p=AC.createStereoPanner();const cr=new THREE.Vector3(1,0,0).applyQuaternion(camera.getWorldQuaternion(new THREE.Quaternion()));
-  p.pan.value=clamp(new THREE.Vector3().subVectors(pos,cw).dot(cr)/(d+1),-0.9,0.9);g.connect(p);p.connect(dest);}catch(e){g.connect(dest);}fn(out);}
+  p.pan.value=clamp(new THREE.Vector3().subVectors(pos,cw).dot(cr)/(d+1),-0.9,0.9);g.connect(p);p.connect(dest);}catch(e){g.connect(dest);}if(typeof fn==='function')try{fn(out);}catch(e){}}catch(e){}}
 function updAudio(){
   if(!AC)return;updExtBus();updSpeechBoost();const R=soundRig();const t=AC.currentTime,v=G.v,closed=G.door.state==='closed',tun=inTunnel(G.s),via=Yat(G.s)>1.5;motorGain.gain.setTargetAtTime(0,t,0.1);rumbleGain.gain.setTargetAtTime(0,t,0.2);
   const k=Math.min(1,v/25);
@@ -3755,35 +3755,58 @@ function updOTAudio(){if(!AC)return;camera.getWorldPosition(camW);camera.getWorl
     if(S.pan)S.pan.pan.setTargetAtTime(clamp(tv.dot(camR)/(tv.length()+1),-0.9,0.9),t,0.3);}
   if(IS_ONLINE && window.ONLINE_PLAYERS){
     for(const pid in ONLINE_PLAYERS){
-      const p = ONLINE_PLAYERS[pid];
-      if(!p.tr || !p.tr.cars || !p.tr.grp || !p.tr.grp.visible){
-        if(p.snd) p.snd.g.gain.setTargetAtTime(0, t, 0.8);
-        continue;
-      }
-      if(!p.snd) initRemotePlayerSound(p);
-      if(!p.snd) continue;
-      const S = p.snd;
-      const sp = Math.min(1.8, Math.max(0, p.v || 0) / 16);
-      let d = 1e9;
-      for(const c of p.tr.cars){
-        const dd = c.position.distanceTo(camW);
-        if(dd < d) d = dd;
-      }
-      tv.subVectors(p.tr.cars[Math.min(2, p.tr.cars.length - 1)].position, camW);
-      const distG = otDistGain(d);
-      S.g.gain.setTargetAtTime(sp * 2.8 * distG, t, 0.35);
-      S.f.frequency.setTargetAtTime(320 + (p.v || 0) * 22, t, 0.3);
-      S.mg.gain.setTargetAtTime((p.v || 0) > 0.4 ? 0.38 : 0, t, 0.3);
-      S.mo.frequency.setTargetAtTime(75 + (p.v || 0) * 18, t, 0.3);
-      if(S.pan) S.pan.pan.setTargetAtTime(clamp(tv.dot(camR)/(tv.length()+1), -0.9, 0.9), t, 0.2);
-      if(d < 24 && Math.abs((p.v || 0) + (typeof G !== 'undefined' && G ? G.v : 0)) > 6){
-        if(!p.whooshPlayed){
-          p.whooshPlayed = true;
-          try{ playAt(p.tr.cars[0].position, dest => airHiss(0.35, 1.1)); }catch(e){}
+      try{
+        const p = ONLINE_PLAYERS[pid];
+        if(!p || !p.tr || !p.tr.cars || !p.tr.cars.length || !p.tr.grp || !p.tr.grp.visible){
+          if(p && p.snd && p.snd.g && p.snd.g.gain){
+            try{ p.snd.g.gain.setTargetAtTime(0, t, 0.8); }catch(e){}
+          }
+          continue;
         }
-      } else if(d > 45){
-        p.whooshPlayed = false;
-      }
+        if(!p.snd) initRemotePlayerSound(p);
+        if(!p.snd) continue;
+        const S = p.snd;
+        const pv = (typeof p.v === 'number' && isFinite(p.v)) ? Math.max(0, p.v) : 0;
+        const gv = (typeof G !== 'undefined' && G && typeof G.v === 'number' && isFinite(G.v)) ? Math.max(0, G.v) : 0;
+        const sp = Math.min(1.8, pv / 16);
+        let d = 1e9;
+        for(const c of p.tr.cars){
+          if(c && c.position){
+            const dd = c.position.distanceTo(camW);
+            if(isFinite(dd) && dd < d) d = dd;
+          }
+        }
+        if(!isFinite(d)) continue;
+        const midCar = p.tr.cars[Math.min(2, p.tr.cars.length - 1)];
+        if(midCar && midCar.position) tv.subVectors(midCar.position, camW);
+        const distG = otDistGain(d);
+        if(S.g && S.g.gain){
+          try{ S.g.gain.setTargetAtTime(clamp(sp * 2.8 * distG, 0, 4.0), t, 0.35); }catch(e){}
+        }
+        if(S.f && S.f.frequency){
+          try{ S.f.frequency.setTargetAtTime(clamp(320 + pv * 22, 100, 2000), t, 0.3); }catch(e){}
+        }
+        if(S.mg && S.mg.gain){
+          try{ S.mg.gain.setTargetAtTime(pv > 0.4 ? 0.38 : 0, t, 0.3); }catch(e){}
+        }
+        if(S.mo && S.mo.frequency){
+          try{ S.mo.frequency.setTargetAtTime(clamp(75 + pv * 18, 50, 800), t, 0.3); }catch(e){}
+        }
+        if(S.pan && S.pan.pan){
+          const pVal = clamp(tv.dot(camR) / (tv.length() + 1), -0.9, 0.9);
+          try{ S.pan.pan.setTargetAtTime(isFinite(pVal) ? pVal : 0, t, 0.2); }catch(e){}
+        }
+        if(d < 24 && Math.abs(pv + gv) > 6){
+          if(!p.whooshPlayed){
+            p.whooshPlayed = true;
+            if(p.tr.cars[0] && p.tr.cars[0].position){
+              try{ playAt(p.tr.cars[0].position, dest => airHiss(0.35, 1.1)); }catch(e){}
+            }
+          }
+        } else if(d > 45){
+          p.whooshPlayed = false;
+        }
+      }catch(e){}
     }
   }}
 /* ================= messages ================= */
@@ -5403,71 +5426,73 @@ function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,fals
   for(const ch of CHUNKS){if(!ch.built||!ch.g)continue;const sp=chunkSphere(ch);if(!sp){ch.g.visible=true;continue;}
     ch.g.visible=_frus.intersectsSphere(sp)&&(cp.distanceTo(sp.center)-sp.radius)<far;}
   const trs=[ownTrain];for(const a of OT)trs.push(a.tr);for(const t of cityTrains)trs.push(t);for(const t of depotTrains)trs.push(t);
-  if (IS_ONLINE) {
-    for (const pid in ONLINE_PLAYERS) {
-      if (ONLINE_PLAYERS[pid].tr && ONLINE_PLAYERS[pid].tr.cars) {
-        for (const car of ONLINE_PLAYERS[pid].tr.cars) car.visible = true;
-      }
-    }
-  }
+  if(IS_ONLINE && window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){if(ONLINE_PLAYERS[pid].tr)trs.push(ONLINE_PLAYERS[pid].tr);}}
   for(const tr of trs){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=car.position.distanceTo(cp)<far+14;}}
 function frameBody(now){
   updQuality(now-last);
   const dt=Math.min(0.05,(now-last)/1000);last=now;frameN++;
   try{update(dt,now);}catch(e){LOOPERR.n++;console.error('update error',e);if(now-LOOPERR.shown>20000){LOOPERR.shown=now;try{toast('一時的な不具合を自動で回復しました','warn');}catch(_){}}} /* 更新で失敗しても描画は続ける */
   if (IS_ONLINE && typeof scene !== 'undefined') {
-    const L = CFG.L;
-    const nowMsTime = Date.now();
-    for (const pid in ONLINE_PLAYERS) {
-      const p = ONLINE_PLAYERS[pid];
-      if (nowMsTime - p.lastSeen > 8000) {
-        removeRemotePlayer(pid);
-        continue;
-      }
-      const pLine = p.line || 'loop';
-      if (pLine !== (typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop')) {
-        if (p.tr && p.tr.grp) p.tr.grp.visible = false;
-        if (p.snd && p.snd.g) p.snd.g.gain.setTargetAtTime(0, (window.__AC && window.__AC.currentTime) || 0, 0.8);
-        continue;
-      }
-      if (p.s == null) {
-        if (p.tr && p.tr.grp) p.tr.grp.visible = false;
-        continue;
-      }
-      const k = (p.key && TK[p.key]) ? p.key : 'A';
-      if (!p.tr) {
-        const flip = TK[k].dir < 0;
-        const liv = SVCLOOK[k] ? SVCLOOK[k][0] : 0x14935f;
-        const svcLabel = SVCLOOK[k] ? SVCLOOK[k][1] : '環状線';
-        const tr = buildTrain('', flip, liv, true, greenCarsFor(k), carsFor(k));
-        setLook(tr, k);
-        const plate = makeNameplateSprite(p.name, svcLabel);
-        plate.position.set(0, 4.6, -CARHALF + 2.5);
-        tr.cars[0].add(plate);
-        tr.nameplate = plate;
-        addCrew(tr, false);
-        p.tr = tr;
-        p.smoothS = p.s != null ? p.s : 0;
-        placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+    try {
+      const L = (typeof CFG !== 'undefined' && CFG && CFG.L) ? CFG.L : 72000;
+      const nowMsTime = Date.now();
+      for (const pid in ONLINE_PLAYERS) {
+        try {
+          const p = ONLINE_PLAYERS[pid];
+          if (!p) continue;
+          if (nowMsTime - p.lastSeen > 8000) {
+            removeRemotePlayer(pid);
+            continue;
+          }
+          const pLine = p.line || 'loop';
+          if (pLine !== (typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop')) {
+            if (p.tr && p.tr.grp) p.tr.grp.visible = false;
+            if (p.snd && p.snd.g && p.snd.g.gain) {
+              try { p.snd.g.gain.setTargetAtTime(0, (window.__AC && window.__AC.currentTime) || 0, 0.8); } catch(e) {}
+            }
+            continue;
+          }
+          if (p.s == null || !isFinite(p.s)) {
+            if (p.tr && p.tr.grp) p.tr.grp.visible = false;
+            continue;
+          }
+          const k = (p.key && typeof TK !== 'undefined' && TK[p.key]) ? p.key : 'A';
+          if (!p.tr) {
+            const flip = TK[k].dir < 0;
+            const liv = SVCLOOK[k] ? SVCLOOK[k][0] : 0x14935f;
+            const svcLabel = SVCLOOK[k] ? SVCLOOK[k][1] : '環状線';
+            const tr = buildTrain('', flip, liv, true, greenCarsFor(k), carsFor(k));
+            setLook(tr, k);
+            const plate = makeNameplateSprite(p.name, svcLabel);
+            plate.position.set(0, 4.6, -CARHALF + 2.5);
+            tr.cars[0].add(plate);
+            tr.nameplate = plate;
+            addCrew(tr, false);
+            p.tr = tr;
+            p.smoothS = (typeof p.s === 'number' && isFinite(p.s)) ? p.s : 0;
+            placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
 
-        p.ai = {
-          name: 'P_' + (p.id || 'rem').slice(0, 6),
-          tr: tr,
-          key: k,
-          load: p.load || 180,
-          inside: [],
-          insideSet: new Set()
-        };
+            p.ai = {
+              name: 'P_' + (p.id || 'rem').slice(0, 6),
+              tr: tr,
+              key: k,
+              load: p.load || 180,
+              inside: [],
+              insideSet: new Set()
+            };
+          }
+          if (p.tr && p.tr.grp) p.tr.grp.visible = true;
+          if (!isFinite(p.smoothS)) p.smoothS = p.s;
+          let ds = sdiff(p.smoothS, p.s);
+          if (!isFinite(ds)) ds = 0;
+          p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 15), L);
+          placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+          if (p.door && p.tr) {
+            setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
+          }
+        } catch(e) {}
       }
-      p.tr.grp.visible = true;
-      for (const car of p.tr.cars) car.visible = true;
-      let ds = sdiff(p.smoothS, p.s);
-      p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 15), L);
-      placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
-      if (p.door) {
-        setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
-      }
-    }
+    } catch(e) {}
   }
   const ms=monStation(),side=ms?localSide(ms):0;
   const MQ=monQuads();
