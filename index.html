@@ -189,6 +189,25 @@ html,body{overscroll-behavior:none}
 #qualRow button.on{border-color:#ffd23f;background:#3a2f0e;color:#ffd23f}
 #qualRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
 
+/* Tutorial Styles */
+#tutRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+#tutRow .ql{font-weight:700;margin-right:4px}
+#tutRow button{flex:1;min-width:80px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+#tutRow button.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
+#tutRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
+
+.q-tut-btn{flex:1;height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.q-tut-btn.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
+
+#gameTutorialHUD{position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:35;width:min(92vw,620px);padding:10px 18px;border-radius:14px;border:1.5px solid #38bdf8;background:rgba(12,20,36,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#f1f5f9;box-shadow:0 6px 24px rgba(0,0,0,0.5);pointer-events:none;transition:opacity 0.2s,transform 0.2s}
+#gameTutorialHUD.hide{display:none!important}
+.tut-hud-step{font-size:14.5px;font-weight:800;color:#38bdf8;display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.tut-hud-desc{font-size:13px;line-height:1.45;color:#e2e8f0;font-weight:600}
+.tut-hud-sub{font-size:11.5px;color:#94a3b8;margin-top:2px}
+
+.menu-tut-tip{background:rgba(14,116,144,0.18);border:1px solid #0284c7;border-radius:10px;padding:10px 14px;color:#38bdf8;font-size:13px;font-weight:700;margin-bottom:12px;text-align:left;display:flex;align-items:center;gap:8px}
+.menu-tut-tip.hide{display:none!important}
+
 /* Online Mode Styles */
 .online-menu-btn{background:linear-gradient(135deg,rgba(14,116,144,0.92),rgba(3,105,161,0.95));border:2px solid #38bdf8;padding:18px 24px;box-shadow:0 8px 28px rgba(14,165,233,0.4)}
 .online-menu-btn:hover,.online-menu-btn:focus-visible{transform:translateY(-3px) scale(1.02);border-color:#7dd3fc;box-shadow:0 12px 36px rgba(56,189,248,0.6)}
@@ -224,8 +243,22 @@ html,body{overscroll-behavior:none}
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
 <button id="btnTitleReturn" class="hide" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
 <button id="btnOnlineHud" class="online-hud-btn">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
+<div id="gameTutorialHUD" class="hide">
+  <div class="tut-hud-step" id="tutHudStep">💡 運転ガイド</div>
+  <div class="tut-hud-desc" id="tutHudDesc">説明が表示されます</div>
+  <div class="tut-hud-sub" id="tutHudSub">画面ドラッグで見回し / モニターをタップで拡大</div>
+</div>
 <div id="onlinePanel" class="hide"><div class="op-box"><div class="op-header"><span>🌐 オンライン乗務員一覧</span><button id="opClose">✕</button></div><div id="opList" class="op-list"></div></div></div>
-<div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・動作</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div><button class="qclose" id="qualClose">閉じる</button></div></div>
+<div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・設定</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div>
+<div style="margin:14px 0 6px;border-top:1px solid rgba(255,255,255,0.15);padding-top:12px;">
+  <div style="font-weight:700;font-size:14.5px;margin-bottom:8px;color:#38bdf8;">💡 チュートリアル説明表示</div>
+  <div style="display:flex;gap:8px;">
+    <button id="qTutOff" class="q-tut-btn">OFF</button>
+    <button id="qTutOn" class="q-tut-btn on">ON</button>
+  </div>
+  <div style="font-size:12px;color:#94a3b8;margin-top:6px;">画面上に操作手順や次に行うことの案内を表示します</div>
+</div>
+<button class="qclose" id="qualClose">閉じる</button></div></div>
 <div id="home">
   <div id="homeBg"></div>
   <div id="homeBgOverlay"></div>
@@ -315,6 +348,7 @@ html,body{overscroll-behavior:none}
         <h2>乗務路線の選択</h2>
       </div>
       <div class="sub">乗務する路線を選択してください</div>
+      <div class="menu-tut-tip">💡【チュートリアル】まずは全85駅・三複線の大動脈「本線 汐見環状線」がおすすめです！</div>
 
       <div class="duty-cat-grid">
         <button id="btnSelectLoop" class="duty-cat-card cat-loop">
@@ -340,6 +374,7 @@ html,body{overscroll-behavior:none}
         <h2>汐見環状線 種別選択</h2>
       </div>
       <div class="sub">乗務する種別を選択してください</div>
+      <div class="menu-tut-tip">💡【チュートリアル】初めての乗務は全駅停車の「各停」または主要駅停車の「快速」が遊びやすくておすすめです！</div>
       <canvas id="homeMap" width="720" height="360"></canvas>
       <div style="font-size:12px;opacity:.7;margin:-8px 0 12px">路線図は指でずらして見られます（2本指で拡大・ダブルタップで元に戻す）</div>
       <div class="cards" id="cardsLoop"></div>
@@ -352,6 +387,7 @@ html,body{overscroll-behavior:none}
         <h2>支線・種別選択</h2>
       </div>
       <div class="sub">乗務する支線と種別を選択してください</div>
+      <div class="menu-tut-tip">💡【チュートリアル】白峰・紫雲・天宮の3支線はオンライン対応、港見支線はローカル単線のオフライン専用です。</div>
       <div class="cards" id="cardsBranch"></div>
     </div>
 
@@ -362,6 +398,7 @@ html,body{overscroll-behavior:none}
         <h2>設定・操作</h2>
       </div>
       <div id="qualRow"><span class="ql">画質・動作</span><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button><div class="qd" id="qualDesc"></div></div>
+      <div id="tutRow"><span class="ql">チュートリアル表示</span><button id="btnTutOff">OFF</button><button id="btnTutOn" class="on">ON</button><div class="qd" id="tutDesc">ONにすると、ゲーム中やメニュー画面に運転手順や操作説明が分かりやすく表示されます。</div></div>
       <div class="help" style="margin-top:20px;">
         <h3 style="color:#fff;margin:0 0 8px;font-size:16px;">運転操作ガイド</h3>
         駅に着いたら「戸開」→ 左右のモニターで乗り降りを確認 →「乗降促進」→「戸閉」→「ATO」で次の駅へ。<br>
@@ -478,6 +515,7 @@ html,body{overscroll-behavior:none}
   <div id="crewGrid"><button data-c="one"><b>ワンマン</b><small>運転士ひとりで、運転・ドア・乗降促進・放送をすべて扱います</small></button><button data-c="twoD"><b>ツーマン（運転士）</b><small>ドア・乗降促進・放送は車掌（自動）。車掌の合図（ブザー）が出るまで発車できません</small></button><button data-c="twoC"><b>ツーマン（車掌）</b><small>最後尾の乗務員室に立って乗務。駅でホームに出てドアと発車メロディ（駅ごとに違う曲）か乗降促進、戻って運転士へ合図</small></button></div>
   <button id="crewBack" class="backbtn">← 路線選択に戻る</button></div></div>
 <div id="stSel" class="hide"><div class="wrap"><div class="brand"><div class="led" id="stSelTitle">開始駅</div></div><div class="sub" id="stSelSub">開始する駅を選んでください</div>
+  <div class="menu-tut-tip" style="max-width:720px;margin:0 auto 12px;">💡【チュートリアル】他列車から1km以上離れている駅をタップして乗務を開始します！</div>
   <div id="stGrid"></div><button id="stBack" class="backbtn">← 路線選択に戻る</button></div></div>
 <div id="walkUI" class="hide"><div id="walkHint">左側スワイプで移動　右側スワイプで視点（WASDキーでも移動）</div><button id="holdBack"><span>長押しで<br>運転室へ</span></button><button id="meloBtn" class="hide">発車メロディ</button><div id="paxBtns" class="hide"><button id="paxView" class="hide" style="background:#34445e">視点：一人称（V）</button><button id="paxPhone" class="hide" style="background:#2c5aa0">📱 スマホ</button><button id="paxTab" class="hide" style="background:#7a3fa0">📲 タブレット</button><button id="paxResv" class="hide" style="background:#2e9f5b">予約した席へ</button><button id="paxAlight" class="hide" style="background:#c8322b">降車する</button><button id="paxSit" class="hide" style="background:#2e7d4f">座る</button><button id="paxUp" class="hide" style="background:#1d3f7a">2階へ</button><button id="paxDown" class="hide" style="background:#1d3f7a">1階へ</button><button id="paxUse" class="hide" style="background:#1f7a4a">使う</button><button id="paxBack2" class="hide" style="background:#555f70">ホームへ</button><button id="paxTask" class="hide" style="background:#c8322b">確認</button><button id="paxPlat" style="background:#1d3f7a">ホーム切替</button><button id="paxStation">駅を移動</button><button id="paxHide">表示を消す</button><button id="paxQuit">ホーム画面へ</button></div><div id="paxWhere"></div></div>
 <div id="paxSel" class="hide"><div class="wrap"><div class="brand"><div class="led">駅を移動</div></div><div class="sub">見学する駅を選んでください</div><div id="paxGrid"></div><button id="paxClose" class="backbtn">← もどる</button></div></div>
@@ -3979,11 +4017,31 @@ function updCondUI(){const ui=document.getElementById('condUI');if(!ui)return;ui
 /* 停止信号で止まっている（駅の停止位置より手前）か */
 function sigStopped(){if(G.atStation!==null||G.depCheck!==null||G.v>0.3)return false;const d=stopDist(G.nv);return !!(G.sig&&G.sig.asp==='R'&&G.sig.dist<90&&d>2.5);}
 function toggleAuto(){if(G.crew==='twoC'){toast('車掌乗務中は運転士が運転します','info');return;}if(BRANCH){toast('支線の電車に完全オートはありません','warn');return;}G.auto=!G.auto;G.autoPh='';G.autoT=0;toast(G.auto?'完全オート ON':'完全オート OFF',G.auto?'ok':'warn',G.auto?'完全オート、開始。':'完全オート、解除。');}
+function triggerNextStationAnnounce(manual){
+  if(G.phase!=='play')return;
+  const nst=stOf(G.nv);
+  const sideStr=localSide(nst)<0?'左側':'右側';
+  chime();
+  toast('📢 次駅放送：「次は、'+(nst?nst.name:'')+'、'+(nst?nst.name:'')+'です。お出口は'+sideStr+'です」','info');
+  const leftSt=G.leftSt||stOf(Math.max(0,G.nv-1));
+  const gk=guideKindFor(G.key,leftSt);
+  if(gk)scheduleGuide(gk,700);
+  else scheduleGuide('lo',700);
+}
+
 function panelAct(u,v){ // touch panel hit (u,v in 0..1)
   const x=u*512,y=(1-v)*284;
   const back=()=>{G.panel='main';if(G.panelZoomed){G.zoom=null;G.panelZoomed=false;}};
   if(G.panel==='ann'||G.panel==='promo'){if(y<52){if(x>380)back();return;}
     const i=(y<168?0:2)+(x<256?0:1);if(G.panel==='ann')broadcast(i);else promote(i);back();return;}
+
+  if(G.tabNextAnn && x < 2 * (512 / 3)){
+    triggerNextStationAnnounce(true);
+    G.tabNextAnn = false;
+    drawPanel();
+    return;
+  }
+
   const t=Math.floor(x/(512/3));
   if(t===0||t===1){G.panel=t===0?'promo':'ann';if(G.zoom!=='T'){G.zoom='T';G.panelZoomed=true;}}
   else if(y<142){horn();G.hornT=nowMs();}else{musicHorn();G.mhornT=nowMs();}
@@ -4096,6 +4154,17 @@ function physics(dt){
     if(G.atStation===null&&G.v>1){if(G.depTimer===undefined||G.depTimer===null)G.depTimer=0;G.depTimer+=dt;}
     else if(G.atStation!==null){G.depTimer=0;}
 
+    /* タブレット自動切り替え：発車後は「次駅放送」ボタン、駅手前600mで「乗降促進＆放送」に戻る */
+    if(G.v>2 && d>650 && !G.tabDepSwitched){
+      G.tabDepSwitched = true;
+      G.tabNextAnn = true;
+      if(typeof drawPanel==='function')drawPanel();
+    }
+    if(d<=600 && G.tabNextAnn){
+      G.tabNextAnn = false;
+      if(typeof drawPanel==='function')drawPanel();
+    }
+
     /* 発車30秒後の案内放送（次は、〇〇） */
     if(G.depTimer>=30&&G.depCheck===null&&!G.said['dep30_'+key]&&G.v>2){
       G.said['dep30_'+key]=true;
@@ -4116,6 +4185,10 @@ function physics(dt){
       }
     }
     if(d<-30&&G.nv<=lastStop())G.nv++;}
+  if(G.atStation!==null||(G.depCheck!==null&&G.v===0)){
+    if(G.tabNextAnn){G.tabNextAnn=false;if(typeof drawPanel==='function')drawPanel();}
+    G.tabDepSwitched=false;
+  }
 }
 function updFlow(dt){
   if(G.flowV<0)return;
@@ -4222,6 +4295,25 @@ function drawPanel(){const x=CANV.T.x,W=512,H=284;x.fillStyle='#07101e';x.fillRe
       :[['案内放送',G.atStation!==null||G.depCheck!==null?'〇〇方面行き':'この先の停車駅'],['遅れのお詫び',''],['しばらく停車',''],['まもなく発車','ドアが閉まります']];
     opts.forEach(([t,sub],i)=>{const bx=(i%2)*256+6,by=58+Math.floor(i/2)*113;x.fillStyle=pr?'#6b4f12':'#1c3d6e';x.fillRect(bx,by,244,105);x.fillStyle='#fff';x.font='700 28px '+FONT;x.fillText((i+1)+'. '+t,bx+122,by+(sub?42:52));
       if(sub){x.fillStyle='#d6dde8';x.font='500 17px '+FONT;x.fillText(sub,bx+122,by+76);}});}
+  else if(G.tabNextAnn){
+    const bw=2*(W/3)-10;
+    x.fillStyle='#1d4ed8';
+    x.fillRect(5,8,bw,H-16);
+    x.strokeStyle='#60a5fa';
+    x.lineWidth=4;
+    x.strokeRect(8,11,bw-6,H-22);
+    x.fillStyle='#fff';
+    x.font='700 42px '+FONT;
+    x.fillText('📢 次駅放送',5+bw/2,H/2-22);
+    const nst=stOf(G.nv);
+    x.fillStyle='#bfdbfe';
+    x.font='700 20px '+FONT;
+    x.fillText('次は '+(nst?nst.name:'')+'（タップで案内放送）',5+bw/2,H/2+28);
+
+    const bx=2*(W/3)+5,cw=W/3-10,hOn=nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
+    x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 36px '+FONT;x.fillText('警笛',bx+cw/2,71);
+    x.fillStyle=mOn?'#f2c230':'#6a3fa0';x.fillRect(bx,146,cw,130);x.fillStyle=mOn?'#111':'#fff';x.font='700 24px '+FONT;x.fillText('ミュージック',bx+cw/2,196);x.fillText('ホーン',bx+cw/2,228);
+  }
   else{const cw=W/3-10;
     [['乗降促進',G.promoOn?'#e0a21a':'#5a4410',G.promoOn?'再生中':'4種類'],['放送','#2e63a3','4種類']].forEach(([t,c,sub],i)=>{const bx=i*(W/3)+5;x.fillStyle=c;x.fillRect(bx,8,cw,H-16);
       x.fillStyle=(G.promoOn&&i===0)?'#111':'#fff';x.font='700 38px '+FONT;x.fillText(t,bx+cw/2,H/2-16);x.font='500 18px '+FONT;x.fillText(sub,bx+cw/2,H/2+30);});
@@ -4268,6 +4360,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   else if(G.crew==='twoD')setTimeout(()=>toast('ツーマン（運転士）：ドア・乗降促進・放送は車掌。ブザー（合図）が鳴ったら発車できます','info'),2500);
   const st=STATIONS[si];G.arrKey=null;
   G.s=st.s+TK[G.key].so;G.nv=G.list?Math.max(0,G.list.indexOf(si)):0;G.atStation=G.nv;G.depCheck=null;G.depAt=G.s;
+  G.tabNextAnn=false;G.tabDepSwitched=false;
   ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;setLook(ownTrain,G.key);if(G.list)drawOwnDest();
   updChunks(G.s,true);
   for(const p of active.slice())freePerson(p);for(const s2 of STATIONS){s2.sp={};s2.staff=null;for(const k in s2.wait)s2.wait[k].length=0;}
@@ -5156,7 +5249,107 @@ function update(dt,now){
     drawSideOverlay('L',ms,ms&&localSide(ms)*SIDEINV<0);drawSideOverlay('R',ms,ms&&localSide(ms)*SIDEINV>0);}}
   if(OWNOLD){updGauges(dt);if(G.lean&&G.v>0.05)leanBack();if(G.lean)updLeanUI();
     const mb=document.getElementById('meloBtn');if(mb){const on=nearMeloBox()&&(G.door.state==='open'||G.door.state==='opening');mb.classList.toggle('hide',!on);mb.textContent=G.promoOn?'再生中…':'発車メロディ';}}
-  updButtons(now);updAudio();audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
+function updateTutorialHUD() {
+  const hud = document.getElementById('gameTutorialHUD');
+  if (!hud) return;
+  if (!window.TUTORIAL_ENABLED || typeof G === 'undefined' || !G || G.phase !== 'play') {
+    hud.classList.add('hide');
+    return;
+  }
+  hud.classList.remove('hide');
+
+  const stepEl = document.getElementById('tutHudStep');
+  const descEl = document.getElementById('tutHudDesc');
+  const subEl = document.getElementById('tutHudSub');
+
+  if (PAX) {
+    if (stepEl) stepEl.innerHTML = '🚶 ホーム見学モード';
+    if (descEl) descEl.textContent = '左側スワイプまたはWASDで移動、右側スワイプで視点変更。開いている電車のドアへ歩いて入ると乗車できます。';
+    if (subEl) subEl.textContent = '階段から別のホームへ移動可能 / 電車に乗ったら「降車する」でホームへ戻れます';
+    return;
+  }
+
+  if (G.crew === 'twoC') {
+    if (stepEl) stepEl.innerHTML = '👮 車掌乗務中';
+    const D = G.door;
+    if (D.state === 'closed' && G.atStation !== null) {
+      if (descEl) descEl.textContent = '駅に到着しました。画面下の「ホームに出る」を押してホームへ出てください。';
+      if (subEl) subEl.textContent = 'ホームに出たら「戸開」を押してドアを開けます。';
+    } else if (D.state === 'open') {
+      if (descEl) descEl.textContent = '乗客の乗降を確認し、操作箱の前で「発車メロディ」または「乗降促進」を鳴らしてください。';
+      if (subEl) subEl.textContent = '「戸閉」でドアを閉め、最後尾の車内に戻ったら「合図」を押して運転士を発車させます。';
+    } else {
+      if (descEl) descEl.textContent = '車掌室で立って乗務中。電車が駅に到着するのを待ちます。';
+      if (subEl) subEl.textContent = '画面ドラッグで車内や後方展望を360度見回せます。';
+    }
+    return;
+  }
+
+  const D = G.door;
+  const vKmh = Math.round(G.v * 3.6);
+  const d = stopDist(G.nv);
+  const nst = stOf(G.nv);
+  const atStop = G.v === 0 && (G.atStation !== null || G.depCheck !== null || (d > -6.5 && d < 17.9));
+
+  if (G.manual) {
+    if (atStop && D.state === 'closed') {
+      if (stepEl) stepEl.innerHTML = '🚪 【手順 1】ドアを開ける';
+      if (descEl) descEl.textContent = '駅に停車しました。運転席左側の「戸開」ボタンを押してドアを開けてください。';
+      if (subEl) subEl.textContent = 'ホーム側のボタン（緑に点滅）を押します。';
+    } else if (D.state === 'open' && !pending() && !G.promoted[G.atStation]) {
+      if (stepEl) stepEl.innerHTML = '🎵 【手順 2】発車メロディ・乗降促進';
+      if (descEl) descEl.textContent = '乗り降りが終わりました。中央下のタブレットで「乗降促進」を押してください。';
+      if (subEl) subEl.textContent = 'メロディ放送が流れ、駆け込み乗車を防ぎます。';
+    } else if (D.state === 'open') {
+      if (stepEl) stepEl.innerHTML = '🔴 【手順 3】ドアを閉める';
+      if (descEl) descEl.textContent = '運転席左側の赤い「戸閉」ボタンを押してドアを閉めてください。';
+      if (subEl) subEl.textContent = '左右の車外モニターで人が挟まっていないか確認します。';
+    } else {
+      if (stepEl) stepEl.innerHTML = '🕹️ 【手動運転中】マスコン操作';
+      if (descEl) descEl.textContent = '画面右のマスコンで「▲ 加速(Q)」と「▼ ブレーキ(Z)」を操作して運転します。';
+      if (subEl) subEl.textContent = '次は ' + (nst ? nst.name : '') + ' 駅（あと ' + Math.round(d) + ' m）。停止位置±1m以内に停車させます。';
+    }
+    return;
+  }
+
+  if (atStop && D.state === 'closed') {
+    if (stepEl) stepEl.innerHTML = '🚪 【手順 1】ドアを開ける';
+    if (descEl) descEl.textContent = '駅に到着・停車しました。運転席左側の「戸開」ボタンを押してドアを開けてください。';
+    if (subEl) subEl.textContent = 'ホーム側ボタン（緑色に点滅）を押します。モニタータップで拡大可能。';
+  } else if (D.state === 'open' && pending()) {
+    if (stepEl) stepEl.innerHTML = '👥 【乗降中】お客さまの乗り降りを待つ';
+    if (descEl) descEl.textContent = '乗客が乗り降りしています。左右の車外モニターで乗り降りの様子を確認してください。';
+    if (subEl) subEl.textContent = '乗り降りが終わると案内表示が「乗降促進」に変わります。';
+  } else if (D.state === 'open' && (!G.promoted[G.atStation] || G.promoOn)) {
+    if (stepEl) stepEl.innerHTML = '🎵 【手順 2】乗降促進メロディを流す';
+    if (descEl) descEl.textContent = '乗り降りが終わりました。中央下のタブレットで「乗降促進」ボタンを押してください。';
+    if (subEl) subEl.textContent = 'メロディとともに「ドアが閉まります」の合図アナウンスが流れます。';
+  } else if (D.state === 'open') {
+    if (stepEl) stepEl.innerHTML = '🔴 【手順 3】ドアを閉める';
+    if (descEl) descEl.textContent = '運転席左側の赤い「戸閉」ボタンを押してドアを閉めてください。';
+    if (subEl) subEl.textContent = 'モニターで駆け込み客がいないか確認します。';
+  } else if (D.state === 'closed' && G.v === 0) {
+    if (stepEl) stepEl.innerHTML = '🟢 【手順 4】ATOで出発・加速！';
+    if (descEl) descEl.textContent = '運転席の緑色の「ATO」ボタンを押すと、自動で加速して次の駅へ出発します！';
+    if (subEl) subEl.textContent = '「完全オート」ボタンを押せば、以後の全操作（戸開閉・乗降促進・発車）も自動化できます。';
+  } else if (G.tabNextAnn) {
+    if (stepEl) stepEl.innerHTML = '📢 【走行中】次駅案内放送を流せます';
+    if (descEl) descEl.textContent = '現在時速 ' + vKmh + ' km/h で走行中。中央下のタブレット「次駅放送」を押すと「次は ' + (nst ? nst.name : '') + '」案内を流せます。';
+    if (subEl) subEl.textContent = '※ 次駅放送を押すか、駅の手前600mに近づくと自動で通常の乗降促進・放送ボタンに戻ります。';
+  } else if (d <= 600) {
+    if (stepEl) stepEl.innerHTML = '🏁 【まもなく到着】次は ' + (nst ? nst.name : '') + ' 駅';
+    if (descEl) descEl.textContent = '駅まであと約 ' + Math.round(d) + ' m。ATOが自動で停止位置に合わせてブレーキをかけます。';
+    if (subEl) subEl.textContent = '完全に停止したら「戸開」を押してドアを開けてください。';
+  } else {
+    if (stepEl) stepEl.innerHTML = '🚅 【順調に走行中】次は ' + (nst ? nst.name : '') + ' 駅';
+    if (descEl) descEl.textContent = '速度 ' + vKmh + ' km/h で巡航中。画面をドラッグすると360度自由に運転席や外の景色を見回せます。';
+    if (subEl) subEl.textContent = '警笛やミュージックホーンはタブレット右側からいつでも鳴らせます。';
+  }
+}
+
+  updButtons(now);
+  updateTutorialHUD();
+  updAudio();audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
 }
 /* 自動画質：フレームが遅いときは描画解像度を少しずつ下げ、速くなったら戻す（ゲームの中身は変わらない） */
 const QUAL={max:Math.min(window.devicePixelRatio||1,1.1),min:0.5,pr:0,ema:16,t:0,lock:0,pend:null};QUAL.pr=QUAL.max;
@@ -6033,6 +6226,40 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     for(const ev of ['pointerdown','touchstart'])sh.addEventListener(ev,e=>e.stopPropagation(),{passive:true});
     upd();}
   
+  let TUTORIAL_ENABLED = localStorage.getItem('shiomi_tutorial') === '1'; // 設定でオンにすると有効
+  window.TUTORIAL_ENABLED = TUTORIAL_ENABLED;
+  function setTutorialEnabled(on) {
+    TUTORIAL_ENABLED = on;
+    window.TUTORIAL_ENABLED = on;
+    try { localStorage.setItem('shiomi_tutorial', on ? '1' : '0'); } catch(e) {}
+    updTut();
+    if (typeof updateTutorialHUD === 'function') updateTutorialHUD();
+  }
+  function updTut() {
+    const btnOff = document.getElementById('btnTutOff');
+    const btnOn = document.getElementById('btnTutOn');
+    if (btnOff) btnOff.classList.toggle('on', !TUTORIAL_ENABLED);
+    if (btnOn) btnOn.classList.toggle('on', TUTORIAL_ENABLED);
+
+    const qOff = document.getElementById('qTutOff');
+    const qOn = document.getElementById('qTutOn');
+    if (qOff) qOff.classList.toggle('on', !TUTORIAL_ENABLED);
+    if (qOn) qOn.classList.toggle('on', TUTORIAL_ENABLED);
+
+    const tips = document.querySelectorAll('.menu-tut-tip');
+    tips.forEach(t => t.classList.toggle('hide', !TUTORIAL_ENABLED));
+    if (typeof updateTutorialHUD === 'function') updateTutorialHUD();
+  }
+  const btnTutOff = document.getElementById('btnTutOff');
+  if (btnTutOff) btnTutOff.addEventListener('click', () => setTutorialEnabled(false));
+  const btnTutOn = document.getElementById('btnTutOn');
+  if (btnTutOn) btnTutOn.addEventListener('click', () => setTutorialEnabled(true));
+  const qTutOff = document.getElementById('qTutOff');
+  if (qTutOff) qTutOff.addEventListener('click', () => setTutorialEnabled(false));
+  const qTutOn = document.getElementById('qTutOn');
+  if (qTutOn) qTutOn.addEventListener('click', () => setTutorialEnabled(true));
+  updTut();
+
   const btr = document.getElementById('btnTitleReturn');
   if (btr) btr.addEventListener('click', () => {
     if (confirm('乗務を終了してタイトル画面に戻りますか？')) {
