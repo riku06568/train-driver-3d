@@ -177,6 +177,7 @@ html,body{overscroll-behavior:none}
 #crewRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}#crewRow .ql{font-weight:700;margin-right:4px}#crewRow button{flex:1;min-width:90px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:14px;cursor:pointer}#crewRow button.on{border-color:#ffd23f;background:#3a2f0e;color:#ffd23f}#crewRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
 #qualFab{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 12px;border-radius:19px;border:1px solid var(--edge);background:rgba(12,20,34,.88);color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
 #btnTitleReturn{position:fixed;top:calc(54px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(255,255,255,0.25);background:rgba(12,20,34,0.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.4);transition:background 0.15s,transform 0.15s}
+#btnTitleReturn.hide{display:none!important}
 #btnTitleReturn:hover{background:rgba(28,44,72,0.95);border-color:#5a95f5;transform:scale(1.02)}
 #qualSheet{position:fixed;inset:0;z-index:41;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}#qualSheet.hide{display:none}
 #qualSheet .qbox{width:min(440px,92vw);background:#121a2a;border:1px solid var(--edge);border-radius:16px;padding:16px;color:#eef2f8}#qualSheet .qt{font-weight:800;font-size:18px;margin-bottom:10px}
@@ -221,7 +222,7 @@ html,body{overscroll-behavior:none}
 </head>
 <body>
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
-<button id="btnTitleReturn" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
+<button id="btnTitleReturn" class="hide" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
 <button id="btnOnlineHud" class="online-hud-btn">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
 <div id="onlinePanel" class="hide"><div class="op-box"><div class="op-header"><span>🌐 オンライン乗務員一覧</span><button id="opClose">✕</button></div><div id="opList" class="op-list"></div></div></div>
 <div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・動作</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div><button class="qclose" id="qualClose">閉じる</button></div></div>
@@ -767,15 +768,15 @@ function updateDriverCardUI() {
   if (timeEl) timeEl.textContent = formatDriverTime(CURRENT_DRIVER.totalTime);
   if (rankEl) rankEl.textContent = getDriverRank(CURRENT_DRIVER.totalDist);
   if (statusEl) {
-    statusEl.textContent = CURRENT_DRIVER.passHash ? '🔒 登録済み' : '📴 ゲスト';
-    statusEl.style.background = CURRENT_DRIVER.passHash ? '#059669' : '#0369a1';
+    statusEl.textContent = CURRENT_DRIVER.passHash ? '🔒 記録保護中' : '🌐 常時オンライン';
+    statusEl.style.background = CURRENT_DRIVER.passHash ? '#059669' : '#0284c7';
   }
 
   if (mName) mName.textContent = CURRENT_DRIVER.name || '運転士';
   if (mDist) mDist.textContent = formatDriverDist(CURRENT_DRIVER.totalDist);
   if (mTime) mTime.textContent = formatDriverTime(CURRENT_DRIVER.totalTime);
   if (mBadge) {
-    mBadge.textContent = CURRENT_DRIVER.passHash ? '🔒 登録済み運転士' : '📴 ゲスト運転士';
+    mBadge.textContent = CURRENT_DRIVER.passHash ? '🔒 パスワード保護済み' : '🌐 常時オンライン運転士';
     mBadge.style.color = CURRENT_DRIVER.passHash ? '#34d399' : '#38bdf8';
   }
 }
@@ -860,6 +861,7 @@ function initOnlineClient() {
   }
   try {
     ONLINE_CLIENT = mqtt.connect(brokerUrl, opts);
+    window.ONLINE_CLIENT = ONLINE_CLIENT;
     
     ONLINE_CLIENT.on('connect', () => {
       ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#', { qos: 0 });
@@ -1023,9 +1025,6 @@ function removeRemotePlayer(id) {
   const pName = p.name;
   if (typeof stopRemotePlayerSound === 'function') stopRemotePlayerSound(p);
   if (p.ai && p.ai.inside) {
-    for (const pers of p.ai.inside.slice()) {
-      try { releaseOne(p.ai, pers); } catch(e) {}
-    }
     p.ai.inside.length = 0;
   }
   if (p.tr) {
@@ -1035,21 +1034,9 @@ function removeRemotePlayer(id) {
         p.tr.nameplate.material.dispose();
       } catch(e) {}
     }
-    if (p.tr.grp) {
+    if (p.tr.grp && p.tr.grp.parent) {
       try {
-        p.tr.grp.traverse(o => {
-          if (o.geometry && !SHARED.has(o.geometry)) o.geometry.dispose();
-          if (o.material) {
-            const ms = Array.isArray(o.material) ? o.material : [o.material];
-            for (const m of ms) {
-              if (m && typeof globalMats === 'function' && !globalMats().has(m)) {
-                if (m.map && !SHARED.has(m.map)) m.map.dispose();
-                m.dispose();
-              }
-            }
-          }
-        });
-        if (p.tr.grp.parent) p.tr.grp.parent.remove(p.tr.grp);
+        p.tr.grp.parent.remove(p.tr.grp);
       } catch(e) {}
     }
     p.tr = null;
@@ -1200,7 +1187,8 @@ function publishPresence() {
   if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
   const curG = (typeof G !== 'undefined' ? G : (window.G || (window.__T ? window.__T.G : null)));
   const isDriving = curG && curG.phase === 'play';
-  const curLine = typeof CFG !== 'undefined' && CFG && CFG.id ? CFG.id : 'loop';
+  const curCfg = typeof CFG !== 'undefined' ? CFG : (window.CFG || (window.__T ? window.__T.CFG : null));
+  const curLine = curCfg && curCfg.id ? curCfg.id : 'loop';
   if (isDriving && curLine === 'branch4') return; // 港見支線は短距離のためオンライン配信を行わない
   const stFn = typeof stOf === 'function' ? stOf : (window.stOf || (window.__T ? window.__T.stOf : null));
   const stObj = (isDriving && stFn) ? (curG.atStation !== null ? stFn(curG.atStation) : (curG.nv != null ? stFn(curG.nv) : null)) : null;
@@ -1323,9 +1311,11 @@ function sendPlayNotification(lineId, svcKey, startI, stName) {
    boot: builds the chosen line (loop or branch) and starts the game
    ===================================================================== */
 function boot(LINE_ID,SVC,START_I){
-IS_ONLINE = (LINE_ID !== 'branch4' && SVC && !SVC.startsWith('pax'));
+IS_ONLINE = (LINE_ID !== 'branch4'); // 港見支線以外は全種別・全駅必ずオンライン！
+window.IS_ONLINE = IS_ONLINE;
 initOnlineClient();
-const CFG=lineConfig(LINE_ID);const ST0=layoutStations(CFG);const L=CFG.L,BRANCH=!!CFG.branch,MINI=!!CFG.mini;
+const CFG=lineConfig(LINE_ID);
+window.CFG = CFG;const L=CFG.L,BRANCH=!!CFG.branch,MINI=!!CFG.mini;
 const {px,pz,th}=genPath(L,CFG.R||0);
 function P(s){s=mod(s,L);const i=Math.floor(s),f=s-i;return [px[i]+(px[i+1]-px[i])*f,pz[i]+(pz[i+1]-pz[i])*f,th[i]+(th[i+1]-th[i])*f];}
 function sdiff(a,b){return mod(b-a+L/2,L)-L/2;}
@@ -4076,8 +4066,8 @@ function hideAsk(){G.askOpen=false;askTimeout=null;document.getElementById('ask'
 function askTwin(st,atStart){askStation(st,atStart);}
 function askStation(st,atStart){ // 待ち合わせ（休憩）は廃止。車庫のみ
   const depot=!BRANCH&&st.i===0&&!atStart;if(!depot)return;
-  const btns=[['車庫に入る（ホーム画面へ）',()=>location.reload(),true],[atStart?'しないで発車準備':'そのまま運転を続ける',null,false]];
-  openAsk(st.name+'に着きました','車庫に入りますか？ 何もしなければ15秒後にそのまま運転を続けます。',btns,15);}
+  const btns=[['そのまま運転を続ける',null,true],['乗務を終了（タイトルへ）',()=>location.href=location.pathname,false]];
+  openAsk(st.name+'に着きました','汐見車庫に入りますか？ 何もしなければ15秒後にそのまま運転を続けます。',btns,15);}
 
 /* ================= simulation ================= */
 function physics(dt){
@@ -4445,7 +4435,7 @@ function paxStairCheck(){if(!W.st||!PX.plats.length||RIDE)return;const st=W.st,p
   openAsk('階段（'+st.name+'）',PX.plats.length>1?'どのホームへ行きますか？':'別の駅へ移動できます',btns,0);}
 document.getElementById('paxStation').addEventListener('click',()=>openPaxSel());
 document.getElementById('paxPlat').addEventListener('click',()=>openPlatSel());
-document.getElementById('paxQuit').addEventListener('click',()=>location.reload());
+document.getElementById('paxQuit').addEventListener('click',()=>location.href=location.pathname);
 document.getElementById('paxClose').addEventListener('click',()=>{document.getElementById('paxSel').classList.add('hide');PX.inStair=false;});
 /* ================= riding a train in passenger mode ================= */
 function nearTrainDoor(){if(!PAX||RIDE||!W.st||!PX.plats.length)return null;const plat=PX.plats[PX.pi];
@@ -5022,7 +5012,7 @@ function updAsk(dt){if(G.askOpen&&askTimer>0){askTimer-=dt;if(askTimer<=0){const
   if(G.askOpen&&G.v>0.5)hideAsk();
   if(!G.list||G.asked||G.atStation===null||G.atStation<lastStop()){askT=0;return;}
   if(G.door.state==='open'&&!pending())askT+=dt;if(askT>1.5){G.asked=true;const st=STATIONS[G.list[0]];
-    openAsk(stOf(G.atStation).name+'（終点）に着きました',st.name+' 方面へ折り返すか、ホーム画面に戻るかを選んでください。',[['ホーム画面に戻る',()=>location.reload(),true],['折り返して運転を続ける',()=>toast('扉を閉めてATOを押すと折り返します','info'),false]],0);}}
+    openAsk(stOf(G.atStation).name+'（終点）に着きました',st.name+' 方面へ折り返すか、ホーム画面に戻るかを選んでください。',[['折り返して運転を続ける',()=>toast('扉を閉めてATOを押すと折り返します','info'),true],['タイトル画面に戻る',()=>location.href=location.pathname,false]],0);}}
 /* LED departure boards */
 const LEDTK_VIS=Math.round(32*1.94/(0.535*30/176)); // テロップの見える幅（px）
 function LEDTEX_SHARED(t){return t===ledIdle||LEDLIVE.some(k=>k.tex===t||k.tk.tex===t);}
@@ -5239,11 +5229,6 @@ function frameBody(now){
           inside: [],
           insideSet: new Set()
         };
-        try {
-          populateCars(p.ai, Array.from({length: tr.cars.length}, (_, i) => i));
-        } catch(e) {
-          console.warn('remote train populate error:', e);
-        }
       }
       p.tr.grp.visible = true;
       for (const car of p.tr.cars) car.visible = true;
@@ -5442,8 +5427,10 @@ if (IS_ONLINE) {
   startOnlinePublishLoop();
   const hudBtn = document.getElementById('btnOnlineHud');
   if (hudBtn) hudBtn.classList.remove('hide');
-  updateOnlineHud();
+  updateOnlineHud(true);
 }
+const btr = document.getElementById('btnTitleReturn');
+if (btr) btr.classList.remove('hide');
 window.__T={enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks};
 }
 /* ================= home screen (before the world is built) ================= */
@@ -5636,9 +5623,12 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (btnNavDuty) btnNavDuty.onclick = () => {
     for (const pid in ONLINE_PLAYERS) {
       if (pid !== ONLINE_CLIENT_ID && ONLINE_PLAYERS[pid].name === MY_PLAYER_NAME) {
-        toast('⚠️ 「' + MY_PLAYER_NAME + '」は現在他の運転士が使用中のため、別の名前に変更してください。', 'warn');
-        showOnlineModal();
-        return;
+        MY_PLAYER_NAME = (MY_PLAYER_NAME.replace(/#\d+$/, '') || '運転士') + '#' + Math.floor(1000 + Math.random() * 9000);
+        CURRENT_DRIVER.name = MY_PLAYER_NAME;
+        saveCurrentDriverLocally();
+        updateDriverCardUI();
+        toast('運転士名を「' + MY_PLAYER_NAME + '」に自動調整しました', 'info');
+        break;
       }
     }
     showHomeView('viewDutySelect');
@@ -5895,7 +5885,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const isBranch = Boolean(S.branch || S.line);
     const isMinatomi = S.line === 'branch4';
     if (S.kind === 'pax') {
-      b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>ホームを歩いて見学。階段から別のホームへ、電車にも乗れます。</p><div class="meta"><span>全' + n + '駅</span><span>歩いて見学</span>' + (isMinatomi ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン</span>' : '') + '</div>';
+      b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>ホームを歩いて見学。階段から別のホームへ、電車にも乗れます。</p><div class="meta"><span>全' + n + '駅</span><span>歩いて見学</span>' + (isMinatomi ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン</span>' : '<span style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.12);">🌐 常時オンライン</span>') + '</div>';
       b.addEventListener('click', () => { currentDutyView = isBranch ? 'viewBranch' : 'viewLoop'; pickStation(id); });
       if (isBranch && contBranch) contBranch.appendChild(b);
       else if (!isBranch && contLoop) contLoop.appendChild(b);
@@ -5903,7 +5893,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     }
     const modeBadge = isMinatomi 
       ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン専用</span>'
-      : '<span style="border-color:#38bdf8;color:#38bdf8;">🌐 オンライン対応</span>';
+      : '<span style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.12);">🌐 常時オンライン</span>';
     b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と40駅に停車。外側から2番目の線路。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
     b.addEventListener('click', () => { currentDutyView = isBranch ? 'viewBranch' : 'viewLoop'; pickStation(id); });
     if (isBranch && contBranch) contBranch.appendChild(b);
@@ -5977,13 +5967,13 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   function pickStationGo(id){
     const S=SERVICES[id];
     const isMinatomi = (S.line === 'branch4');
-    const isOnlineSvc = !isMinatomi && S.kind !== 'pax' && S.kind !== 'staff';
+    const isOnlineSvc = !isMinatomi; // 港見支線以外は全種別・全駅必ずオンライン！
     curOnlineStList = null;
     curOnlineService = S;
     document.getElementById('home').classList.add('hide');
     document.getElementById('stSel').classList.remove('hide');
-    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(S.kind==='ltd'?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (isOnlineSvc ? ' [🌐 オンライン]' : ' [📴 オフライン]');
-    document.getElementById('stSelSub').textContent=isOnlineSvc ? '【オンライン乗務】他列車から1km以上離れた駅を選択してください' : (isMinatomi ? '【オフライン運転】港見支線は短距離（16km・4駅）のためオフライン専用です。開始駅を選択してください' : S.kind==='staff'?'勤務する駅を選んでください':S.kind==='pax'?'見学する駅を選んでください':(S.branch?'片道':'一周')+' 約'+fmtDur(timeOf(S))+'　開始する駅を選んでください');
+    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(S.kind==='ltd'?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (isOnlineSvc ? ' [🌐 リアルタイム常時オンライン]' : ' [📴 オフライン専用]');
+    document.getElementById('stSelSub').textContent=isOnlineSvc ? '【リアルタイム常時オンライン】他列車から1km以上離れた駅を選択してください' : '【オフライン専用】港見支線は短距離ローカル線（16km・4駅）のためオフライン運行です。開始駅を選択してください';
     const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2;
     const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
     curOnlineStList = list;
