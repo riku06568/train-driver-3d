@@ -738,13 +738,17 @@ function recordDrivingProgress(stepDistKm, dtSec) {
   CURRENT_DRIVER.totalTime = (CURRENT_DRIVER.totalTime || 0) + dtSec;
   
   const now = Date.now();
-  if (now - lastProgressSaveTime > 4000) {
+  if (now - lastProgressSaveTime > 25000) {
     lastProgressSaveTime = now;
     saveCurrentDriverLocally();
-    syncDriverToMQTT();
-    updateDriverCardUI();
   }
 }
+window.addEventListener('beforeunload', () => {
+  try {
+    saveCurrentDriverLocally();
+    syncDriverToMQTT();
+  } catch(e) {}
+});
 
 function updateDriverCardUI() {
   const nameEl = document.getElementById('cardDriverName');
@@ -1010,9 +1014,7 @@ function handleRemotePlayerUpdate(data) {
     p.stName = data.stName;
     p.lastSeen = now;
   }
-  updateOnlineHud();
-  if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
-  if (typeof drawHomeMap === 'function') drawHomeMap();
+  updateOnlineHud(false);
 }
 
 function removeRemotePlayer(id) {
@@ -1026,85 +1028,120 @@ function removeRemotePlayer(id) {
     }
     p.ai.inside.length = 0;
   }
-  if (p.tr && p.tr.grp && p.tr.grp.parent) {
-    p.tr.grp.parent.remove(p.tr.grp);
+  if (p.tr) {
+    if (p.tr.nameplate && p.tr.nameplate.material) {
+      try {
+        if (p.tr.nameplate.material.map) p.tr.nameplate.material.map.dispose();
+        p.tr.nameplate.material.dispose();
+      } catch(e) {}
+    }
+    if (p.tr.grp) {
+      try {
+        p.tr.grp.traverse(o => {
+          if (o.geometry && !SHARED.has(o.geometry)) o.geometry.dispose();
+          if (o.material) {
+            const ms = Array.isArray(o.material) ? o.material : [o.material];
+            for (const m of ms) {
+              if (m && typeof globalMats === 'function' && !globalMats().has(m)) {
+                if (m.map && !SHARED.has(m.map)) m.map.dispose();
+                m.dispose();
+              }
+            }
+          }
+        });
+        if (p.tr.grp.parent) p.tr.grp.parent.remove(p.tr.grp);
+      } catch(e) {}
+    }
     p.tr = null;
   }
   delete ONLINE_PLAYERS[id];
   try {
     toast('👤 ' + pName + ' さんが乗務を終了しました', 'info');
   } catch(e) {}
-  updateOnlineHud();
-  if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
-  if (typeof drawHomeMap === 'function') drawHomeMap();
+  updateOnlineHud(true);
 }
 
-function updateOnlineHud() {
+let lastHudUpdateTime = 0;
+function updateOnlineHud(force) {
+  const now = Date.now();
+  if (!force && now - lastHudUpdateTime < 1200) return;
+  lastHudUpdateTime = now;
+
   const badge = document.getElementById('onlineCountBadge');
   const titleCount = document.getElementById('titleOnlineCount');
   const hudBtn = document.getElementById('btnOnlineHud');
   const count = 1 + Object.keys(ONLINE_PLAYERS).length;
-  if (badge) badge.textContent = count;
-  if (titleCount) titleCount.textContent = count;
+  if (badge && badge.textContent !== String(count)) badge.textContent = count;
+  if (titleCount && titleCount.textContent !== String(count)) titleCount.textContent = count;
   if (hudBtn) hudBtn.classList.toggle('hide', !IS_ONLINE);
-  if (typeof drawHomeMap === 'function') drawHomeMap();
 
-  const opList = document.getElementById('opList');
-  if (!opList) return;
-  let html = '';
-  if (IS_ONLINE && typeof G !== 'undefined' && G && G.phase === 'play') {
-    const stObj = G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null);
-    const myLoc = G.atStation !== null ? (stObj ? stObj.name + ' 停車中' : '停車中') : (stObj ? stObj.name + 'へ走行中' : '走行中');
-    const mySpd = Math.round(G.v * 3.6);
-    const myLine = typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop';
-    const myLineName = myLine === 'branch' ? '白峰支線' : myLine === 'branch2' ? '紫雲地下線' : myLine === 'branch3' ? '天宮高架線' : '汐見環状線';
-    const svcName = SERVICES[G.route] ? SERVICES[G.route].name : myLineName;
-    html += `
-      <div class="op-item is-me">
-        <div class="op-item-top">
-          <span class="op-item-name">👤 ${MY_PLAYER_NAME} <span style="font-size:11px;color:#38bdf8;font-weight:700;">(あなた)</span></span>
-          <span class="op-item-svc" style="color:#38bdf8;">${svcName}</span>
-        </div>
-        <div class="op-item-info">
-          <span>📍 ${myLoc}</span>
-          <span>⚡ ${mySpd} km/h</span>
-        </div>
-      </div>
-    `;
+  const vl = document.getElementById('viewLoop');
+  if (vl && !vl.classList.contains('hide') && typeof drawHomeMap === 'function') {
+    drawHomeMap();
   }
-  for (const pid in ONLINE_PLAYERS) {
-    const p = ONLINE_PLAYERS[pid];
-    const spd = Math.round((p.v || 0) * 3.6);
-    const loc = p.stName ? (p.v > 0.5 ? p.stName + '付近 走行中' : p.stName + ' 停車中') : '走行中';
-    const pLine = p.line || 'loop';
-    const pLineName = pLine === 'branch' ? '白峰支線' : pLine === 'branch2' ? '紫雲地下線' : pLine === 'branch3' ? '天宮高架線' : pLine === 'branch4' ? '港見支線' : '汐見環状線';
-    const curLine = typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop';
-    const svcLook = p.service && SERVICES[p.service] ? SERVICES[p.service].short : pLineName;
-    let distText = '';
-    if (typeof G !== 'undefined' && G && G.s != null && p.s != null && pLine === curLine) {
-      const curL = typeof CFG !== 'undefined' && CFG ? CFG.L : 72000;
-      const d = Math.round(Math.abs(mod(p.s - G.s + curL / 2, curL) - curL / 2));
-      distText = ` (距離: ${d < 1000 ? d + 'm' : (d / 1000).toFixed(1) + 'km'})`;
-    } else if (pLine !== curLine) {
-      distText = ` (${pLineName})`;
+
+  const onlinePanel = document.getElementById('onlinePanel');
+  if (onlinePanel && !onlinePanel.classList.contains('hide')) {
+    const opList = document.getElementById('opList');
+    if (opList) {
+      let html = '';
+      if (IS_ONLINE && typeof G !== 'undefined' && G && G.phase === 'play') {
+        const stObj = G.atStation !== null ? stOf(G.atStation) : (G.nv != null ? stOf(G.nv) : null);
+        const myLoc = G.atStation !== null ? (stObj ? stObj.name + ' 停車中' : '停車中') : (stObj ? stObj.name + 'へ走行中' : '走行中');
+        const mySpd = Math.round(G.v * 3.6);
+        const myLine = typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop';
+        const myLineName = myLine === 'branch' ? '白峰支線' : myLine === 'branch2' ? '紫雲地下線' : myLine === 'branch3' ? '天宮高架線' : '汐見環状線';
+        const svcName = SERVICES[G.route] ? SERVICES[G.route].name : myLineName;
+        html += `
+          <div class="op-item is-me">
+            <div class="op-item-top">
+              <span class="op-item-name">👤 ${MY_PLAYER_NAME} <span style="font-size:11px;color:#38bdf8;font-weight:700;">(あなた)</span></span>
+              <span class="op-item-svc" style="color:#38bdf8;">${svcName}</span>
+            </div>
+            <div class="op-item-info">
+              <span>📍 ${myLoc}</span>
+              <span>⚡ ${mySpd} km/h</span>
+            </div>
+          </div>
+        `;
+      }
+      for (const pid in ONLINE_PLAYERS) {
+        const p = ONLINE_PLAYERS[pid];
+        const spd = Math.round((p.v || 0) * 3.6);
+        const loc = p.stName ? (p.v > 0.5 ? p.stName + '付近 走行中' : p.stName + ' 停車中') : '走行中';
+        const pLine = p.line || 'loop';
+        const pLineName = pLine === 'branch' ? '白峰支線' : pLine === 'branch2' ? '紫雲地下線' : pLine === 'branch3' ? '天宮高架線' : pLine === 'branch4' ? '港見支線' : '汐見環状線';
+        const curLine = typeof CFG !== 'undefined' && CFG ? CFG.id : 'loop';
+        const svcLook = p.service && SERVICES[p.service] ? SERVICES[p.service].short : pLineName;
+        let distText = '';
+        if (typeof G !== 'undefined' && G && G.s != null && p.s != null && pLine === curLine) {
+          const curL = typeof CFG !== 'undefined' && CFG ? CFG.L : 72000;
+          const d = Math.round(Math.abs(mod(p.s - G.s + curL / 2, curL) - curL / 2));
+          distText = ` (距離: ${d < 1000 ? d + 'm' : (d / 1000).toFixed(1) + 'km'})`;
+        } else if (pLine !== curLine) {
+          distText = ` (${pLineName})`;
+        }
+        html += `
+          <div class="op-item">
+            <div class="op-item-top">
+              <span class="op-item-name">👤 ${p.name}</span>
+              <span class="op-item-svc">${svcLook}</span>
+            </div>
+            <div class="op-item-info">
+              <span>📍 ${loc}${distText}</span>
+              <span>⚡ ${spd} km/h</span>
+            </div>
+          </div>
+        `;
+      }
+      if (!html) {
+        html = '<div style="text-align:center;color:#64748b;padding:24px;">現在接続中の他の乗務員はいません</div>';
+      }
+      opList.innerHTML = html;
     }
-    html += `
-      <div class="op-item">
-        <div class="op-item-top">
-          <span class="op-item-name">👤 ${p.name}</span>
-          <span class="op-item-svc">${svcLook}</span>
-        </div>
-        <div class="op-item-info">
-          <span>📍 ${loc}${distText}</span>
-          <span>⚡ ${spd} km/h</span>
-        </div>
-      </div>
-    `;
   }
-  if (!html) {
-    html = '<div style="text-align:center;color:#64748b;padding:24px;">現在接続中の他の乗務員はいません</div>';
-  }
-  opList.innerHTML = html;
+
+  if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
 }
 
 function checkOnlineStationBlocked(st, serviceKey, lineId) {
@@ -1127,6 +1164,8 @@ function checkOnlineStationBlocked(st, serviceKey, lineId) {
 
 let curOnlineStList = null, curOnlineService = null;
 function updateStationSelectButtons() {
+  const stSel = document.getElementById('stSel');
+  if (!stSel || stSel.classList.contains('hide')) return;
   if (!curOnlineStList || !curOnlineService) return;
   const isMinatomi = (curOnlineService.line === 'branch4');
   const isOnlineSvc = !isMinatomi && curOnlineService.kind !== 'pax' && curOnlineService.kind !== 'staff';
@@ -1138,17 +1177,21 @@ function updateStationSelectButtons() {
     if (!bt) return;
     const blocked = isOnlineSvc ? checkOnlineStationBlocked(st, curOnlineService.key, curOnlineService.line || 'loop') : null;
     if (blocked) {
-      bt.disabled = true;
-      bt.style.opacity = '0.45';
-      bt.style.cursor = 'not-allowed';
-      bt.style.borderColor = '#ef4444';
-      bt.innerHTML = st.name + '<small style="color:#ef4444;font-weight:700;">⛔ 接近中: ' + blocked.name + ' (' + blocked.dist + 'm)</small>';
+      if (!bt.disabled) {
+        bt.disabled = true;
+        bt.style.opacity = '0.45';
+        bt.style.cursor = 'not-allowed';
+        bt.style.borderColor = '#ef4444';
+        bt.innerHTML = st.name + '<small style="color:#ef4444;font-weight:700;">⛔ 接近中: ' + blocked.name + ' (' + blocked.dist + 'm)</small>';
+      }
     } else {
-      bt.disabled = false;
-      bt.style.opacity = '1';
-      bt.style.cursor = 'pointer';
-      bt.style.borderColor = '';
-      bt.innerHTML = st.name + '<small>' + ({M:'主要駅',X:'快特停車',R:'快速停車',L:'',J:'乗換駅',Q:'2面4線',T:'通過線',I:'島式'}[st.cls] || '') + '</small>';
+      if (bt.disabled) {
+        bt.disabled = false;
+        bt.style.opacity = '1';
+        bt.style.cursor = 'pointer';
+        bt.style.borderColor = '';
+        bt.innerHTML = st.name + '<small>' + ({M:'主要駅',X:'快特停車',R:'快速停車',L:'',J:'乗換駅',Q:'2面4線',T:'通過線',I:'島式'}[st.cls] || '') + '</small>';
+      }
     }
   });
 }
@@ -1430,15 +1473,20 @@ function occAt(s){s=mod(s,L);const r=[];if(!hasTrack(s)&&!BRANCH)return r;const 
   for(const cp of CITYPAIRS){const cs=STATIONS[cp.ci];const uu=sdiff(cs.s-62,s);if(uu<-600||uu>600)continue;const a=cp.t1(s),b=cp.t2(s);r.push([Math.min(a,b)-3.2,Math.max(a,b)+3.2]);}
   return r;}
 /* ================= renderer / scene ================= */
-const renderer=new THREE.WebGLRenderer({antialias:true,logarithmicDepthBuffer:true,powerPreference:'high-performance'});
+const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const renderer = new THREE.WebGLRenderer({
+  antialias: !isMobileDevice,
+  logarithmicDepthBuffer: false,
+  powerPreference: isMobileDevice ? 'default' : 'high-performance'
+});
 let CTXLOST=false;
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();CTXLOST=true;},false);
 renderer.domElement.addEventListener('webglcontextrestored',()=>{CTXLOST=false; /* 画像を全部読み直す */
   try{scene.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){for(const k of ['map','emissiveMap','alphaMap'])if(m[k])m[k].needsUpdate=true;m.needsUpdate=true;}});}catch(_){}},false);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.1));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, isMobileDevice ? 1.0 : 1.1));
 renderer.setSize(innerWidth,innerHeight);renderer.domElement.id='gl';document.body.prepend(renderer.domElement);
 const scene=new THREE.Scene();scene.fog=new THREE.Fog(0xc4d6e6,200,1400);scene.background=new THREE.Color(0xc4d6e6);
-const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.04,3600);camera.rotation.order='YXZ';camera.layers.enable(2);
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.12,3200);camera.rotation.order='YXZ';camera.layers.enable(2);
 const hemi=new THREE.HemisphereLight(0xb9c8e8,0x4a3a30,0.8);scene.add(hemi);
 const dirL=new THREE.DirectionalLight(0xffffff,0.8);scene.add(dirL);
 const DS=THREE.DoubleSide;
@@ -3645,10 +3693,13 @@ function initRemotePlayerSound(p) {
 function stopRemotePlayerSound(p) {
   if (p && p.snd) {
     try {
-      p.snd.g.gain.setValueAtTime(0, AC.currentTime);
-      if (p.snd.src) p.snd.src.stop();
-      if (p.snd.mo) p.snd.mo.stop();
-      p.snd.g.disconnect();
+      if (p.snd.g && p.snd.g.gain) p.snd.g.gain.setValueAtTime(0, (AC && AC.currentTime) || 0);
+      if (p.snd.src) { p.snd.src.stop(); p.snd.src.disconnect(); }
+      if (p.snd.mo) { p.snd.mo.stop(); p.snd.mo.disconnect(); }
+      if (p.snd.f) p.snd.f.disconnect();
+      if (p.snd.pan) p.snd.pan.disconnect();
+      if (p.snd.mg) p.snd.mg.disconnect();
+      if (p.snd.g) p.snd.g.disconnect();
     } catch(e) {}
     p.snd = null;
   }
@@ -5370,14 +5421,16 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
   if(OWNOLD)setTimeout(()=>toast('支線の古い電車：乗降確認・戸開閉・発車メロディは、運転室の左右の壁「窓から顔を出す」から（メロディはホームのボタンでも）','info'),4200);}
 /* 画質・動作の設定を反映（ゲーム中に変えても、その場で切り替わる） */
 window.__applyQ=()=>{const dpr=window.devicePixelRatio||1;
-  QUAL.max=QMODE==='heavy'?Math.min(dpr,2):Math.min(dpr,1.1);QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;QUAL.ema=16;renderer.setPixelRatio(QUAL.pr);
-  for(const k in RT)QMODE==='heavy'?RT[k].setSize(640,480):RT[k].setSize(320,240);
+  const isMob = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  QUAL.max=QMODE==='heavy'?(isMob?Math.min(dpr,1.2):Math.min(dpr,2)):(isMob?Math.min(dpr,1.0):Math.min(dpr,1.1));QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;QUAL.ema=16;renderer.setPixelRatio(QUAL.pr);
+  for(const k in RT)QMODE==='heavy'?(isMob?RT[k].setSize(384,288):RT[k].setSize(640,480)):RT[k].setSize(320,240);
   if(QMODE==='normal'){for(const ch of CHUNKS)if(ch&&ch.g)ch.g.visible=true;const trs=[ownTrain];for(const a of OT)trs.push(a.tr);for(const t of cityTrains)trs.push(t);for(const t of depotTrains)trs.push(t);for(const tr of trs)if(tr&&tr.cars)for(const c of tr.cars)c.visible=true;}
   if(TRAF.ready){for(const k of ['body','cab','whl','hl','tl','pb','ph','pl'])if(TRAF[k]){scene.remove(TRAF[k]);TRAF[k].geometry.dispose();TRAF[k].dispose&&TRAF[k].dispose();}TRAF.ready=false;}
   try{toast('画質：'+({light:'軽い',normal:'普通',heavy:'重い'})[QMODE],'info');}catch(e){}};
 (function applyQMode(){const dpr=window.devicePixelRatio||1;
-  QUAL.max=QMODE==='heavy'?Math.min(dpr,2):Math.min(dpr,1.1);QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;renderer.setPixelRatio(QUAL.pr);
-  if(QMODE==='heavy')for(const k in RT)OLDMON?RT[k].setSize(768,288):RT[k].setSize(640,480); // ホームカメラ映像を高精細に
+  const isMob = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  QUAL.max=QMODE==='heavy'?(isMob?Math.min(dpr,1.2):Math.min(dpr,2)):(isMob?Math.min(dpr,1.0):Math.min(dpr,1.1));QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;renderer.setPixelRatio(QUAL.pr);
+  if(QMODE==='heavy')for(const k in RT)OLDMON?RT[k].setSize(768,288):(isMob?RT[k].setSize(384,288):RT[k].setSize(640,480)); // ホームカメラ映像を高精細に
 })();
 requestAnimationFrame(frame);
 startRoute(SVC,START_I);
