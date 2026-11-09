@@ -237,12 +237,41 @@ html,body{overscroll-behavior:none}
       </div>
 
       <div class="main-menu-buttons">
-        <div class="online-status-bar" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:10px 16px;margin:8px 0 14px;display:flex;align-items:center;justify-content:space-between;color:#e0f2fe;font-size:14px;">
+        <div class="online-status-bar" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:10px 16px;margin:8px 0 10px;display:flex;align-items:center;justify-content:space-between;color:#e0f2fe;font-size:14px;">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;"></span>
             <span>オンライン接続中：<strong id="titleOnlineCount" style="color:#38bdf8;font-size:16px;">1</strong> 名乗務中</span>
           </div>
-          <button id="btnChangeName" style="background:#1e293b;border:1px solid #38bdf8;color:#38bdf8;padding:4px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:700;">名前変更</button>
+          <button id="btnChangeName" style="background:#1e293b;border:1px solid #38bdf8;color:#38bdf8;padding:4px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:700;">👤 運転士設定</button>
+        </div>
+
+        <!-- 運転士証（累計走行距離・乗務時間カード） -->
+        <div id="driverCard" style="background:linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,41,59,0.92) 100%);border:1px solid rgba(56,189,248,0.35);border-radius:14px;padding:12px 16px;margin:0 0 14px;box-shadow:0 4px 16px rgba(0,0,0,0.35);display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(56,189,248,0.2);padding-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">🆔</span>
+              <span style="font-weight:700;color:#38bdf8;font-size:13px;">運転士証</span>
+              <span id="driverStatusBadge" style="background:#0369a1;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">ゲスト</span>
+            </div>
+            <span id="driverRankBadge" style="color:#f59e0b;font-weight:700;font-size:12px;">🔰 見習い運転士</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;">
+            <div>
+              <span style="font-size:12px;color:#94a3b8;">乗務員名：</span>
+              <strong id="cardDriverName" style="font-size:18px;color:#fff;font-weight:800;letter-spacing:0.5px;">運転士</strong>
+            </div>
+            <button id="btnCardLogin" style="background:transparent;border:none;color:#38bdf8;font-size:12px;cursor:pointer;text-decoration:underline;font-weight:700;">名前・パスワード設定</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(11,19,34,0.6);padding:8px 12px;border-radius:10px;font-size:12px;">
+            <div>
+              <span style="color:#94a3b8;">🏅 累計走行距離:</span>
+              <div id="cardDriverDist" style="font-size:16px;font-weight:800;color:#38bdf8;margin-top:2px;">0.0 km</div>
+            </div>
+            <div>
+              <span style="color:#94a3b8;">⏱ 累計乗務時間:</span>
+              <div id="cardDriverTime" style="font-size:16px;font-weight:800;color:#22c55e;margin-top:2px;">0分</div>
+            </div>
+          </div>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -385,34 +414,54 @@ html,body{overscroll-behavior:none}
       </div>
     </div>
 
-    <!-- Online Name Input Modal -->
+    <!-- Driver Account / Name & Password Modal -->
     <div id="onlineModal" class="home-modal hide">
-      <div class="home-modal-box">
+      <div class="home-modal-box" style="max-width:440px;">
         <div class="home-modal-header">
-          <h3>🌐 オンライン乗務（汐見環状線）</h3>
+          <h3>👤 運転士アカウント（ログイン・登録）</h3>
           <button id="closeOnlineModal" class="modal-close">✕</button>
         </div>
         <div class="home-modal-body">
           <p style="font-size:13px; color:#94a3b8; margin:0 0 14px; line-height:1.5;">
-            汐見環状線（各停・快速・快特）の同一マップで、他プレイヤーとリアルタイムで一緒に走ります。
+            プレイヤー名とパスワードを設定すると、走行距離や乗務時間が保存され、次回も引き継げます。他の人と重複する名前や不適切な言葉は使えません。
           </p>
-          <div style="margin-bottom: 16px;">
+
+          <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.3); border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:12px; color:#94a3b8;">現在の運転士：</span>
+              <span id="modalCurrentBadge" style="font-size:11px; font-weight:700; color:#38bdf8;"></span>
+            </div>
+            <div style="font-size:18px; font-weight:800; color:#fff;" id="modalCurrentName">運転士</div>
+            <div style="display:flex; gap:16px; margin-top:8px; font-size:13px; color:#cbd5e1;">
+              <div>累計走行距離: <strong id="modalCurrentDist" style="color:#38bdf8;">0.0 km</strong></div>
+              <div>累計乗務時間: <strong id="modalCurrentTime" style="color:#22c55e;">0分</strong></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
             <label style="display:block; font-size:13px; font-weight:700; color:#e2e8f0; margin-bottom:6px;">
-              運転席に表示する名前（プレイヤー名）：
+              プレイヤー名（重複不可・1〜16文字）：
             </label>
-            <input type="text" id="onlineNameInput" maxlength="10" placeholder="例: 汐見ライナー"
-              style="width:100%; box-sizing:border-box; padding:12px 14px; background:#0c1424; border:1px solid #38bdf8; border-radius:10px; color:#fff; font-size:16px; font-weight:700; outline:none;">
+            <input type="text" id="onlineNameInput" maxlength="16" placeholder="例: 汐見ライナー"
+              style="width:100%; box-sizing:border-box; padding:10px 14px; background:#0c1424; border:1px solid #38bdf8; border-radius:10px; color:#fff; font-size:15px; font-weight:700; outline:none;">
           </div>
-          <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:12px; font-size:12px; color:#cbd5e1; line-height:1.6; margin-bottom:18px;">
-            <div style="color:#38bdf8; font-weight:700; margin-bottom:4px;">✨ オンライン仕様：</div>
-            <div>・環状線のみで各駅停車・快速・快速特急が同じ線路上を走行</div>
-            <div>・運転席・列車の上にプレイヤー名プレートが表示</div>
-            <div>・他プレイヤーの前後1km以内は接近防止のためスポーン不可</div>
-            <div>・AI列車・ホーム乗客は少なめの快適設定</div>
+
+          <div style="margin-bottom: 14px;">
+            <label style="display:block; font-size:13px; font-weight:700; color:#e2e8f0; margin-bottom:6px;">
+              パスワード（4〜32文字）：
+            </label>
+            <input type="password" id="driverPassInput" maxlength="32" placeholder="設定すると記録を保護・次回引き継ぎ"
+              style="width:100%; box-sizing:border-box; padding:10px 14px; background:#0c1424; border:1px solid #475569; border-radius:10px; color:#fff; font-size:15px; outline:none;">
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+              ※ 既存のアカウントは正しいパスワードでログインできます。新しい名前の場合はパスワードを設定すると新規登録されます。
+            </div>
           </div>
+
+          <div id="driverModalStatus" style="display:none; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:14px; line-height:1.4;"></div>
+
           <div style="display:flex; gap:10px;">
-            <button id="btnOnlineCancel" class="modal-btn" style="background:#1e293b; color:#94a3b8;">戻る</button>
-            <button id="btnOnlineProceed" class="modal-btn primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; border:1px solid #38bdf8;">乗務開始へ</button>
+            <button id="btnOnlineCancel" class="modal-btn" style="background:#1e293b; color:#94a3b8;">閉じる</button>
+            <button id="btnOnlineProceed" class="modal-btn primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; border:1px solid #38bdf8; font-weight:700;">ログイン / 登録</button>
           </div>
         </div>
       </div>
@@ -560,7 +609,173 @@ function fmtDur(sec){const m=Math.round(sec/60);return m>=60?Math.floor(m/60)+'�
    Online Multiplayer State & Logic (汐見環状線 オンライン)
    ===================================================================== */
 let IS_ONLINE = false;
-let MY_PLAYER_NAME = localStorage.getItem('shiomi_online_name') || '運転士';
+
+/* =====================================================================
+   Driver Account & Authentication System (運転士アカウント・記録管理)
+   ===================================================================== */
+const GLOBAL_ACCOUNTS = {}; // name -> { name, passHash, totalDist, totalTime, runs, ts }
+window.GLOBAL_ACCOUNTS = GLOBAL_ACCOUNTS;
+
+function getStoredDriverAccount() {
+  try {
+    const raw = localStorage.getItem('shiomi_driver_account');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  const guestNum = Math.floor(1000 + Math.random() * 9000);
+  const oldName = localStorage.getItem('shiomi_online_name');
+  const initialName = oldName && oldName !== '運転士' ? oldName : ('運転士#' + guestNum);
+  return {
+    name: initialName,
+    passHash: '',
+    totalDist: 0.0,
+    totalTime: 0,
+    runs: 0,
+    isGuest: true
+  };
+}
+
+let CURRENT_DRIVER = getStoredDriverAccount();
+let MY_PLAYER_NAME = CURRENT_DRIVER.name;
+window.CURRENT_DRIVER = CURRENT_DRIVER;
+
+function saveCurrentDriverLocally() {
+  try {
+    localStorage.setItem('shiomi_driver_account', JSON.stringify(CURRENT_DRIVER));
+    localStorage.setItem('shiomi_online_name', CURRENT_DRIVER.name);
+    let db = {};
+    try { db = JSON.parse(localStorage.getItem('shiomi_driver_db') || '{}'); } catch(e) {}
+    db[CURRENT_DRIVER.name] = {
+      name: CURRENT_DRIVER.name,
+      passHash: CURRENT_DRIVER.passHash,
+      totalDist: CURRENT_DRIVER.totalDist,
+      totalTime: CURRENT_DRIVER.totalTime,
+      runs: CURRENT_DRIVER.runs,
+      ts: Date.now()
+    };
+    localStorage.setItem('shiomi_driver_db', JSON.stringify(db));
+  } catch(e) {}
+}
+
+function getDriverRank(distKm) {
+  distKm = distKm || 0;
+  if (distKm >= 1000) return '🌟 伝説の指導運転士';
+  if (distKm >= 300) return '👑 環状線マスター';
+  if (distKm >= 100) return '🏅 ベテラン運転士';
+  if (distKm >= 50) return '⭐ 熟練運転士';
+  if (distKm >= 10) return '🚃 一人前運転士';
+  return '🔰 見習い運転士';
+}
+
+function formatDriverTime(sec) {
+  sec = Math.floor(sec || 0);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return h > 0 ? (h + '時間' + m + '分') : (m + '分');
+}
+
+function formatDriverDist(km) {
+  return (km || 0).toFixed(1) + ' km';
+}
+
+/* 性的なもの・不適切な単語の判定フィルター */
+function isSexualOrNSFW(rawName) {
+  if (!rawName) return false;
+  // 1. 全角を半角へ、小文字化
+  let s = rawName.normalize('NFKC').toLowerCase();
+  // 2. 記号・空白等を除去（文字間隔での回避対策）
+  s = s.replace(/[\s\-_.\*・~〜/\\#@!?,:;+=「」『』（）()[\]{}|]+/g, '');
+  // 3. カタカナをひらがなに変換
+  s = s.replace(/[\u30a1-\u30f6]/g, function(ch) {
+    return String.fromCharCode(ch.charCodeAt(0) - 0x60);
+  });
+
+  const patterns = [
+    /ちん[こぽ]|おまんこ|まんこ|マンコ|陰茎|陰部|勃起|射精|精液|ザーメン|精子|膣|きんたま|金玉|睾丸/,
+    /おなに[ー]?|手淫|せっくす|セックス|性交|乱交|潮吹[き]?|ぱいずり|パイズリ|ふぇら|フェラ|くんに|クンニ|あなる|アナル/,
+    /きょにゅう|巨乳|ばくにゅう|爆乳|ひんにゅう|貧乳|どうてい|童貞|しょじょ|処女/,
+    /れいぷ|レイプ|強姦|ちかん|痴漢|露出狂|いんらん|淫乱|へんたい|変態|えろ|エロ|えっち|エッチ/,
+    /そーぷ|ソープ|へるす|ヘルス|でりへる|デリヘル|ばいしゅん|売春|ふうぞく|風俗/,
+    /sex|porn|penis|vagina|cock|dick|pussy|boobs|tits|blowjob|anal|orgasm|semen|cum|rape|hentai|ecchi|xxx|nsfw|slut|whore/
+  ];
+
+  for (let i = 0; i < patterns.length; i++) {
+    if (patterns[i].test(s)) return true;
+  }
+  return false;
+}
+
+async function hashPassword(pwd) {
+  if (!pwd) return '';
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(pwd + '_shiomi_train_salt_2026'));
+  const arr = Array.from(new Uint8Array(buf));
+  return arr.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+function syncDriverToMQTT() {
+  if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected || !CURRENT_DRIVER.passHash) return;
+  const payload = {
+    name: CURRENT_DRIVER.name,
+    passHash: CURRENT_DRIVER.passHash,
+    totalDist: CURRENT_DRIVER.totalDist,
+    totalTime: CURRENT_DRIVER.totalTime,
+    runs: CURRENT_DRIVER.runs,
+    ts: Date.now()
+  };
+  try {
+    ONLINE_CLIENT.publish('shiomi3d/v1/accounts/' + encodeURIComponent(CURRENT_DRIVER.name), JSON.stringify(payload), { qos: 1, retain: true });
+  } catch(e) {}
+}
+
+let sessionDriveDistKm = 0;
+let sessionDriveTimeSec = 0;
+let lastProgressSaveTime = 0;
+
+function recordDrivingProgress(stepDistKm, dtSec) {
+  sessionDriveDistKm += stepDistKm;
+  sessionDriveTimeSec += dtSec;
+  CURRENT_DRIVER.totalDist = (CURRENT_DRIVER.totalDist || 0) + stepDistKm;
+  CURRENT_DRIVER.totalTime = (CURRENT_DRIVER.totalTime || 0) + dtSec;
+  
+  const now = Date.now();
+  if (now - lastProgressSaveTime > 4000) {
+    lastProgressSaveTime = now;
+    saveCurrentDriverLocally();
+    syncDriverToMQTT();
+    updateDriverCardUI();
+  }
+}
+
+function updateDriverCardUI() {
+  const nameEl = document.getElementById('cardDriverName');
+  const distEl = document.getElementById('cardDriverDist');
+  const timeEl = document.getElementById('cardDriverTime');
+  const rankEl = document.getElementById('driverRankBadge');
+  const statusEl = document.getElementById('driverStatusBadge');
+  
+  const mName = document.getElementById('modalCurrentName');
+  const mDist = document.getElementById('modalCurrentDist');
+  const mTime = document.getElementById('modalCurrentTime');
+  const mBadge = document.getElementById('modalCurrentBadge');
+
+  if (nameEl) nameEl.textContent = CURRENT_DRIVER.name || '運転士';
+  if (distEl) distEl.textContent = formatDriverDist(CURRENT_DRIVER.totalDist);
+  if (timeEl) timeEl.textContent = formatDriverTime(CURRENT_DRIVER.totalTime);
+  if (rankEl) rankEl.textContent = getDriverRank(CURRENT_DRIVER.totalDist);
+  if (statusEl) {
+    statusEl.textContent = CURRENT_DRIVER.passHash ? '🔒 登録済み' : '📴 ゲスト';
+    statusEl.style.background = CURRENT_DRIVER.passHash ? '#059669' : '#0369a1';
+  }
+
+  if (mName) mName.textContent = CURRENT_DRIVER.name || '運転士';
+  if (mDist) mDist.textContent = formatDriverDist(CURRENT_DRIVER.totalDist);
+  if (mTime) mTime.textContent = formatDriverTime(CURRENT_DRIVER.totalTime);
+  if (mBadge) {
+    mBadge.textContent = CURRENT_DRIVER.passHash ? '🔒 登録済み運転士' : '📴 ゲスト運転士';
+    mBadge.style.color = CURRENT_DRIVER.passHash ? '#34d399' : '#38bdf8';
+  }
+}
+
 let ONLINE_CLIENT = null;
 const ONLINE_CLIENT_ID = 'sh_' + Math.random().toString(16).slice(2, 10);
 const ONLINE_PLAYERS = {}; // pid -> player state
@@ -644,9 +859,12 @@ function initOnlineClient() {
     
     ONLINE_CLIENT.on('connect', () => {
       ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#', { qos: 0 });
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/accounts/#', { qos: 1 });
       startOnlinePublishLoop();
       publishPresence();
+      syncDriverToMQTT();
       updateOnlineHud();
+      updateDriverCardUI();
       if (typeof drawHomeMap === 'function') drawHomeMap();
     });
 
@@ -667,6 +885,23 @@ function initOnlineClient() {
     
     ONLINE_CLIENT.on('message', (topic, message) => {
       try {
+        if (topic.startsWith('shiomi3d/v1/accounts/')) {
+          const acc = JSON.parse(message.toString());
+          if (acc && acc.name) {
+            GLOBAL_ACCOUNTS[acc.name] = acc;
+            if (CURRENT_DRIVER && CURRENT_DRIVER.name === acc.name && CURRENT_DRIVER.passHash === acc.passHash) {
+              if ((acc.totalDist || 0) > (CURRENT_DRIVER.totalDist || 0)) {
+                CURRENT_DRIVER.totalDist = acc.totalDist;
+              }
+              if ((acc.totalTime || 0) > (CURRENT_DRIVER.totalTime || 0)) {
+                CURRENT_DRIVER.totalTime = acc.totalTime;
+              }
+              saveCurrentDriverLocally();
+              updateDriverCardUI();
+            }
+          }
+          return;
+        }
         const data = JSON.parse(message.toString());
         if (!data || data.id === ONLINE_CLIENT_ID) return;
         if (data.offline) {
@@ -1015,6 +1250,10 @@ function sendPlayNotification(lineId, svcKey, startI, stName) {
       _captcha: 'false',
       _template: 'table',
       'プレイヤー名': playerName,
+      '運転士ランク': getDriverRank(CURRENT_DRIVER.totalDist),
+      '累計走行距離': formatDriverDist(CURRENT_DRIVER.totalDist),
+      '累計乗務時間': formatDriverTime(CURRENT_DRIVER.totalTime),
+      'アカウント保護': CURRENT_DRIVER.passHash ? '🔒 パスワード設定済み' : '📴 ゲスト',
       '路線名': lineTitle,
       '運行種別': svcName,
       '開始駅': stationStr + '駅',
@@ -1060,6 +1299,9 @@ const STATIONS=ST0.map(st=>Object.assign(st,{type:st.cls==='L'||st.cls==='T'?'si
 const NST=STATIONS.length;
 const startStObj = STATIONS[START_I] || ST0[START_I] || null;
 const startStName = startStObj ? startStObj.name : '';
+CURRENT_DRIVER.runs = (CURRENT_DRIVER.runs || 0) + 1;
+saveCurrentDriverLocally();
+syncDriverToMQTT();
 sendPlayNotification(LINE_ID, SVC, START_I, startStName);
 const BIG=STATIONS.filter(st=>st.lines).map(st=>st.i);
 const RAPID=['快速線','かいそくせん',0xe8731e];
@@ -4824,7 +5066,13 @@ function update(dt,now){
   try{sweepPeople(dt);}catch(e){console.error(e);}
   envT+=dt;if(envT>3){envT=0;updEnv();}
   clkT+=dt;if(clkT>0.5){clkT=0;drawClock();}
-  if(G.phase==='play'&&!PAX){physics(dt);updDoor(dt);updFlow(dt);updAsk(dt);updAuto(dt);}else setDoors(ownTrain,G.door.side,G.door.frac);
+  if(G.phase==='play'&&!PAX){
+    physics(dt);updDoor(dt);updFlow(dt);updAsk(dt);updAuto(dt);
+    if (typeof recordDrivingProgress === 'function') {
+      const curSpd = Math.abs(G.v || 0);
+      recordDrivingProgress((curSpd / 3600) * dt, dt);
+    }
+  }else setDoors(ownTrain,G.door.side,G.door.frac);
   updChunks(G.walkOn?W.s:G.s);spT+=dt;if(spT>0.5){spT=0;updSpawns();}
   updPeople(dt);updPools(dt);updFT(dt);updShin(dt);updCity(dt);updCrossings(dt);updHomeDoors(dt);
   sigT+=dt;if(sigT>0.2){sigT=0;updSignals();const dv=Math.abs(sdiff(G.s,(DEPOT.a+DEPOT.b)/2))<2200;depotTrains.forEach(t=>t.grp.visible=dv);}
@@ -5322,6 +5570,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       const el = document.getElementById(v);
       if (el) el.classList.toggle('hide', v !== id);
     }
+    if (id === 'viewMain') {
+      updateDriverCardUI();
+    }
     if (id === 'viewLoop') {
       setTimeout(() => { if (typeof drawHomeMap === 'function') drawHomeMap(); }, 50);
     }
@@ -5330,37 +5581,156 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
   const btnNavDuty = document.getElementById('btnNavDuty');
   if (btnNavDuty) btnNavDuty.onclick = () => {
+    for (const pid in ONLINE_PLAYERS) {
+      if (pid !== ONLINE_CLIENT_ID && ONLINE_PLAYERS[pid].name === MY_PLAYER_NAME) {
+        toast('⚠️ 「' + MY_PLAYER_NAME + '」は現在他の運転士が使用中のため、別の名前に変更してください。', 'warn');
+        showOnlineModal();
+        return;
+      }
+    }
     showHomeView('viewDutySelect');
   };
   const btnChangeName = document.getElementById('btnChangeName');
+  const btnCardLogin = document.getElementById('btnCardLogin');
   const btnNavOnline = document.getElementById('btnNavOnline');
   const onlineModal = document.getElementById('onlineModal');
   const onlineNameInput = document.getElementById('onlineNameInput');
+  const driverPassInput = document.getElementById('driverPassInput');
   const btnOnlineCancel = document.getElementById('btnOnlineCancel');
   const btnOnlineProceed = document.getElementById('btnOnlineProceed');
   const closeOnlineModal = document.getElementById('closeOnlineModal');
+  const driverModalStatus = document.getElementById('driverModalStatus');
 
-  if (onlineNameInput) onlineNameInput.value = MY_PLAYER_NAME;
-  const hideOnlineModal = () => { if (onlineModal) onlineModal.classList.add('hide'); };
+  const hideOnlineModal = () => {
+    if (onlineModal) onlineModal.classList.add('hide');
+    if (driverModalStatus) driverModalStatus.style.display = 'none';
+    if (driverPassInput) driverPassInput.value = '';
+  };
   const showOnlineModal = () => {
-    if (onlineNameInput) onlineNameInput.value = MY_PLAYER_NAME;
+    if (onlineNameInput) onlineNameInput.value = CURRENT_DRIVER.name || '';
+    if (driverPassInput) driverPassInput.value = '';
+    if (driverModalStatus) driverModalStatus.style.display = 'none';
+    updateDriverCardUI();
     if (onlineModal) onlineModal.classList.remove('hide');
   };
   if (btnNavOnline) btnNavOnline.onclick = showOnlineModal;
   if (btnChangeName) btnChangeName.onclick = showOnlineModal;
+  if (btnCardLogin) btnCardLogin.onclick = showOnlineModal;
   if (btnOnlineCancel) btnOnlineCancel.onclick = hideOnlineModal;
   if (closeOnlineModal) closeOnlineModal.onclick = hideOnlineModal;
 
   if (btnOnlineProceed) {
-    btnOnlineProceed.onclick = () => {
-      const val = onlineNameInput.value.trim();
-      MY_PLAYER_NAME = val || '運転士';
-      try { localStorage.setItem('shiomi_online_name', MY_PLAYER_NAME); } catch(e) {}
-      hideOnlineModal();
-      toast('プレイヤー名を「' + MY_PLAYER_NAME + '」に変更しました', 'ok');
-      updateOnlineHud();
+    btnOnlineProceed.onclick = async () => {
+      const name = (onlineNameInput.value || '').trim();
+      const pwd = (driverPassInput.value || '').trim();
+      const statusEl = document.getElementById('driverModalStatus');
+      
+      const showErr = (msg) => {
+        if (!statusEl) return;
+        statusEl.style.display = 'block';
+        statusEl.style.background = 'rgba(239, 68, 68, 0.15)';
+        statusEl.style.border = '1px solid #ef4444';
+        statusEl.style.color = '#fca5a5';
+        statusEl.textContent = msg;
+      };
+      const showOk = (msg) => {
+        if (!statusEl) return;
+        statusEl.style.display = 'block';
+        statusEl.style.background = 'rgba(34, 197, 94, 0.15)';
+        statusEl.style.border = '1px solid #22c55e';
+        statusEl.style.color = '#86efac';
+        statusEl.textContent = msg;
+      };
+
+      if (!name) {
+        showErr('プレイヤー名を入力してください。');
+        return;
+      }
+      if (name.length < 2) {
+        showErr('プレイヤー名は2文字以上で入力してください。');
+        return;
+      }
+      if (name.length > 16) {
+        showErr('プレイヤー名は16文字以内で入力してください。');
+        return;
+      }
+      if (isSexualOrNSFW(name)) {
+        showErr('⚠️ 不適切な言葉（性的な表現など）が含まれているため登録できません。別の名前を入力してください。');
+        return;
+      }
+
+      // オンライン上で現在他の人が使っているかチェック
+      for (const pid in ONLINE_PLAYERS) {
+        if (pid !== ONLINE_CLIENT_ID && ONLINE_PLAYERS[pid].name === name) {
+          showErr('⚠️ 「' + name + '」は現在他の運転士がオンライン乗務中です。別の名前を入力してください。');
+          return;
+        }
+      }
+
+      // アカウントDB（ローカル＆MQTT）をチェック
+      let localDb = {};
+      try { localDb = JSON.parse(localStorage.getItem('shiomi_driver_db') || '{}'); } catch(e) {}
+      const targetAcc = GLOBAL_ACCOUNTS[name] || localDb[name] || (CURRENT_DRIVER.name === name ? CURRENT_DRIVER : null);
+
+      const passHash = pwd ? await hashPassword(pwd) : '';
+
+      if (targetAcc && targetAcc.passHash) {
+        // 既存アカウントが存在する場合
+        if (!pwd) {
+          showErr('⚠️ 「' + name + '」はパスワード保護されています。パスワードを入力してログインしてください。');
+          return;
+        }
+        if (passHash !== targetAcc.passHash) {
+          showErr('❌ パスワードが一致しません。正しいパスワードを入力してください。');
+          return;
+        }
+        // ログイン成功！
+        CURRENT_DRIVER.name = name;
+        CURRENT_DRIVER.passHash = passHash;
+        CURRENT_DRIVER.totalDist = Math.max(CURRENT_DRIVER.totalDist || 0, targetAcc.totalDist || 0);
+        CURRENT_DRIVER.totalTime = Math.max(CURRENT_DRIVER.totalTime || 0, targetAcc.totalTime || 0);
+        CURRENT_DRIVER.runs = Math.max(CURRENT_DRIVER.runs || 0, targetAcc.runs || 0);
+        CURRENT_DRIVER.isGuest = false;
+        MY_PLAYER_NAME = name;
+        saveCurrentDriverLocally();
+        syncDriverToMQTT();
+        updateDriverCardUI();
+        showOk('✨ ログインしました！累計走行距離: ' + formatDriverDist(CURRENT_DRIVER.totalDist) + '、累計乗務時間: ' + formatDriverTime(CURRENT_DRIVER.totalTime));
+        setTimeout(() => {
+          hideOnlineModal();
+          toast('運転士「' + name + '」でログインしました', 'ok');
+          updateOnlineHud();
+        }, 1200);
+        return;
+      }
+
+      // 新規アカウント（または既存だがパスワード未設定）の場合
+      if (!pwd) {
+        showErr('⚠️ プレイヤー名を保護し、次回から走行距離などを引き継ぐために、パスワード（4文字以上）を設定してください。');
+        return;
+      }
+      if (pwd.length < 4) {
+        showErr('⚠️ パスワードは4文字以上で設定してください。');
+        return;
+      }
+
+      // 新規登録成功！
+      CURRENT_DRIVER.name = name;
+      CURRENT_DRIVER.passHash = passHash;
+      CURRENT_DRIVER.isGuest = false;
+      MY_PLAYER_NAME = name;
+      saveCurrentDriverLocally();
+      syncDriverToMQTT();
+      updateDriverCardUI();
+      showOk('🎉 運転士「' + name + '」を登録しました！次回からもこの名前とパスワードで記録が引き継がれます。');
+      setTimeout(() => {
+        hideOnlineModal();
+        toast('運転士「' + name + '」を登録しました', 'ok');
+        updateOnlineHud();
+      }, 1200);
     };
   }
+  updateDriverCardUI();
 
   const btnOnlineHud = document.getElementById('btnOnlineHud');
   const onlinePanel = document.getElementById('onlinePanel');
