@@ -1315,7 +1315,8 @@ IS_ONLINE = (LINE_ID !== 'branch4'); // 港見支線以外は全種別・全駅�
 window.IS_ONLINE = IS_ONLINE;
 initOnlineClient();
 const CFG=lineConfig(LINE_ID);
-window.CFG = CFG;const L=CFG.L,BRANCH=!!CFG.branch,MINI=!!CFG.mini;
+window.CFG = CFG;
+const ST0=layoutStations(CFG);const L=CFG.L,BRANCH=!!CFG.branch,MINI=!!CFG.mini;
 const {px,pz,th}=genPath(L,CFG.R||0);
 function P(s){s=mod(s,L);const i=Math.floor(s),f=s-i;return [px[i]+(px[i+1]-px[i])*f,pz[i]+(pz[i+1]-pz[i])*f,th[i]+(th[i+1]-th[i])*f];}
 function sdiff(a,b){return mod(b-a+L/2,L)-L/2;}
