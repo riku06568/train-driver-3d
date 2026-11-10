@@ -317,7 +317,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.4.0)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.5.0)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -331,7 +331,21 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">⚙️</span>
           <div class="m-info">
             <span class="m-title">設定・操作</span>
-            <span class="m-desc">画質設定・運転操作ガイド</span>
+            <span class="m-desc">キーボード操作・画質設定・自動放送</span>
+          </div>
+        </button>
+        <button id="btnNavFaq" class="menu-btn">
+          <span class="m-icon">❓</span>
+          <div class="m-info">
+            <span class="m-title">よくある質問 (FAQ)</span>
+            <span class="m-desc">ゲーム概要・動画投稿・バグ報告</span>
+          </div>
+        </button>
+        <button id="btnNavChangelog" class="menu-btn">
+          <span class="m-icon">📜</span>
+          <div class="m-info">
+            <span class="m-title">アプデ履歴</span>
+            <span class="m-desc">v1.5.0 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -411,11 +425,25 @@ html,body{overscroll-behavior:none}
       </div>
       <div id="qualRow"><span class="ql">画質・動作</span><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button><div class="qd" id="qualDesc"></div></div>
       <div id="tutRow"><span class="ql">チュートリアル表示</span><button id="btnTutOff">OFF</button><button id="btnTutOn" class="on">ON</button><div class="qd" id="tutDesc">ONにすると、ゲーム中やメニュー画面に運転手順や操作説明が分かりやすく表示されます。</div></div>
+      <div id="autoAnnRow" style="margin-top:12px;"><span class="ql">自動次駅放送</span><button id="btnAutoAnnOff">OFF</button><button id="btnAutoAnnOn" class="on">ON</button><div class="qd" id="autoAnnDesc">ONまたは完全オート時、発車後と駅手前600mで自動的に車内アナウンス（次は〜 / まもなく〜）を流します。</div></div>
       <div class="help" style="margin-top:20px;">
         <h3 style="color:#fff;margin:0 0 8px;font-size:16px;">運転操作ガイド</h3>
         駅に着いたら「戸開」→ 左右のモニターで乗り降りを確認 →「乗降促進」→「戸閉」→「ATO」で次の駅へ。<br>
         ドラッグで360度見回し、モニターはタップで拡大。中央下のタッチパネルで乗降促進・放送・警笛。「完全オート」で全部自動。<br>
         停車中は運転室の壁のボタンを長押しするとホームに出られます（ホーム見学）。
+      </div>
+      <div style="margin-top:16px;background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:14px 18px;text-align:left;">
+        <h4 style="color:#38bdf8;margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:6px;">⌨️ キーボード操作</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:13px;line-height:1.6;color:#e2e8f0;">
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">→ (右矢印)</b> : 右扉の開閉</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">← (左矢印)</b> : 左扉の開閉</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Enter</b> : ATO運転開始 / 停止</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Space</b> : 次駅放送 / まもなく放送</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">H キー</b> : 電笛 (警笛)</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">J キー</b> : ミュージックホーン</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Q / E</b> : 視点左右回転</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">V キー</b> : 視点を正面に戻す</div>
+        </div>
       </div>
     </div>
 
@@ -426,8 +454,89 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v49)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.5.0)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
+        <div class="credit-list">
+          <div class="cr-item"><strong>車内放送音声</strong><span>全路線・全駅事前録音音声（Nanami + Ava Neural TTS）</span></div>
+          <div class="cr-item"><strong>3D描画エンジン</strong><span>three.js (WebGL)</span></div>
+          <div class="cr-item"><strong>フォント</strong><span>Google Fonts（DotGothic16 / Zen Kaku Gothic New）</span></div>
+          <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線</span></div>
+        </div>
+        <p style="font-size:11.5px;opacity:0.6;margin-top:18px;">※ 本作に登場する駅名、路線名、団体名等はすべて架空のものであり、実在の人物・団体・鉄道会社とは一切関係ありません。</p>
+      </div>
+    </div>
+
+    <!-- View 7: FAQ (よくある質問) -->
+    <div id="viewFaq" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackFromFaq" class="backbtn">← タイトルに戻る</button>
+        <h2>❓ よくある質問 (FAQ)</h2>
+      </div>
+      <div class="sub">ゲームについてのよくある質問と回答です</div>
+      <div class="credits-box" style="text-align:left;line-height:1.7;">
+        <div style="margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:14px;">
+          <h3 style="color:#38bdf8;margin:0 0 6px;font-size:17px;">Q. なんのゲームですか？</h3>
+          <p style="margin:0;font-size:14.5px;color:#e2e8f0;font-weight:700;">架空の環状線を運転するゲームです</p>
+        </div>
+        <div style="margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:14px;">
+          <h3 style="color:#38bdf8;margin:0 0 6px;font-size:17px;">Q. 動画投稿サイトに投稿してもいいですか？</h3>
+          <p style="margin:0;font-size:14.5px;color:#e2e8f0;font-weight:700;">大歓迎です！</p>
+        </div>
+        <div style="margin-bottom:6px;">
+          <h3 style="color:#38bdf8;margin:0 0 6px;font-size:17px;">Q. バグを見つけたらどうすればいいですか？</h3>
+          <p style="margin:0;font-size:14.5px;color:#e2e8f0;font-weight:700;">スタート画面の下にあるご意見箱で報告してください</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 8: Changelog (アプデ履歴) -->
+    <div id="viewChangelog" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackFromChangelog" class="backbtn">← タイトルに戻る</button>
+        <h2>📜 アプデ履歴 (更新情報)</h2>
+      </div>
+      <div class="sub">汐見環状線 3Dトレインシミュレーターの最新アップデート情報</div>
+      <div class="credits-box" style="text-align:left;line-height:1.7;">
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.5.0 (2026.11.11)</h3>
+          </div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>乗客モードの表示修正</b>：乗客モードで駅にいる時に電車が表示されてしまう不具合を修正</li>
+            <li><b>他プレイヤー列車の完全同期</b>：他車の車内乗客、警笛・ミュージックホーン、乗降促進メロディ、ドア開閉・乗客の乗降をリアルタイムに完全反映</li>
+            <li><b>他車走行のスムーズ補間</b>：ネットワーク遅延による他車のカクつき・ジャンプを解消し滑らかに追従</li>
+            <li><b>乗客の車内乗車動作を改善</b>：ホームから車内に入った際に乗客が消えてしまう不自然な挙動を修正</li>
+            <li><b>乗客の長時間走行バランス修正</b>：しばらく走らせていると乗客が全くいなくなってしまう現象を修正</li>
+            <li><b>キーボード操作対応</b>：右矢印(右扉開閉)、左矢印(左扉開閉)、Enter(ATO)、Space(次駅放送)に対応</li>
+            <li><b>完全オート自動次駅放送</b>：完全オート運転時に次駅放送・まもなく放送が自動再生される機能を追加（設定でON/OFF可能）</li>
+            <li><b>乗客モードの服バリエーション大幅追加</b>：ワイシャツ、パーカー、スーツ、ニット、カーディガン、コートや各種ズボン、多彩なカラーを追加</li>
+            <li><b>よくある質問 (FAQ)・アプデ履歴の新設</b>：タイトル画面からQ&Aと更新履歴を確認できるように追加</li>
+          </ul>
+        </div>
+
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.4.0 (2026.11.10)</h3>
+          </div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>全駅車内放送の日英二重事前録音化</b>：日本語アナウンス直後にネイティブ英語アナウンスが流れる美麗音声へ全面刷新</li>
+            <li><b>他車接近クラッシュの根本修正</b>：他列車と至近距離で並走・接近した際のWeb Audioおよび描画フリーズを完全解消</li>
+          </ul>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.3.1 (2026.11.09)</h3>
+          </div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li>運転室内タブレットによる次駅放送・まもなく放送ボタンの手動切り替え実装</li>
+            <li>常時リアルタイムオンライン化（港見支線を除く全路線）</li>
+            <li>ご意見箱（作者への直通メッセージフォーム）の新設</li>
+          </ul>
+        </div>
+      </div>
+    </div>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>全路線・全駅事前録音音声（Nanami Neural TTS）</span></div>
           <div class="cr-item"><strong>3D描画エンジン</strong><span>three.js (WebGL)</span></div>
@@ -543,7 +652,7 @@ html,body{overscroll-behavior:none}
 (function(){
 'use strict';
 /* 画質・動作の設定：light=軽い（自動調整＋見えない物を省く） normal=普通（前のバージョンと同じ） heavy=重い（最高画質） */
-const AV_DEF={female:false,height:170,skin:0,hair:0,hairLong:false,tails:false,top:0x2f3b52,sleeve:'long',bottom:'long',bottomC:0x2b2d33,skirtType:1,skirtLen:0.36,sock:0,sockC:0xf4f2ec,shoeC:0x2a2a2a,bag:0,glasses:false};
+const AV_DEF={female:false,height:170,skin:0,hair:0,hairLong:false,tails:false,topStyle:'shirt',top:0x2f3b52,sleeve:'long',bottom:'long',bottomC:0x2b2d33,skirtType:1,skirtLen:0.36,sock:0,sockC:0xf4f2ec,shoeC:0x2a2a2a,bag:0,glasses:false};
 let AVATAR=(()=>{try{return Object.assign({},AV_DEF,JSON.parse(localStorage.getItem('td_avatar')||'{}'));}catch(e){return Object.assign({},AV_DEF);}})(); /* 乗客モードの自分の見た目 */
 let CREWSEL=(()=>{try{const v=localStorage.getItem('td_crew');return v==='twoD'||v==='twoC'?v:'one';}catch(e){return 'one';}})(); /* 快速特急の乗務：one=ワンマン twoD=ツーマン（運転士） twoC=ツーマン（車掌） */
 let QMODE=(()=>{try{const v=localStorage.getItem('td_quality');return v==='normal'||v==='heavy'?v:'light';}catch(e){return 'light';}})();
@@ -992,10 +1101,13 @@ function handleRemotePlayerUpdate(data) {
       load: data.load || 180,
       stName: data.stName || '',
       smoothS: data.s,
+      state: data.state || 'driving',
+      isPax: !!data.isPax,
       lastSeen: now,
       lastDoor: data.door || 'closed',
       lastHornT: data.hornT || 0,
       lastMhornT: data.mhornT || 0,
+      lastPromoT: data.promoT || 0,
       whooshPlayed: false,
       ai: null,
       snd: null,
@@ -1003,9 +1115,27 @@ function handleRemotePlayerUpdate(data) {
     };
     ONLINE_PLAYERS[data.id] = p;
     try {
-      toast('👤 ' + p.name + ' さんが乗務を開始しました', 'ok');
+      if (!p.isPax && p.state !== 'passenger') {
+        toast('👤 ' + p.name + ' さんが乗務を開始しました', 'ok');
+      } else {
+        toast('🚶 ' + p.name + ' さんが見学を開始しました', 'info');
+      }
     } catch(e) {}
   } else {
+    // 他プレイヤーの乗降促進メロディ再生
+    if (data.promoT && (!p.lastPromoT || data.promoT > p.lastPromoT)) {
+      p.lastPromoT = data.promoT;
+      if (p.tr && p.tr.cars && p.tr.cars[0]) {
+        try {
+          playAt(p.tr.cars[0].position, dest => {
+            const pn = data.promoN || 0;
+            if (pn === 4) ponSnd(dest);
+            else if (pn === 1) chime(dest);
+            else melody(dest, 1);
+          });
+        } catch(e) {}
+      }
+    }
     // 他プレイヤーのドア開閉音・チャイム再生
     if (data.door && data.door !== p.lastDoor) {
       if (p.tr && p.tr.cars && p.tr.cars[0]) {
@@ -1064,7 +1194,13 @@ function handleRemotePlayerUpdate(data) {
     p.doorFrac = data.doorFrac;
     p.load = data.load != null ? data.load : p.load;
     p.stName = data.stName;
+    p.state = data.state || p.state;
+    p.isPax = data.isPax !== undefined ? !!data.isPax : p.isPax;
     p.lastSeen = now;
+
+    if (p.isPax || p.state === 'passenger' || p.s == null) {
+      if (p.tr && p.tr.grp) p.tr.grp.visible = false;
+    }
   }
   updateOnlineHud(false);
 }
@@ -1236,7 +1372,8 @@ function updateStationSelectButtons() {
 function publishPresence() {
   if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
   const curG = (typeof G !== 'undefined' ? G : (window.G || (window.__T ? window.__T.G : null)));
-  const isDriving = curG && curG.phase === 'play';
+  const isPax = (typeof PAX !== 'undefined' && PAX);
+  const isDriving = curG && curG.phase === 'play' && !isPax;
   const curCfg = typeof CFG !== 'undefined' ? CFG : (window.CFG || (window.__T ? window.__T.CFG : null));
   const curLine = curCfg && curCfg.id ? curCfg.id : 'loop';
   if (isDriving && curLine === 'branch4') return; // 港見支線は短距離のためオンライン配信を行わない
@@ -1245,7 +1382,8 @@ function publishPresence() {
   const payload = {
     id: ONLINE_CLIENT_ID,
     name: MY_PLAYER_NAME,
-    state: isDriving ? 'driving' : 'title',
+    state: isDriving ? 'driving' : (isPax ? 'passenger' : 'title'),
+    isPax: isPax,
     line: isDriving ? curLine : null,
     service: isDriving ? curG.route : null,
     key: isDriving ? curG.key : null,
@@ -1257,6 +1395,9 @@ function publishPresence() {
     doorFrac: (isDriving && curG.door) ? curG.door.frac : 0,
     hornT: (isDriving && curG.hornT) ? curG.hornT : 0,
     mhornT: (isDriving && curG.mhornT) ? curG.mhornT : 0,
+    promoT: (isDriving && curG.promoLoop) ? curG.promoLoop.t0 : 0,
+    promoOn: (isDriving && curG.promoOn) ? true : false,
+    promoN: (isDriving && curG.promoLoop) ? curG.promoLoop.n : 0,
     load: (isDriving && curG.load) ? curG.load : 180,
     stName: stObj ? stObj.name : '',
     ts: Date.now()
@@ -2597,26 +2738,56 @@ function partsOf(vi,child,pose,staff){const D=(child?VDC:VD)[vi],style=staff?'lo
   faceParts(D,add);
   if(staff){const S2=D.headScale;add(new THREE.CylinderGeometry(0.13*S2,0.13*S2,0.07,10),0,1.735,0,0x101a2c);add(boxGeo(0.24*S2,0.03,0.13),0,1.70,0.10*S2,0x101a2c);
     add(boxGeo(0.06,0.10,0.02),0.11,1.30,0.108,0xffd23f);}
+  if(D.av){
+    if(D.topStyle==='hoodie'){
+      add(boxGeo(0.24,0.18,0.16),0,1.46,-0.09,col);
+      add(boxGeo(0.26,0.18,0.04),0,1.08,0.11,col);
+    } else if(D.topStyle==='jacket'){
+      add(boxGeo(0.08,0.22,0.02),-0.08,1.34,0.11,col,0,0,0.25);
+      add(boxGeo(0.08,0.22,0.02),0.08,1.34,0.11,col,0,0,-0.25);
+      add(boxGeo(0.12,0.18,0.015),0,1.36,0.105,0xffffff);
+      add(boxGeo(0.04,0.20,0.02),0,1.30,0.112,0x991b1b);
+    } else if(D.topStyle==='coat'){
+      add(boxGeo(D.torso*1.08,0.48,0.24),0,0.80,0,col);
+    } else if(D.topStyle==='shirt'){
+      add(boxGeo(0.09,0.05,0.03),-0.07,1.44,0.11,col,0,0,-0.2);
+      add(boxGeo(0.09,0.05,0.03),0.07,1.44,0.11,col,0,0,0.2);
+      add(boxGeo(0.025,0.45,0.01),0,1.18,0.108,0xffffff);
+    } else if(D.topStyle==='cardigan'){
+      add(boxGeo(0.14,0.26,0.01),0,1.30,0.105,0xf5f5f5);
+    } else if(D.topStyle==='sweater'){
+      add(boxGeo(D.torso*1.04,0.06,0.22),0,0.92,0,col);
+    }
+  }
   if(style==='skirt'){if(pose==='sit')skirtSit(D,add);else skirtParts(D,add);} /* 座ったときは太ももの上にかかる形 */
   const kidLike=D.child||D.av,tights=kidLike&&D.sock===4,skinUp=tights?D.sockC:skin,skinLo=tights?D.sockC:skin,shoe=D.shoeC||0x2a2a2a;
   if(pose==='stand'||up)for(const x of [-0.085,0.085]){
-    if(style==='long')add(boxGeo(0.125,0.82,0.145),x,0.43,0,leg);
+    if(style==='long'||style==='jeans'||style==='wide'||style==='cargo'){
+      const w=style==='wide'?0.16:0.125;
+      add(boxGeo(w,0.82,0.145),x,0.43,0,leg);
+      if(style==='cargo')add(boxGeo(0.03,0.14,0.12),x>0?x+0.06:x-0.06,0.46,0,leg);
+    }
     else{add(boxGeo(0.125,style==='shorts'?0.30:0.16,0.145),x,style==='shorts'?0.69:0.76,0,style==='shorts'?leg:skinUp);
          add(boxGeo(0.115,style==='shorts'?0.52:0.66,0.135),x,style==='shorts'?0.28:0.35,0,skinLo);}
-    if(kidLike&&style!=='long'&&!tights){if(D.sock===2||D.sock===3)add(boxGeo(0.122,0.36,0.142),x,0.22,0,D.sockC);else if(D.sock===1)add(boxGeo(0.122,0.1,0.142),x,0.09,0,D.sockC);} /* ハイソックス／くるぶし丈 */
+    if(kidLike&&style!=='long'&&style!=='jeans'&&style!=='wide'&&style!=='cargo'&&!tights){if(D.sock===2||D.sock===3)add(boxGeo(0.122,0.36,0.142),x,0.22,0,D.sockC);else if(D.sock===1)add(boxGeo(0.122,0.1,0.142),x,0.09,0,D.sockC);} /* ハイソックス／くるぶし丈 */
     add(boxGeo(0.13,0.06,0.23),x,0.03,0.03,shoe);if(kidLike)add(boxGeo(0.132,0.02,0.235),x,0.005,0.03,0xf2f2f2);}
   if(pose==='sit')for(const x of [-0.095,0.095]){
-    add(boxGeo(0.14,0.15,0.46),x,0.80,0.21,style==='long'?leg:(style==='shorts'?leg:skinUp));
-    add(boxGeo(0.13,0.42,0.14),x,0.53,0.40,style==='long'?leg:skinLo);
-    if(kidLike&&style!=='long'&&!tights&&(D.sock===2||D.sock===3))add(boxGeo(0.135,0.24,0.145),x,0.44,0.40,D.sockC);
+    const isPants=style==='long'||style==='jeans'||style==='wide'||style==='cargo';
+    add(boxGeo(0.14,0.15,0.46),x,0.80,0.21,isPants?leg:(style==='shorts'?leg:skinUp));
+    add(boxGeo(0.13,0.42,0.14),x,0.53,0.40,isPants?leg:skinLo);
+    if(kidLike&&!isPants&&!tights&&(D.sock===2||D.sock===3))add(boxGeo(0.135,0.24,0.145),x,0.44,0.40,D.sockC);
     add(boxGeo(0.13,0.06,0.23),x,0.31,0.45,shoe);}
   return P;}
 function legPartsOf(vi,child){const D=(child?VDC:VD)[vi],tights=(D.child||D.av)&&D.sock===4,skin=tights?D.sockC:D.skin,leg=D.leg,style=D.style;
   const P=[],add=(g,y,c)=>{dummy.position.set(0,y,0);dummy.rotation.set(0,0,0);dummy.scale.set(1,1,1);dummy.updateMatrix();P.push([g,dummy.matrix.clone(),c]);};
-  if(style==='long')add(boxGeo(0.125,0.82,0.145),-0.41,leg);
+  if(style==='long'||style==='jeans'||style==='wide'||style==='cargo'){
+    const w=style==='wide'?0.16:0.125;
+    add(boxGeo(w,0.82,0.145),-0.41,leg);
+    if(style==='cargo')add(boxGeo(0.03,0.14,0.12),0.07,-0.38,leg);
+  }
   else{add(boxGeo(0.125,style==='shorts'?0.30:0.16,0.145),style==='shorts'?-0.15:-0.08,style==='shorts'?leg:skin);
        add(boxGeo(0.115,style==='shorts'?0.52:0.66,0.135),style==='shorts'?-0.56:-0.49,skin);}
-  if((D.child||D.av)&&style!=='long'&&!tights){if(D.sock===2||D.sock===3)add(boxGeo(0.122,0.36,0.142),-0.62,D.sockC);else if(D.sock===1)add(boxGeo(0.122,0.1,0.142),-0.75,D.sockC);}
+  if((D.child||D.av)&&style!=='long'&&style!=='jeans'&&style!=='wide'&&style!=='cargo'&&!tights){if(D.sock===2||D.sock===3)add(boxGeo(0.122,0.36,0.142),-0.62,D.sockC);else if(D.sock===1)add(boxGeo(0.122,0.1,0.142),-0.75,D.sockC);}
   add(boxGeo(0.13,0.06,0.23),-0.81,D.shoeC||0x2a2a2a);
   return P;}
 const NVAR=26,NVARC=36; /* 子どもは36通り（スカート14種類×色・長さ・靴下・靴） */
@@ -2629,11 +2800,11 @@ const upperMat=new THREE.MeshLambertMaterial({vertexColors:true});
 /* ===== 乗客モードの自分（アバター） ===== */
 let AVG=null,AVH=1.7,AV3P=false,AVPREV=null;
 function avatarDesc(A){const child=A.height<145,f=!!A.female,kt=A.skirtType|0;
-  return {av:true,female:f,child,col:A.top,skin:SKIN[A.skin]||SKIN[0],hair:HAIRC[A.hair]||HAIRC[0],leg:A.bottomC,sk:A.bottomC,style:A.bottom,skirtType:kt,skirtC:A.bottomC,
+  return {av:true,female:f,child,col:A.top,topStyle:A.topStyle||'tshirt',skin:SKIN[A.skin]||SKIN[0],hair:HAIRC[A.hair]||HAIRC[0],leg:A.bottomC,sk:A.bottomC,style:A.bottom,skirtType:kt,skirtC:A.bottomC,
     skirtH:A.skirtLen*(child?0.85:1),skirtBot:(kt===0?0.2:kt===3||kt===8?0.3:kt===11?0.26:0.27)+(child?0:0.03),sock:A.sock|0,sockC:A.sockC,shoeC:A.shoeC,
     skirtPleatC:kt===7?0x2f4a74:kt===4||kt===5?0x15181f:0xf2efe6,shoulder:child?0.32:(f?0.36:0.43),torso:child?0.31:(f?0.33:0.38),hairLong:!!A.hairLong||!!A.tails,tails:!!A.tails,
     eyeGap:0.048,eyeW:0.034,eyeH:child?0.032:0.024,browY:0.042,browTilt:0,browW:f?0.04:0.05,browH:f?0.008:0.013,mouthW:0.056,lips:f,lipC:LIPC[0],
-    glasses:!!A.glasses,beard:false,bare:A.sleeve==='short',bag:A.bag|0,bagC:0x3a3f4a,fringe:true,headScale:child?1.16:(f?0.98:1.02)};}
+    glasses:!!A.glasses,beard:false,bare:A.sleeve==='short'||A.sleeve==='none',sleeveNone:A.sleeve==='none',bag:A.bag|0,bagC:0x3a3f4a,fringe:true,headScale:child?1.16:(f?0.98:1.02)};}
 function buildAvatar(){if(AVG||!PAX||STAFF)return;const A=AVATAR,D=avatarDesc(A);let vi;
   if(D.child){VDC.push(D);vi=VDC.length-1;CUPPERG[vi]=colored(partsOf(vi,true,'upper'));CSTANDG[vi]=colored(partsOf(vi,true,'stand'));CSITG[vi]=colored(partsOf(vi,true,'sit'));CLEGG[vi]=colored(legPartsOf(vi,true));}
   else{VD.push(D);vi=VD.length-1;STRAPG[vi]=colored(partsOf(vi,false,'strap'));UPPERG[vi]=colored(partsOf(vi,false,'upper'));STANDG[vi]=colored(partsOf(vi,false,'stand'));SITG[vi]=colored(partsOf(vi,false,'sit'));LEGG[vi]=colored(legPartsOf(vi,false));}
@@ -3089,6 +3260,16 @@ function posePerson(p,moving){p.g.position.copy(offs(p.s,p.o,Math.abs(p.o-p.trac
 function trainOpenAt(st,k){
   if(st&&!PAX&&G.atStation!==null&&stOf(G.atStation)===st&&physKey(G.key,st.s)===k&&(G.door.state==='open'||G.door.state==='opening')&&G.door.frac>0.55)return 'OWN';
   for(const a of OT){if(!a.key||a.key!==k||a.state!=='dwell'||a.stSt!==st)continue;if(a.frac>0.55)return a;}
+  if(IS_ONLINE && window.ONLINE_PLAYERS){
+    for(const pid in ONLINE_PLAYERS){
+      const p = ONLINE_PLAYERS[pid];
+      if(!p || !p.key || p.key !== k || !p.tr || p.s == null || (p.v || 0) > 0.4) continue;
+      const d = Math.abs(sdiff(p.s, st.s + TK[k].so));
+      if(d < 18 && (p.door === 'open' || p.door === 'opening') && (p.doorFrac || 0) > 0.4){
+        return p.ai || p;
+      }
+    }
+  }
   return null;}
 /* ドア開中：待機列をすぐ乗車に切り替え */
 function pullWaiters(st,k){const train=trainOpenAt(st,k);if(!train)return 0;
@@ -5124,9 +5305,33 @@ addEventListener('keydown',e=>{
   initAudio();unlockSpeech();
   if(G.walkOn){W.keys[e.code]=true;e.preventDefault();return;}
   if(e.repeat&&!['KeyQ','KeyE'].includes(e.code))return;
+  // キーボード操作：右矢印で右扉の開閉、左矢印で左扉の開閉、エンターキーでATO、スペースキーで次駅放送
+  if(e.code==='ArrowRight'){
+    e.preventDefault();
+    const isRightOpen=(G.door&&G.door.state==='open'&&G.door.side===-1*SIDEINV);
+    if(isRightOpen)doAct('rc');else doAct('ro');
+    return;
+  }
+  if(e.code==='ArrowLeft'){
+    e.preventDefault();
+    const isLeftOpen=(G.door&&G.door.state==='open'&&G.door.side===1*SIDEINV);
+    if(isLeftOpen)doAct('lc');else doAct('lo');
+    return;
+  }
+  if(e.code==='Enter'){
+    e.preventDefault();
+    doAct('ato');
+    return;
+  }
+  if(e.code==='Space'){
+    e.preventDefault();
+    triggerNextStationAnnounce(G.tabAnnMode||'next');
+    if(G.tabNextAnn){G.tabNextAnn=false;if(typeof drawPanel==='function')drawPanel();}
+    return;
+  }
   switch(e.code){
     case 'KeyH':horn();G.hornT=nowMs();break;case 'KeyA':doAct('lo');break;case 'KeyZ':doAct('lc');break;case 'KeyD':doAct('ro');break;case 'KeyC':doAct('rc');break;
-    case 'KeyB':G.panel='ann';G.zoom='T';G.panelZoomed=true;break;case 'KeyP':G.panel='promo';G.zoom='T';G.panelZoomed=true;break;case 'KeyJ':musicHorn();G.mhornT=nowMs();break;case 'KeyO':case 'Space':case 'Enter':doAct('ato');break;case 'KeyU':doAct('auto');break;case 'KeyW':endWaiting();break;
+    case 'KeyB':G.panel='ann';G.zoom='T';G.panelZoomed=true;break;case 'KeyP':G.panel='promo';G.zoom='T';G.panelZoomed=true;break;case 'KeyJ':musicHorn();G.mhornT=nowMs();break;case 'KeyO':doAct('ato');break;case 'KeyU':doAct('auto');break;case 'KeyW':endWaiting();break;
     case 'Digit1':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(0);G.panel='main';G.zoom=null;break;}zoomTo('L');break;case 'Digit2':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(1);G.panel='main';G.zoom=null;break;}zoomTo('S');break;case 'Digit3':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(2);G.panel='main';G.zoom=null;break;}zoomTo('I');break;case 'Digit4':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(3);G.panel='main';G.zoom=null;break;}zoomTo('M');break;case 'Digit6':zoomTo('T');break;case 'Digit5':zoomTo('R');break;
     case 'KeyQ':G.zoom=null;G.lookY=wrapA(G.lookY+0.15);break;case 'KeyE':G.zoom=null;G.lookY=wrapA(G.lookY-0.15);break;
     case 'KeyV':case 'Digit0':case 'Escape':G.zoom=null;G.lookY=0;G.lookP=0;break;
@@ -5452,7 +5657,7 @@ function frameBody(now){
             }
             continue;
           }
-          if (p.s == null || !isFinite(p.s)) {
+          if (p.s == null || !isFinite(p.s) || p.state === 'passenger' || p.isPax) {
             if (p.tr && p.tr.grp) p.tr.grp.visible = false;
             continue;
           }
@@ -5482,12 +5687,31 @@ function frameBody(now){
             };
           }
           if (p.tr && p.tr.grp) p.tr.grp.visible = true;
-          if (!isFinite(p.smoothS)) p.smoothS = p.s;
-          let ds = sdiff(p.smoothS, p.s);
+
+          // 車内乗客の同期（他プレイヤーの列車にもリアルに乗客を表示）
+          if (p.ai && (!p.ai.populated || !p.ai.inside || p.ai.inside.length === 0)) {
+            p.ai.populated = true;
+            try {
+              const nc = (p.tr && p.tr.cars) ? p.tr.cars.length : 6;
+              const carIndices = [];
+              for (let ci = 0; ci < nc; ci++) carIndices.push(ci);
+              populateCars(p.ai, carIndices);
+            } catch(e) {}
+          }
+
+          // カクつき解消：速度と方向によるデッドレコニング（外挿）で滑らかに補間
+          const elapsedSec = Math.min(1.0, Math.max(0, (nowMsTime - p.lastSeen) / 1000));
+          const targetS = mod((p.s || 0) + (p.dir || 1) * (p.v || 0) * elapsedSec, L);
+          if (!isFinite(p.smoothS)) p.smoothS = targetS;
+          let ds = sdiff(p.smoothS, targetS);
           if (!isFinite(ds)) ds = 0;
-          p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 15), L);
+          if (Math.abs(ds) > 120) {
+            p.smoothS = targetS;
+          } else {
+            p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 10), L);
+          }
           placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
-          if (p.door && p.tr) {
+          if (p.tr) {
             setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
           }
         } catch(e) {}
@@ -5858,7 +6082,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   }
 
   /* 画面遷移制御 */
-  const VIEWS = ['viewMain', 'viewDutySelect', 'viewLoop', 'viewBranch', 'viewSettings', 'viewCredits', 'viewFeedback'];
+  const VIEWS = ['viewMain', 'viewDutySelect', 'viewLoop', 'viewBranch', 'viewSettings', 'viewCredits', 'viewFeedback', 'viewFaq', 'viewChangelog'];
   let currentDutyView = 'viewLoop';
   function showHomeView(id) {
     for (const v of VIEWS) {
@@ -6047,6 +6271,10 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
   const btnNavSettings = document.getElementById('btnNavSettings');
   if (btnNavSettings) btnNavSettings.onclick = () => showHomeView('viewSettings');
+  const btnNavFaq = document.getElementById('btnNavFaq');
+  if (btnNavFaq) btnNavFaq.onclick = () => showHomeView('viewFaq');
+  const btnNavChangelog = document.getElementById('btnNavChangelog');
+  if (btnNavChangelog) btnNavChangelog.onclick = () => showHomeView('viewChangelog');
   const btnNavCredits = document.getElementById('btnNavCredits');
   if (btnNavCredits) btnNavCredits.onclick = () => showHomeView('viewCredits');
   const btnNavFeedback = document.getElementById('btnNavFeedback');
@@ -6056,10 +6284,28 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (btnBackToMain) btnBackToMain.onclick = () => showHomeView('viewMain');
   const btnBackFromSettings = document.getElementById('btnBackFromSettings');
   if (btnBackFromSettings) btnBackFromSettings.onclick = () => showHomeView('viewMain');
+  const btnBackFromFaq = document.getElementById('btnBackFromFaq');
+  if (btnBackFromFaq) btnBackFromFaq.onclick = () => showHomeView('viewMain');
+  const btnBackFromChangelog = document.getElementById('btnBackFromChangelog');
+  if (btnBackFromChangelog) btnBackFromChangelog.onclick = () => showHomeView('viewMain');
   const btnBackFromCredits = document.getElementById('btnBackFromCredits');
   if (btnBackFromCredits) btnBackFromCredits.onclick = () => showHomeView('viewMain');
   const btnBackFromFeedback = document.getElementById('btnBackFromFeedback');
   if (btnBackFromFeedback) btnBackFromFeedback.onclick = () => showHomeView('viewMain');
+
+  let autoAnnEnabled = (()=>{try{return localStorage.getItem('td_auto_ann')!=='0';}catch(e){return true;}})();
+  const setAutoAnn = (on) => {
+    autoAnnEnabled = on;
+    try{localStorage.setItem('td_auto_ann', on ? '1' : '0');}catch(e){}
+    const bOff = document.getElementById('btnAutoAnnOff'), bOn = document.getElementById('btnAutoAnnOn');
+    if (bOff) bOff.classList.toggle('on', !on);
+    if (bOn) bOn.classList.toggle('on', on);
+    if (typeof G !== 'undefined' && G) G.autoAnn = on;
+  };
+  const bAutoAnnOff = document.getElementById('btnAutoAnnOff'), bAutoAnnOn = document.getElementById('btnAutoAnnOn');
+  if (bAutoAnnOff) bAutoAnnOff.onclick = () => setAutoAnn(false);
+  if (bAutoAnnOn) bAutoAnnOn.onclick = () => setAutoAnn(true);
+  setAutoAnn(autoAnnEnabled);
 
   /* 意見箱フォーム送信（メールアドレス非公開・安全送信） */
   const fbForm = document.getElementById('feedbackForm');
@@ -6157,8 +6403,14 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   /* 乗客モード：駅を選ぶ前に自分の見た目を選ぶ */
   let avFor=null;
   const AVSKIN=['#e8c49a','#e0b894','#d6a87c','#c59468','#f0d3b4'],AVHAIR=['#1d1a18','#2b211c','#3a2b20','#5a4a3a','#8a7a68'],
-    AVTOP=[0x2f3b52,0x6b3a3a,0x3f5a45,0xc9c2b0,0x23262b,0xf2efe6,0x3a5f8a,0x8a3f5f,0xd9702b,0xe08cb0,0x7a3fa0,0xe8d27a],
-    AVBOT=[0x2b2d33,0x1b2740,0x5a4a3a,0x3b5b8c,0x6b6f78,0xc4456b,0x2f5a3f,0x7a2b3a,0xf0c8d8,0x9ec7e8,0xf2efe6,0x3a3a42],
+    AVTOP=[
+      0x2f3b52,0x6b3a3a,0x3f5a45,0xc9c2b0,0x23262b,0xf2efe6,0x3a5f8a,0x8a3f5f,0xd9702b,0xe08cb0,0x7a3fa0,0xe8d27a,
+      0x1e293b,0x475569,0x94a3b8,0x0f766e,0x15803d,0x0284c7,0x4338ca,0x7e22ce,0xbe123c,0xb45309,0x3f3f46,0x57534e
+    ],
+    AVBOT=[
+      0x2b2d33,0x1b2740,0x5a4a3a,0x3b5b8c,0x6b6f78,0xc4456b,0x2f5a3f,0x7a2b3a,0xf0c8d8,0x9ec7e8,0xf2efe6,0x3a3a42,
+      0x1e3a8a,0x2563eb,0x064e3b,0x78350f,0x451a03,0x581c87,0x0f172a,0x334155,0x64748b,0x831843,0x713f12,0x14532d
+    ],
     AVSOCK=[0xf4f2ec,0x1b2740,0x2a2a2a,0x8a8f99,0xe08cb0],AVSHOE=[0x2a2a2a,0xc8322b,0x3f63b0,0xf2f2f2,0xe08cb0,0x6b4a2e,0x2f7f5f];
   const SKN=['タイト','プリーツ','ティアード','フレア','チェックのプリーツ','キルト','ジャンパースカート','デニム','チュール','ラップ','サスペンダー付き','キュロット','裾フリル','ボーダー'];
   const hx=c=>'#'+c.toString(16).padStart(6,'0');
@@ -6168,18 +6420,62 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const rect=(x0,y0,w,h,col)=>{x.fillStyle=col;x.fillRect(cx+Xs(x0)-Xs(w)/2,Y(y0+h),Xs(w),Xs(h));};
     const shoe=hx(A.shoeC),skin=AVSKIN[A.skin],top=hx(A.top),bot=hx(A.bottomC),hair=AVHAIR[A.hair];
     for(const lx of [-0.085,0.085]){ /* 脚 */
-      if(A.bottom==='long')rect(lx,0.04,0.12,0.82,bot);else{rect(lx,0.04,0.11,0.82,A.sock===4?hx(A.sockC):skin);if(A.sock===2||A.sock===3)rect(lx,0.04,0.115,0.36,hx(A.sockC));else if(A.sock===1)rect(lx,0.04,0.115,0.1,hx(A.sockC));
-        if(A.bottom==='shorts')rect(lx,0.55,0.13,0.32,bot);}
-      rect(lx,0,0.13,0.06,shoe);}
-    rect(0,0.86,0.36,0.56,top);                                                     /* 胴 */
-    for(const sx of [-1,1]){rect(sx*0.23,0.86,0.085,0.5,A.sleeve==='short'?skin:top);if(A.sleeve==='short')rect(sx*0.23,1.12,0.09,0.24,top);rect(sx*0.23,0.8,0.075,0.08,skin);}
+      if(A.bottom==='long'||A.bottom==='jeans'||A.bottom==='wide'||A.bottom==='cargo'){
+        const wLeg = (A.bottom==='wide') ? 0.15 : 0.12;
+        rect(lx,0.04,wLeg,0.82,bot);
+        if(A.bottom==='cargo')rect(lx+(lx>0?0.06:-0.06),0.45,0.045,0.13,bot);
+      } else {
+        rect(lx,0.04,0.11,0.82,A.sock===4?hx(A.sockC):skin);
+        if(A.sock===2||A.sock===3)rect(lx,0.04,0.115,0.36,hx(A.sockC));
+        else if(A.sock===1)rect(lx,0.04,0.115,0.1,hx(A.sockC));
+        if(A.bottom==='shorts')rect(lx,0.55,0.13,0.32,bot);
+      }
+      rect(lx,0,0.13,0.06,shoe);
+    }
+    // 上の服（胴体）
+    if(A.topStyle==='coat'){
+      rect(0,0.68,0.42,0.74,top);
+      rect(0,0.86,0.36,0.56,top);
+    } else {
+      rect(0,0.86,0.36,0.56,top);
+    }
+    // 上の服のスタイル別ディテール
+    if(A.topStyle==='hoodie'){
+      rect(0,1.38,0.26,0.10,top);
+      rect(0,0.96,0.24,0.15,top);
+      x.strokeStyle='rgba(0,0,0,0.3)';x.lineWidth=1.5;x.strokeRect(cx-Xs(0.12),Y(1.11),Xs(0.24),Xs(0.15));
+    } else if(A.topStyle==='jacket'){
+      rect(0,1.25,0.14,0.17,'#ffffff');
+      rect(0,1.22,0.04,0.18,'#dc2626');
+      x.strokeStyle='rgba(0,0,0,0.45)';x.lineWidth=2;
+      x.beginPath();x.moveTo(cx-Xs(0.12),Y(1.42));x.lineTo(cx-Xs(0.06),Y(1.22));x.lineTo(cx,Y(1.18));x.stroke();
+      x.beginPath();x.moveTo(cx+Xs(0.12),Y(1.42));x.lineTo(cx+Xs(0.06),Y(1.22));x.lineTo(cx,Y(1.18));x.stroke();
+    } else if(A.topStyle==='shirt'){
+      rect(0,1.39,0.18,0.05,top);
+      x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;
+      x.beginPath();x.moveTo(cx,Y(1.42));x.lineTo(cx,Y(0.86));x.stroke();
+    } else if(A.topStyle==='sweater'){
+      x.strokeStyle='rgba(0,0,0,0.18)';x.lineWidth=1.5;
+      for(let yy=0.90;yy<=1.38;yy+=0.08){x.beginPath();x.moveTo(cx-Xs(0.17),Y(yy));x.lineTo(cx+Xs(0.17),Y(yy));x.stroke();}
+    } else if(A.topStyle==='cardigan'){
+      rect(0,1.20,0.16,0.22,'#f8fafc');
+      x.strokeStyle='rgba(0,0,0,0.3)';x.lineWidth=2;
+      x.beginPath();x.moveTo(cx-Xs(0.08),Y(1.42));x.lineTo(cx,Y(1.15));x.lineTo(cx+Xs(0.08),Y(1.42));x.stroke();
+    }
+    for(const sx of [-1,1]){
+      const armCol=(A.topStyle==='vest')?'#f8fafc':(A.sleeve==='none'?skin:(A.sleeve==='short'?skin:top));
+      rect(sx*0.23,0.86,0.085,0.5,armCol);
+      if(A.sleeve==='short')rect(sx*0.23,1.12,0.09,0.24,top);
+      else if(A.sleeve==='none')rect(sx*0.23,1.30,0.09,0.08,top);
+      rect(sx*0.23,0.8,0.075,0.08,skin);
+    }
     if(A.bottom==='skirt'){const t=A.skirtType,L=A.skirtLen*1.0,y0=0.93-L,wT=0.36,wB=(t===0?0.42:t===3||t===8?0.72:t===11?0.56:0.6);
       x.fillStyle=bot;x.beginPath();x.moveTo(cx-Xs(wT)/2,Y(0.95));x.lineTo(cx+Xs(wT)/2,Y(0.95));x.lineTo(cx+Xs(wB)/2,Y(y0));x.lineTo(cx-Xs(wB)/2,Y(y0));x.closePath();x.fill();
       x.strokeStyle='rgba(0,0,0,.35)';x.lineWidth=1.5;if(t===1||t===4||t===5||t===10){for(let i=-3;i<=3;i++){x.beginPath();x.moveTo(cx+Xs(wT)*i/8,Y(0.95));x.lineTo(cx+Xs(wB)*i/8,Y(y0));x.stroke();}}
       if(t===4||t===5||t===13){x.strokeStyle=t===13?'#f4f2ec':'#15181f';x.lineWidth=3;for(const f of [0.3,0.6,0.85]){const yy=0.95-L*f,ww=wT+(wB-wT)*f;x.beginPath();x.moveTo(cx-Xs(ww)/2,Y(yy));x.lineTo(cx+Xs(ww)/2,Y(yy));x.stroke();}}
       if(t===2||t===12){x.strokeStyle='rgba(255,255,255,.5)';for(const f of [0.4,0.72]){const yy=0.95-L*f,ww=wT+(wB-wT)*f;x.beginPath();x.moveTo(cx-Xs(ww)/2,Y(yy));x.lineTo(cx+Xs(ww)/2,Y(yy));x.stroke();}}
       if(t===6||t===10){x.fillStyle=t===6?bot:'#15181f';for(const sx of [-1,1])x.fillRect(cx+Xs(sx*0.08)-Xs(0.04)/2,Y(1.42),Xs(0.04),Xs(0.5));}}
-    else rect(0,0.86,0.37,0.12,bot);
+    else if(A.bottom!=='long'&&A.bottom!=='jeans'&&A.bottom!=='wide'&&A.bottom!=='cargo') rect(0,0.86,0.37,0.12,bot);
     rect(0,1.42,0.1,0.06,skin);x.fillStyle=skin;x.beginPath();x.arc(cx,Y(1.6),Xs(0.12),0,7);x.fill();     /* 首・頭 */
     x.fillStyle=hair;x.beginPath();x.arc(cx,Y(1.63),Xs(0.125),Math.PI,0);x.fill();if(A.hairLong||A.tails)rect(0,1.38,0.27,0.28,hair);if(A.tails)for(const sx of [-1,1]){x.beginPath();x.arc(cx+Xs(sx*0.15),Y(1.55),Xs(0.05),0,7);x.fill();}
     if(A.glasses){x.strokeStyle='#111';x.lineWidth=2;for(const sx of [-1,1]){x.beginPath();x.arc(cx+Xs(sx*0.045),Y(1.6),Xs(0.03),0,7);x.stroke();}}
@@ -6197,12 +6493,14 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     seg('髪型','hairLong',[[false,'短い'],[true,'長い']],()=>{if(!A.hairLong)A.tails=false;});
     if(A.female||A.height<145)seg('結び方','tails',[[false,'なし'],[true,'ツインテール']],()=>{if(A.tails)A.hairLong=true;});
     sw('髪の色','hair',AVHAIR,true);
-    seg('上の服の袖','sleeve',[['long','長袖'],['short','半袖']]);sw('上の服の色','top',AVTOP);
-    seg('下の服','bottom',[['long','長ズボン'],['shorts','短パン'],['skirt','スカート']]);
+    seg('服の種類（上）','topStyle',[['shirt','ワイシャツ'],['hoodie','パーカー'],['sweater','セーター'],['jacket','ブレザー/スーツ'],['coat','ロングコート'],['cardigan','カーディガン'],['vest','ベスト'],['tshirt','Tシャツ']]);
+    seg('上の服の袖','sleeve',[['long','長袖'],['short','半袖'],['none','ノースリーブ']]);
+    sw('上の服の色','top',AVTOP);
+    seg('服の種類（下）','bottom',[['long','長ズボン'],['jeans','ジーンズ'],['wide','ワイドパンツ'],['cargo','カーゴパンツ'],['shorts','短パン'],['skirt','スカート']]);
     if(A.bottom==='skirt'){const r=row('スカートの種類');SKN.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.classList.toggle('on',A.skirtType===i);b.onclick=()=>{A.skirtType=i;save();buildAvCtl();};r.appendChild(b);});
       sl('スカートの丈','skirtLen',0.2,0.6,0.01,v=>Math.round(v*100)+' cm');}
     sw('下の服の色','bottomC',AVBOT);
-    if(A.bottom!=='long'){seg('靴下','sock',[[0,'なし'],[1,'くるぶし'],[2,'ハイソックス'],[4,'タイツ']]);if(A.sock)sw('靴下の色','sockC',AVSOCK);}
+    if(A.bottom!=='long'&&A.bottom!=='jeans'&&A.bottom!=='wide'&&A.bottom!=='cargo'){seg('靴下','sock',[[0,'なし'],[1,'くるぶし'],[2,'ハイソックス'],[4,'タイツ']]);if(A.sock)sw('靴下の色','sockC',AVSOCK);}
     sw('靴の色','shoeC',AVSHOE);
     seg('かばん','bag',[[0,'なし'],[1,'手さげ'],[2,'リュック'],[3,'ショルダー']]);
     seg('眼鏡','glasses',[[false,'なし'],[true,'あり']]);
