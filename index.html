@@ -317,7 +317,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.5.0)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.5.1)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -345,7 +345,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.5.0 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.5.1 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -454,7 +454,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.5.0)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.5.1)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>全路線・全駅事前録音音声（Nanami + Ava Neural TTS）</span></div>
@@ -500,6 +500,19 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.5.1 (2026.11.11)</h3>
+          </div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>オンライン同期の徹底強化</b>：特定端末で他の人が反映されない問題を根本修正し、全端末で確実・リアルタイムに同期</li>
+            <li><b>他列車の仕様・見た目完全一致</b>：他プレイヤーの種別（各停6両・快速8両・快特12両グリーン車付き等）・車体カラー・行先LED幕・運転士バッジを完全再現</li>
+            <li><b>接近時ラグ・負荷の徹底解消</b>：他列車と接近・並走した際の描画・音響処理を最適化し、近接時もフレームレートを完全キープ</li>
+            <li><b>リアルな走行揺れシミュレーション</b>：25m定尺レール継ぎ目のコトコト上下振動、台車蛇行動（左右ヨー・ロール）、加減速ピッチング、遠心力カント傾斜を追加</li>
+            <li><b>画面復帰時の自動再同期</b>：スリープ解除や別アプリから戻った際にも即座にオンライン状態を回復</li>
+          </ul>
+        </div>
+
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.5.0 (2026.11.11)</h3>
           </div>
           <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
@@ -979,15 +992,12 @@ function makeNameplateSprite(name, svcName) {
   return sprite;
 }
 
-const BROKER_URLS = [
-  'wss://public.cloud.shiftr.io:443/mqtt',
-  'wss://broker.emqx.io:8084/mqtt',
-  'wss://broker.hivemq.com:8884/mqtt'
-];
-let currentBrokerIdx = 0;
+const ONLINE_BROKER_URL = 'wss://public.cloud.shiftr.io:443/mqtt';
+let isConnectingOnline = false;
 
 function initOnlineClient() {
   if (ONLINE_CLIENT && ONLINE_CLIENT.connected) return;
+  if (isConnectingOnline) return;
   if (typeof mqtt === 'undefined') {
     const s = document.createElement('script');
     s.src = 'assets/js/mqtt.min.js';
@@ -1001,12 +1011,15 @@ function initOnlineClient() {
     document.head.appendChild(s);
     return;
   }
-  const brokerUrl = BROKER_URLS[currentBrokerIdx];
+  isConnectingOnline = true;
   const opts = {
     clientId: ONLINE_CLIENT_ID,
+    username: 'public',
+    password: 'public',
     clean: true,
-    connectTimeout: 5000,
-    keepalive: 15,
+    connectTimeout: 7000,
+    keepalive: 20,
+    reconnectPeriod: 2500,
     will: {
       topic: 'shiomi3d/v1/players/' + ONLINE_CLIENT_ID,
       payload: JSON.stringify({ id: ONLINE_CLIENT_ID, offline: true }),
@@ -1014,15 +1027,12 @@ function initOnlineClient() {
       retain: false
     }
   };
-  if (brokerUrl.includes('shiftr.io')) {
-    opts.username = 'public';
-    opts.password = 'public';
-  }
   try {
-    ONLINE_CLIENT = mqtt.connect(brokerUrl, opts);
+    ONLINE_CLIENT = mqtt.connect(ONLINE_BROKER_URL, opts);
     window.ONLINE_CLIENT = ONLINE_CLIENT;
     
     ONLINE_CLIENT.on('connect', () => {
+      isConnectingOnline = false;
       ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/accounts/#', { qos: 1 });
       startOnlinePublishLoop();
@@ -1034,18 +1044,17 @@ function initOnlineClient() {
     });
 
     ONLINE_CLIENT.on('error', (err) => {
-      console.warn('MQTT error on ' + brokerUrl, err);
-      if (!ONLINE_CLIENT.connected) {
-        currentBrokerIdx = (currentBrokerIdx + 1) % BROKER_URLS.length;
-      }
+      console.warn('MQTT error on ' + ONLINE_BROKER_URL, err);
+      isConnectingOnline = false;
     });
 
     ONLINE_CLIENT.on('close', () => {
+      isConnectingOnline = false;
       setTimeout(() => {
         if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) {
           initOnlineClient();
         }
-      }, 3000);
+      }, 2500);
     });
     
     ONLINE_CLIENT.on('message', (topic, message) => {
@@ -1194,6 +1203,8 @@ function handleRemotePlayerUpdate(data) {
     p.doorFrac = data.doorFrac;
     p.load = data.load != null ? data.load : p.load;
     p.stName = data.stName;
+    p.dest = data.dest || p.dest || '';
+    p.old = data.old !== undefined ? data.old : p.old;
     p.state = data.state || p.state;
     p.isPax = data.isPax !== undefined ? !!data.isPax : p.isPax;
     p.lastSeen = now;
@@ -1379,12 +1390,13 @@ function publishPresence() {
   if (isDriving && curLine === 'branch4') return; // 港見支線は短距離のためオンライン配信を行わない
   const stFn = typeof stOf === 'function' ? stOf : (window.stOf || (window.__T ? window.__T.stOf : null));
   const stObj = (isDriving && stFn) ? (curG.atStation !== null ? stFn(curG.atStation) : (curG.nv != null ? stFn(curG.nv) : null)) : null;
+  const destText = (typeof ownTrain !== 'undefined' && ownTrain && ownTrain.dk && ownTrain.dk.txt) ? ownTrain.dk.txt : '';
   const payload = {
     id: ONLINE_CLIENT_ID,
     name: MY_PLAYER_NAME,
     state: isDriving ? 'driving' : (isPax ? 'passenger' : 'title'),
     isPax: isPax,
-    line: isDriving ? curLine : null,
+    line: curLine,
     service: isDriving ? curG.route : null,
     key: isDriving ? curG.key : null,
     dir: isDriving ? curG.dir : 1,
@@ -1400,6 +1412,8 @@ function publishPresence() {
     promoN: (isDriving && curG.promoLoop) ? curG.promoLoop.n : 0,
     load: (isDriving && curG.load) ? curG.load : 180,
     stName: stObj ? stObj.name : '',
+    dest: destText,
+    old: (typeof ownTrain !== 'undefined' && ownTrain) ? !!ownTrain.old : false,
     ts: Date.now()
   };
   try {
@@ -1409,8 +1423,19 @@ function publishPresence() {
 
 function startOnlinePublishLoop() {
   if (onlinePubInterval) clearInterval(onlinePubInterval);
-  onlinePubInterval = setInterval(publishPresence, 200);
+  onlinePubInterval = setInterval(publishPresence, 250);
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) {
+      initOnlineClient();
+    } else {
+      publishPresence();
+      updateOnlineHud(true);
+    }
+  }
+});
 
 function stopOnlinePublishLoop() {
   if (onlinePubInterval) {
@@ -2522,9 +2547,9 @@ function carTemplate(front,rear,panto,staticDoors,green,old){
   const out={};for(const k in parts)out[k]=mergeGeos(parts[k]);TPL[key]=out;return out;
 }
 /* 古い形式の前面：幕式の行先表示（白地に黒文字） */
-function drawDestRoll(k,txt){const x=k.x;x.fillStyle='#f3f1ea';x.fillRect(0,0,256,48);x.fillStyle='#16181c';x.font='700 26px '+FONT;x.textAlign='center';x.textBaseline='middle';fitText(x,txt||'',128,25,236,26,'700','center');x.strokeStyle='#8c887e';x.lineWidth=2;x.strokeRect(1,1,254,46);k.tex.needsUpdate=true;}
+function drawDestRoll(k,txt){k.txt=txt;const x=k.x;x.fillStyle='#f3f1ea';x.fillRect(0,0,256,48);x.fillStyle='#16181c';x.font='700 26px '+FONT;x.textAlign='center';x.textBaseline='middle';fitText(x,txt||'',128,25,236,26,'700','center');x.strokeStyle='#8c887e';x.lineWidth=2;x.strokeRect(1,1,254,46);k.tex.needsUpdate=true;}
 function drawOwnDest(){const nm=G.list?STATIONS[G.list[G.list.length-1]].name:'',rp=KIND[G.key]==='rapid';if(ownTrain.old)drawDestRoll(ownTrain.dk,'普通　'+nm);else drawDest(ownTrain.dk,(rp?'快速 ':B3?'普通 ':'白峰支線 ')+nm+(B3?'行':''));}
-function drawDest(k,txt){const x=k.x;x.fillStyle='#050403';x.fillRect(0,0,256,48);x.fillStyle='#ff9d2e';x.font='24px '+DOTF;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,128,25);k.tex.needsUpdate=true;}
+function drawDest(k,txt){k.txt=txt;const x=k.x;x.fillStyle='#050403';x.fillRect(0,0,256,48);x.fillStyle='#ff9d2e';x.font='24px '+DOTF;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,128,25);k.tex.needsUpdate=true;}
 const glowTex=canvasTex(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,0.6)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});
 const poolTex=canvasTex(64,128,(x,w,h)=>{const g=x.createRadialGradient(32,110,4,32,80,70);g.addColorStop(0,'rgba(255,248,225,0.9)');g.addColorStop(1,'rgba(255,248,225,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});
 const GLOW={head:new THREE.SpriteMaterial({map:glowTex,color:0xfff4dc,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0.6}),
@@ -3951,13 +3976,15 @@ function updOTAudio(){if(!AC)return;camera.getWorldPosition(camW);camera.getWorl
         const gv = (typeof G !== 'undefined' && G && typeof G.v === 'number' && isFinite(G.v)) ? Math.max(0, G.v) : 0;
         const sp = Math.min(1.8, pv / 16);
         let d = 1e9;
-        for(const c of p.tr.cars){
-          if(c && c.position){
-            const dd = c.position.distanceTo(camW);
-            if(isFinite(dd) && dd < d) d = dd;
-          }
+        if (p.tr.cars[0] && p.tr.cars[0].position) {
+          d = p.tr.cars[0].position.distanceTo(camW);
         }
-        if(!isFinite(d)) continue;
+        if (!isFinite(d) || d > 350) {
+          if (p.snd && p.snd.g && p.snd.g.gain) {
+            try { p.snd.g.gain.setTargetAtTime(0, t, 0.8); } catch(e) {}
+          }
+          continue;
+        }
         const midCar = p.tr.cars[Math.min(2, p.tr.cars.length - 1)];
         if(midCar && midCar.position) tv.subVectors(midCar.position, camW);
         const distG = otDistGain(d);
@@ -5497,9 +5524,45 @@ function update(dt,now){
     else if(RIDE)document.getElementById('paxWhere').innerHTML='<b>'+SVCLOOK[RIDE.a.key][1]+'</b> '+(RIDE.a.tr.cars[RIDE.k].userData.green?'グリーン車':(RIDE.k+1)+'号車')+(sitting?'　着席中':'')+'　'+(RIDE.a.state==='dwell'&&RIDE.a.stSt?RIDE.a.stSt.name+' 停車中':'走行中');}
   bellT+=dt;if(bellT>0.42){bellT=0;for(const cr of CROSS)if(cr.act&&Math.abs(sdiff(G.s,cr.s))<500)playAt(offsG(cr.s,0,2),bellSnd);}placeTrain(ownTrain,G.s,TK[G.key].off,TK[G.key].y);
   const near=stationNear(G.s),ls=near.s-60;stLights.forEach(l=>l.intensity=near.under?1.5:1.5*(G.stLit||0));stLights[0].position.copy(offs(ls,near.type==='side'?-4.5:offC(ls)/2,4.5));stLights[1].position.copy(offs(ls,near.type==='side'?sepB(ls)+4.5:sepB(ls)/2,4.5));
-  const offF=TK[G.key].off,rs=CONDV?G.s-G.dir*(carsFor(G.key)*CARL-0.7):G.s,rd=CONDV?-G.dir:G.dir,rp=trackPt(rs,offF),rq=trackPt(rs+rd*2,offF);rig.position.set(rp[0],TK[G.key].y(rs),rp[1]);const curv=wrapA(P(G.s+6)[2]-P(G.s-6)[2])/12*G.dir,lat=G.v*G.v*curv;G.lat=Math.abs(lat);
-  G.roll+=(clamp(lat*0.018,-0.03,0.03)-G.roll)*Math.min(1,dt*1.8);const vib=Math.min(1,G.v/20)*(0.0004+Math.min(0.004,Math.abs(lat)*0.004));
-  rig.rotation.set(Math.atan(((TK[G.key].y(rs+2)-TK[G.key].y(rs-2))/4)*rd),-Math.atan2(rq[0]-rp[0],-(rq[1]-rp[1])),G.roll+Math.sin(now*0.0023)*vib+Math.sin(now*0.0071)*vib*0.5);
+  const offF=TK[G.key].off,rs=CONDV?G.s-G.dir*(carsFor(G.key)*CARL-0.7):G.s,rd=CONDV?-G.dir:G.dir,rp=trackPt(rs,offF),rq=trackPt(rs+rd*2,offF);
+  const spd = Math.max(0, G.v || 0); // 速度 (m/s)
+  const spdF = Math.min(1.5, spd / 20); // 速度係数 (0〜1.5)
+  const nowSec = now * 0.001;
+
+  // 1. レール継ぎ目通過ショック（25m定尺レール継ぎ目のコトコト振動）
+  const jointMod = mod(G.s, 25);
+  const isJointPulse = (jointMod < 1.2 || (jointMod > 2.5 && jointMod < 3.7));
+  const jointBounce = isJointPulse ? Math.sin(jointMod * Math.PI * 1.5) * 0.0035 * spdF : 0;
+  const jointPitch = isJointPulse ? Math.cos(jointMod * Math.PI * 1.5) * 0.0025 * spdF : 0;
+
+  // 2. 加減速時のピッチング（ノーズダイブ／ノーズアップ）
+  const currentAccel = (G.a != null ? G.a : (G.mnotch > 0 ? G.mnotch * 0.3 : G.mnotch * 0.4));
+  if (typeof G.accelPitch === 'undefined') G.accelPitch = 0;
+  G.accelPitch += (-clamp(currentAccel * 0.005, -0.016, 0.016) - G.accelPitch) * Math.min(1, dt * 3.5);
+
+  // 3. 軌道狂い・台車蛇行動（左右ヨーイング・ローリング・上下ピッチング）
+  const swayYaw = (Math.sin(nowSec * 2.7) * 0.0022 + Math.sin(nowSec * 5.4 + 1.2) * 0.0008) * spdF;
+  const swayRoll = (Math.sin(nowSec * 2.1 + 0.7) * 0.006 + Math.sin(nowSec * 6.8) * 0.0022) * spdF;
+  const swayPitch = (Math.sin(nowSec * 3.8 + G.s * 0.2) * 0.0018 + jointPitch) * spdF;
+
+  // 4. カーブ遠心力によるカント・車体ロール
+  const curv = wrapA(P(G.s + 6)[2] - P(G.s - 6)[2]) / 12 * G.dir;
+  const lat = G.v * G.v * curv;
+  G.lat = Math.abs(lat);
+  G.roll += (clamp(lat * 0.028, -0.055, 0.055) - G.roll) * Math.min(1, dt * 2.0);
+
+  // 5. 上下サスペンションのバウンス
+  const vertBounce = (Math.sin(nowSec * 7.2 + G.s * 0.3) * 0.012 + jointBounce * 4.0) * spdF;
+
+  // 位置と回転の適用
+  rig.position.set(rp[0], TK[G.key].y(rs) + vertBounce, rp[1]);
+  const basePitch = Math.atan(((TK[G.key].y(rs + 2) - TK[G.key].y(rs - 2)) / 4) * rd);
+  const baseYaw = -Math.atan2(rq[0] - rp[0], -(rq[1] - rp[1]));
+  rig.rotation.set(
+    basePitch + G.accelPitch + swayPitch,
+    baseYaw + swayYaw,
+    G.roll + swayRoll
+  );
   skyGroup.position.set(rig.position.x,0,rig.position.z);groundPlane.position.set(rig.position.x,-0.3,rig.position.z);
   if(G.walkOn)updWalk(dt);else updCamera(dt,now);
   const ex=canExit();if(G.hold&&ex){G.hold.t+=dt;if(G.hold.t>=HOLD_T){G.hold=null;enterWalk();}}
@@ -5626,13 +5689,18 @@ function chunkSphere(ch){if(ch.sph!==undefined&&ch.sphN===ch.g.children.length)r
   ch.g.traverse(o=>{if(o===ch.g||o.isInstancedMesh||!o.geometry)return;const g=o.geometry;if(!g.boundingBox)g.computeBoundingBox();const bb=g.boundingBox;
     if(!bb||!isFinite(bb.min.x)||!isFinite(bb.max.x))return;_b3.copy(bb).applyMatrix4(o.matrixWorld);box.union(_b3);});
   ch.sph=box.isEmpty()?null:box.getBoundingSphere(new THREE.Sphere());ch.sphN=ch.g.children.length;return ch.sph;}
+const _trsList = [];
 function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,false);_pm4.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);_frus.setFromProjectionMatrix(_pm4);
   const cp=cam.getWorldPosition(_cwp),far=(scene.fog?scene.fog.far:3600)+60;
   for(const ch of CHUNKS){if(!ch.built||!ch.g)continue;const sp=chunkSphere(ch);if(!sp){ch.g.visible=true;continue;}
     ch.g.visible=_frus.intersectsSphere(sp)&&(cp.distanceTo(sp.center)-sp.radius)<far;}
-  const trs=[ownTrain];for(const a of OT)trs.push(a.tr);for(const t of cityTrains)trs.push(t);for(const t of depotTrains)trs.push(t);
-  if(IS_ONLINE && window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){if(ONLINE_PLAYERS[pid].tr)trs.push(ONLINE_PLAYERS[pid].tr);}}
-  for(const tr of trs){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=car.position.distanceTo(cp)<far+14;}}
+  _trsList.length = 0;
+  _trsList.push(ownTrain);
+  for(const a of OT) if (a && a.tr) _trsList.push(a.tr);
+  for(const t of cityTrains) if (t) _trsList.push(t);
+  for(const t of depotTrains) if (t) _trsList.push(t);
+  if(IS_ONLINE && window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){if(ONLINE_PLAYERS[pid].tr)_trsList.push(ONLINE_PLAYERS[pid].tr);}}
+  for(const tr of _trsList){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=car.position.distanceTo(cp)<far+14;}}
 function frameBody(now){
   updQuality(now-last);
   const dt=Math.min(0.05,(now-last)/1000);last=now;frameN++;
@@ -5662,18 +5730,40 @@ function frameBody(now){
             continue;
           }
           const k = (p.key && typeof TK !== 'undefined' && TK[p.key]) ? p.key : 'A';
+          const svcId = p.service || null;
+          const svc = (typeof SERVICES !== 'undefined' && svcId) ? SERVICES[svcId] : null;
+          const flip = (p.dir != null ? p.dir : 1) < 0;
+          const liv = (svc && svc.col) ? parseInt(svc.col.replace('#', ''), 16) : (SVCLOOK[k] ? SVCLOOK[k][0] : 0x14935f);
+          const svcLabel = svc ? svc.short : (SVCLOOK[k] ? SVCLOOK[k][1] : '環状線');
+          const nCar = (BRANCH ? NCAR : (typeof carsFor === 'function' ? carsFor(k) : 6));
+          const greenCars = (typeof greenCarsFor === 'function' ? greenCarsFor(k) : []);
+          const isOld = p.old !== undefined ? !!p.old : (p.line === 'branch');
+
+          // 他プレイヤーの乗務種別・両数・旧型仕様に変更があれば自動で再構築
+          if (p.tr && (p.currentKey !== k || p.currentNCars !== nCar || p.currentOld !== isOld || p.currentFlip !== flip)) {
+            if (p.tr.grp && p.tr.grp.parent) {
+              try { p.tr.grp.parent.remove(p.tr.grp); } catch(e) {}
+            }
+            p.tr = null;
+          }
+
           if (!p.tr) {
-            const flip = TK[k].dir < 0;
-            const liv = SVCLOOK[k] ? SVCLOOK[k][0] : 0x14935f;
-            const svcLabel = SVCLOOK[k] ? SVCLOOK[k][1] : '環状線';
-            const tr = buildTrain('', flip, liv, true, greenCarsFor(k), carsFor(k));
+            const tr = buildTrain(p.dest || '', flip, liv, true, greenCars, nCar, isOld);
             setLook(tr, k);
+            if (p.dest) {
+              if (tr.old) drawDestRoll(tr.dk, p.dest);
+              else drawDest(tr.dk, p.dest);
+            }
             const plate = makeNameplateSprite(p.name, svcLabel);
             plate.position.set(0, 4.6, -CARHALF + 2.5);
             tr.cars[0].add(plate);
             tr.nameplate = plate;
             addCrew(tr, false);
             p.tr = tr;
+            p.currentKey = k;
+            p.currentNCars = nCar;
+            p.currentOld = isOld;
+            p.currentFlip = flip;
             p.smoothS = (typeof p.s === 'number' && isFinite(p.s)) ? p.s : 0;
             placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
 
@@ -5688,17 +5778,6 @@ function frameBody(now){
           }
           if (p.tr && p.tr.grp) p.tr.grp.visible = true;
 
-          // 車内乗客の同期（他プレイヤーの列車にもリアルに乗客を表示）
-          if (p.ai && (!p.ai.populated || !p.ai.inside || p.ai.inside.length === 0)) {
-            p.ai.populated = true;
-            try {
-              const nc = (p.tr && p.tr.cars) ? p.tr.cars.length : 6;
-              const carIndices = [];
-              for (let ci = 0; ci < nc; ci++) carIndices.push(ci);
-              populateCars(p.ai, carIndices);
-            } catch(e) {}
-          }
-
           // カクつき解消：速度と方向によるデッドレコニング（外挿）で滑らかに補間
           const elapsedSec = Math.min(1.0, Math.max(0, (nowMsTime - p.lastSeen) / 1000));
           const targetS = mod((p.s || 0) + (p.dir || 1) * (p.v || 0) * elapsedSec, L);
@@ -5710,9 +5789,15 @@ function frameBody(now){
           } else {
             p.smoothS = mod(p.smoothS + ds * Math.min(1, dt * 10), L);
           }
-          placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
-          if (p.tr) {
-            setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
+
+          // 2km以上離れている場合は配置計算を間引き、接近時（視界内）のみ高精度配置＆ドア連動
+          const camS = (typeof G !== 'undefined' && G && G.s != null) ? G.s : 0;
+          const camDist = Math.abs(sdiff(p.smoothS, camS));
+          if (camDist < 2200) {
+            placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+            if (p.tr) {
+              setDoors(p.tr, p.doorSide || 1, p.doorFrac || 0);
+            }
           }
         } catch(e) {}
       }
