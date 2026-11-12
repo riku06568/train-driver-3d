@@ -3203,7 +3203,7 @@ mcHit.userData.act = 'monMC';
 INTER.push(mcHit);
 
 function updMascon3D(dt) {
-  if (typeof masconPivot === 'undefined' || !masconPivot) return;
+  if (typeof masconPivot === 'undefined' || !masconPivot || typeof G === 'undefined' || !G) return;
   const n = G.manual ? (G.mnotch || 0) : (G.notch || 0);
   const targetAngle = n > 0 ? (-n / 5 * 0.38) : (-n / 8 * 0.44);
   masconPivot.rotation.x += (targetAngle - masconPivot.rotation.x) * Math.min(1, dt * 10);
@@ -3246,6 +3246,7 @@ cbox(0.07, 0.016, 0.014, CM.frame, 0, 0.08, 0.008, stafGroup);
 // スタフ用紙（運行スケジュール表）
 const STAF_CANV = mkCanvas(256, 340);
 function drawStaf() {
+  if (typeof G === 'undefined' || !G) return;
   const x = STAF_CANV.x, W = 256, H = 340;
   x.fillStyle = '#faf8f0'; x.fillRect(0, 0, W, H);
   x.strokeStyle = '#b91c1c'; x.lineWidth = 4; x.strokeRect(3, 3, W - 6, H - 6);
@@ -3253,8 +3254,8 @@ function drawStaf() {
   x.fillStyle = '#fff'; x.font = '700 17px ' + FONT; x.textAlign = 'center';
   x.fillText('乗務行路表 (スタフ)', W / 2, 25);
   x.fillStyle = '#0f172a'; x.font = '700 13px ' + FONT; x.textAlign = 'left';
-  const rName = (ROUTES[G.route] ? ROUTES[G.route].short : '環状線');
-  const dName = (G.list && G.list.length) ? stOf(G.list[G.list.length - 1]).name : '汐見';
+  const rName = (typeof ROUTES !== 'undefined' && ROUTES[G.route]) ? ROUTES[G.route].short : '環状線';
+  const dName = (G.list && G.list.length && typeof stOf === 'function') ? stOf(G.list[G.list.length - 1]).name : '汐見';
   x.fillText('種別: ' + rName + ' 外回り', 12, 53);
   x.fillText('行先: ' + dName + ' 行き', 12, 70);
   x.fillText('最高速度: 120 km/h', 12, 87);
@@ -3266,8 +3267,9 @@ function drawStaf() {
   for (let k = 0; k < 7; k++) {
     const v = curV + k;
     if (G.list && v >= G.list.length) break;
-    const st = stOf(v);
-    const pl = G.plan[v];
+    const st = (typeof stOf === 'function') ? stOf(v) : null;
+    if (!st) break;
+    const pl = G.plan ? G.plan[v] : null;
     const y = 138 + k * 27;
     x.fillStyle = (k === 0) ? '#dbeafe' : (k % 2 ? '#f1f5f9' : '#faf8f0');
     x.fillRect(6, y - 18, W - 12, 25);
@@ -3280,7 +3282,6 @@ function drawStaf() {
   }
   STAF_CANV.tex.needsUpdate = true;
 }
-drawStaf();
 const stafMesh = cplane(0.118, 0.154, basic(STAF_CANV.tex), 0, -0.004, 0.005, stafGroup);
 // スタフクリック判定（ズーム用）
 const stafHit = cplane(0.14, 0.18, CM.hit, 0, 0, 0.01, stafGroup);
@@ -3305,15 +3306,16 @@ cbox(0.44, 0.046, 0.022, CM.frame, 0, 0, -0.01, indRig);
 const IND_CANV = mkCanvas(512, 64);
 const IND_MAT = new THREE.MeshBasicMaterial({ map: IND_CANV.tex });
 function drawIndicatorLamps() {
+  if (typeof G === 'undefined' || !G) return;
   const x = IND_CANV.x, W = 512, H = 64;
   x.fillStyle = '#080c14'; x.fillRect(0, 0, W, H);
   x.strokeStyle = '#1e293b'; x.lineWidth = 3; x.strokeRect(1, 1, W - 2, H - 2);
 
-  const closed = (G.door.state === 'closed');
+  const closed = (G.door && G.door.state === 'closed');
   const isEB = (G.manual ? G.mnotch === -8 : G.notch === -8);
-  const isATO = G.ato;
-  const isAuto = G.auto;
-  const lim = limitFor(G.key, G.s) || 99;
+  const isATO = !!G.ato;
+  const isAuto = !!G.auto;
+  const lim = (typeof limitFor === 'function' ? limitFor(G.key, G.s) : 99) || 99;
   const isOver = (G.v * 3.6 > lim + 3);
 
   const lamps = [
@@ -3342,7 +3344,6 @@ function drawIndicatorLamps() {
   });
   IND_CANV.tex.needsUpdate = true;
 }
-drawIndicatorLamps();
 cplane(0.428, 0.038, IND_MAT, 0, 0, 0.002, indRig);
 
 // 5. モニター遮光フードキャノピー（グラスコックピット上部の日よけフード）
@@ -3468,6 +3469,7 @@ const stopIdx=v=>G.list?G.list[clamp(v,0,G.list.length-1)]:G.cyc[mod(G.cpos+v,G.
 G.cyc=STATIONS.map(s=>s.i);G.cpos=0;
 const stOf=v=>STATIONS[stopIdx(v)];
 window.stOf = stOf;
+try { if (typeof drawIndicatorLamps === 'function') drawIndicatorLamps(); if (typeof drawStaf === 'function') drawStaf(); } catch(e) { console.error('init cab draws', e); }
 
 /* ================= voice (完全事前録音音声化：OS合成音声は使用しない) ================= */
 const SS=()=>null;
