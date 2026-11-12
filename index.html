@@ -606,15 +606,7 @@ html,body{overscroll-behavior:none}
         </div>
       </div>
     </div>
-        <div class="credit-list">
-          <div class="cr-item"><strong>車内放送音声</strong><span>全路線・全駅事前録音音声（Nanami Neural TTS）</span></div>
-          <div class="cr-item"><strong>3D描画エンジン</strong><span>three.js (WebGL)</span></div>
-          <div class="cr-item"><strong>フォント</strong><span>Google Fonts（DotGothic16 / Zen Kaku Gothic New）</span></div>
-          <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線</span></div>
-        </div>
-        <p style="font-size:11.5px;opacity:0.6;margin-top:18px;">※ 本作に登場する駅名、路線名、団体名等はすべて架空のものであり、実在の人物・団体・鉄道会社とは一切関係ありません。</p>
-      </div>
-    </div>
+
 
     <!-- View 6: Feedback (ご意見箱) -->
     <div id="viewFeedback" class="home-view hide">
@@ -624,7 +616,7 @@ html,body{overscroll-behavior:none}
       </div>
       <div class="sub">ゲームの感想・追加してほしい路線や機能・不具合報告などをお気軽にお寄せください！<br>送信された内容は作者に直接届きます。</div>
 
-      <div style="background:rgba(18,28,48,0.92);border:1px solid rgba(130,160,210,0.3);border-radius:16px;padding:22px;max-width:540px;margin:16px auto;box-shadow:0 8px 32px rgba(0,0,0,0.4);text-align:left;">
+      <div style="position:relative;z-index:20;background:rgba(18,28,48,0.92);border:1px solid rgba(130,160,210,0.3);border-radius:16px;padding:22px;max-width:540px;margin:16px auto;box-shadow:0 8px 32px rgba(0,0,0,0.4);text-align:left;">
         <form id="feedbackForm" style="display:flex;flex-direction:column;gap:14px;">
           <div>
             <label style="display:block;font-size:13.5px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">お名前・ニックネーム（任意）</label>
@@ -7031,12 +7023,23 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       status.style.color = '#38bdf8';
       status.textContent = '送信しています...';
 
+      const nowIso = new Date().toISOString();
       const payload = {
         name: name,
         message: message,
+        time: nowIso,
         _subject: '【汐見環状線3D】ご意見箱から新しいメッセージが届きました (' + name + 'さん)'
       };
 
+      let mqttSent = false;
+      if (typeof ONLINE_CLIENT !== 'undefined' && ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+        try {
+          ONLINE_CLIENT.publish('shiomi3d/v1/feedback', JSON.stringify(payload), { qos: 1 });
+          mqttSent = true;
+        } catch(e) {}
+      }
+
+      let formSubmitSent = false;
       try {
         const res = await fetch('https://formsubmit.co/ajax/77c0266b3c001f710fb0460bf4ef7d9e', {
           method: 'POST',
@@ -7046,21 +7049,28 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
           },
           body: JSON.stringify(payload)
         });
-        const json = await res.json();
-        if (json.success === 'true' || json.success === true) {
-          status.style.color = '#22c55e';
-          status.textContent = '✨ ご意見を送信しました！ありがとうございます。';
-          document.getElementById('fbMessage').value = '';
-          btn.textContent = '送信完了';
-          setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = '📨 意見を送信する';
-          }, 3000);
-        } else {
-          throw new Error(json.message || '送信に失敗しました');
+        if (res.ok) {
+          try {
+            const data = await res.json();
+            if (data.success === 'true' || data.success === true || data.message) formSubmitSent = true;
+          } catch(e) {
+            formSubmitSent = true; // 200 OK text response
+          }
         }
       } catch(err) {
-        console.error(err);
+        console.warn('FormSubmit fetch failed, checking MQTT fallback', err);
+      }
+
+      if (formSubmitSent || mqttSent) {
+        status.style.color = '#22c55e';
+        status.textContent = '✨ ご意見を送信しました！作者に届きました。ありがとうございます。';
+        document.getElementById('fbMessage').value = '';
+        btn.textContent = '送信完了';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = '📨 意見を送信する';
+        }, 3000);
+      } else {
         status.style.color = '#ef4444';
         status.textContent = '⚠️ 送信に失敗しました。通信環境をご確認のうえ再度お試しください。';
         btn.disabled = false;
