@@ -546,10 +546,11 @@ html,body{overscroll-behavior:none}
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.3 (2026.11.14)</h3>
           </div>
-          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗降促進メロディ改良＆外回り・内回り別専用メロディ実装</div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗降促進メロディ改良・内外回り専用化＆完全オート停車時間最適化</div>
           <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
             <li><b>結びのチャラりん音の完全除去</b>：メロディの最後に鳴っていた高音ベルの上昇アルペジオ（チャラりん音）を完全撤廃。主旋律と和音本来の美しい余韻をそのまま保ち、自然に響きが溶け込む上品な終止へ改修</li>
             <li><b>外回り・内回りで異なる雰囲気のメロディ</b>：外回りは明るく爽快に駆け上がる『汐鳴り』（Dメジャー・136BPM）、内回りはゆったり温かく落ち着いた優しい情緒を奏でる『潮風』（Gメジャー・116BPM）へと雰囲気を明確に差別化。乗務種別に応じて自動で切り替わります</li>
+            <li><b>完全オート時の停車時間メリハリ</b>：小さい駅（普通駅）は乗降促進メロディが鳴り終わり乗降が終わり次第「すぐに」ドアを閉めて素早く発車。主要駅（朱雀台・蒼海中央・白峰・天宮など）ではじっくり長めにメロディを響かせ、ゆとりを持った停車時間を確保</li>
           </ul>
         </div>
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
@@ -2041,6 +2042,7 @@ const BIG=STATIONS.filter(st=>st.lines).map(st=>st.i);
 const RAPID=['快速線','かいそくせん',0xe8731e];
 const RSTOPS=STATIONS.filter(st=>st.cls!=='L'&&st.cls!=='J'&&st.cls!=='I').map(st=>st.i);
 const LSTOPS=STATIONS.filter(st=>st.cls==='M'||st.cls==='X').map(st=>st.i);
+const isMajorStation=st=>!!(st&&(st.cls==='M'||st.cls==='X'||st.cls==='J'||st.cls==='Q'||st.big||(st.lines&&st.lines.length)));
 const BASE_LIMIT=BRANCH?80:90;
 const LIMITS=CFG.limits.map(([a,b,v])=>{const m=STATIONS[a].s+sdiff(STATIONS[a].s,STATIONS[b].s)/2;return {a:mod(m-220,L),b:mod(m+220,L),v};});
 function limitAt(s){s=mod(s,L);for(const z of LIMITS){if(s>=z.a&&s<=z.b)return z.v;}return BASE_LIMIT;}
@@ -5136,8 +5138,9 @@ function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new mel
   if(n===1){toast(PROMO_NAMES[1],'info');voice();return;}
   toast((cSt?'発車メロディ「'+ltdSong(cSt.i).name+'」':bSt&&n===0?'発車メロディ「'+branchSong(bSt.i).name+'」':PROMO_NAMES[n])+'（もう一度押すと止まります）','info');
   const play=()=>{if(!G.promoLoop)return;const dur=n===4?ponSnd():(promoPlay(b=>cSt?playSong(ltdSong(cSt.i),b,1):n===0?(bSt?playSong(branchSong(bSt.i),b,1):melody(b,1)):playSong(n===2?SONG_A:SONG_B,b,1))||1);
+    G.promoLoop.onePhraseDur=dur;
     G.promoLoop.timer=setTimeout(play,dur*1000+250);};                                       /* 終わったらまた最初から */
-  clearTimeout(promoVoiceT);G.promoLoop={n,timer:null,voice,t0:nowMs()};play();
+  clearTimeout(promoVoiceT);G.promoLoop={n,timer:null,voice,t0:nowMs(),onePhraseDur:8};play();
 }
 function stopPromoLoop(withVoice){const L=G.promoLoop;if(!L)return;clearTimeout(L.timer);G.promoLoop=null;promoCut();
   if(withVoice){toast('メロディを止めました','info');setTimeout(()=>{L.voice();},350);}else G.promoOn=false;}
@@ -5281,12 +5284,22 @@ function updCrew(dt){if(G.phase!=='play'||!G.twoMan)return;const D=G.door;if(G.v
   if(G.crew==='twoC'){updCondUI();return;}
   G.cT=(G.cT||0)+dt; /* 自動の車掌 */
   if(D.state==='closed'&&G.atStation===null&&G.depCheck===null&&G.v===0&&!G.ato){const d=stopDist(G.nv);if(d>-6.5&&d<17.9&&!sigStopped()){if(G.cPh!=='open'){G.cPh='open';G.cT=0;}if(G.cT>1.5){openDoor(localSide(stOf(G.nv)),true);G.cPh='';}}return;}
-  if(D.state==='open'&&G.atStation!==null){G.cDw=(G.cDw||0)+dt;if(G.cMel==null)G.cMel=rand(1,10);
-    if(!G.promoted[G.atStation]){if(G.cDw>=G.cMel){promote('st',true);G.cT=0;}return;}
+  if(D.state==='open'&&G.atStation!==null){
+    const curSt=stOf(G.atStation);
+    const isMajor=isMajorStation(curSt);
+    G.cDw=(G.cDw||0)+dt;
+    if(G.cMel==null) G.cMel=isMajor?rand(2.0,3.5):rand(0.5,1.2);
+    if(!G.promoted[G.atStation]){if(G.cDw>=G.cMel){promote(defaultPromo(),true);G.cT=0;}return;}
     const busy=pending()||jamCount()>0,melT=G.promoLoop?(nowMs()-G.promoLoop.t0)/1000:0;
-    if(G.promoLoop){if((!busy&&melT>7)||melT>45||G.cDw>70)promote('st',true);G.cT=0;return;}
+    const pDur=(G.promoLoop&&G.promoLoop.onePhraseDur)?G.promoLoop.onePhraseDur:8.0;
+    if(G.promoLoop){
+      const targetMelT=isMajor?(pDur*1.8):(pDur*0.95);
+      if((!busy&&melT>=targetMelT)||melT>(isMajor?45:16)||G.cDw>(isMajor?75:28)){promote(defaultPromo(),true);G.cT=0;}
+      return;
+    }
     if(G.promoOn){G.cT=0;return;}if(busy&&G.cDw<75){G.cT=0;return;}
-    if(G.cT>1.0&&!G.closeWait){closeDoor(D.local,true);G.cT=0;}return;}
+    const closeDelay=isMajor?1.8:0.1;
+    if(G.cT>closeDelay&&!G.closeWait){closeDoor(D.local,true);G.cT=0;}return;}
   if(D.state!=='open')G.cMel=null;
   if(D.state!=='open')G.cDw=0;
   if(D.state==='closed'&&G.depCheck!==null&&!G.condOK&&G.v===0){if(G.cPh!=='sig'){G.cPh='sig';G.cT=0;}if(G.cT>1.4){giveSignal();G.cPh='';}}}
@@ -5453,14 +5466,29 @@ function updAuto(dt){if(!G.auto||G.phase!=='play'||G.waiting||G.walkOn)return;G.
     if(d>-6.5&&d<17.9&&!sigStopped()){if(G.autoPh!=='open'){G.autoPh='open';G.autoT=0;}if(G.autoT>1.2){openDoor(localSide(stOf(G.nv)));G.autoPh='';}} /* 停止信号で止まったときは開けずに、信号が変わったら進む */
     else if(G.autoPh!=='go'){G.autoPh='go';G.autoT=0;}else if(G.autoT>2){toggleATO();G.autoPh='';}return;}
   if((D.state==='open')&&G.atStation!==null){
-    G.dwellT=(G.dwellT||0)+dt;if(G.autoMel==null)G.autoMel=rand(1,10);
-    if(!G.promoted[G.atStation]){if(G.dwellT>=G.autoMel){promote(defaultPromo());G.autoT=0;}return;}   /* ドアが開いて1〜10秒でメロディ */
-    const busy=pending()||jamCount()>0,melT=G.promoLoop?(nowMs()-G.promoLoop.t0)/1000:0;
-    if(G.promoLoop){if((!busy&&melT>6+((G.atStation*7)%5))||melT>45||G.dwellT>70)promote(defaultPromo());G.autoT=0;return;} /* 乗り降りが終わったら止める（最低でも少し流す） */
-    if(G.promoOn){G.autoT=0;return;}                                                                    /* 「ドアが閉まります」の放送中 */
-    if(busy&&G.dwellT<75){G.autoT=0;return;}                                                            /* まだ乗り降りしている人がいる */
-    if(G.autoT>1.0&&!G.closeWait){closeDoor(D.local);G.autoT=0;}return;}
-  if(D.state==='closed'&&G.depCheck!==null&&!G.ato&&G.v===0){if(G.autoPh!=='dep'){G.autoPh='dep';G.autoT=0;}if(G.autoT>3){toggleATO();G.autoPh='';}}
+    const curSt=stOf(G.atStation);
+    const isMajor=isMajorStation(curSt);
+    G.dwellT=(G.dwellT||0)+dt;
+    if(G.autoMel==null) G.autoMel=isMajor?rand(2.0,3.5):rand(0.5,1.2);
+    if(!G.promoted[G.atStation]){if(G.dwellT>=G.autoMel){promote(defaultPromo());G.autoT=0;}return;}
+    const busy=pending()||jamCount()>0, melT=G.promoLoop?(nowMs()-G.promoLoop.t0)/1000:0;
+    const pDur=(G.promoLoop&&G.promoLoop.onePhraseDur)?G.promoLoop.onePhraseDur:8.0;
+    if(G.promoLoop){
+      const targetMelT=isMajor?(pDur*1.8):(pDur*0.95);
+      if((!busy&&melT>=targetMelT)||melT>(isMajor?45:16)||G.dwellT>(isMajor?75:28)){promote(defaultPromo());G.autoT=0;}
+      return;
+    }
+    if(G.promoOn){G.autoT=0;return;}
+    if(busy&&G.dwellT<75){G.autoT=0;return;}
+    const closeDelay=isMajor?1.8:0.1;
+    if(G.autoT>closeDelay&&!G.closeWait){closeDoor(D.local);G.autoT=0;}return;}
+  if(D.state==='closed'&&G.depCheck!==null&&!G.ato&&G.v===0){
+    const depSt=stOf(G.depCheck);
+    const isMajor=isMajorStation(depSt);
+    if(G.autoPh!=='dep'){G.autoPh='dep';G.autoT=0;}
+    const depDelay=isMajor?2.5:0.8;
+    if(G.autoT>depDelay){toggleATO();G.autoPh='';}
+  }
 }
 
 /* ================= 2-platform / 4-track stations, depot, waiting ================= */
