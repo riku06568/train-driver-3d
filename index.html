@@ -241,12 +241,25 @@ html,body{overscroll-behavior:none}
 .op-item-svc{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:#1e293b}
 .op-item-info{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#94a3b8}
 
+.q-reload-btn{background:rgba(14,165,233,0.15);border:1px solid rgba(56,189,248,0.4);border-radius:8px;padding:9px 14px;color:#38bdf8;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;transition:background 0.15s,transform 0.15s}
+.q-reload-btn:hover{background:rgba(14,165,233,0.3);color:#fff;transform:translateY(-1px)}
+#btnChatFab{position:fixed;top:calc(100px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(56,189,248,0.4);background:rgba(12,24,44,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#38bdf8;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.5);transition:background 0.15s,transform 0.15s}
+#btnChatFab.hide{display:none!important}
+#btnChatFab:hover{background:rgba(14,116,144,0.95);color:#fff;transform:scale(1.02)}
+#chatTray{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));right:calc(12px + env(safe-area-inset-right,0px));z-index:50;background:rgba(15,23,42,0.96);border:1.5px solid rgba(56,189,248,0.45);border-radius:16px;padding:12px;box-shadow:0 12px 36px rgba(0,0,0,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);width:210px;max-width:85vw;display:flex;flex-direction:column;gap:8px}
+#chatTray.hide{display:none!important}
+.chat-preset-btn{background:rgba(30,41,59,0.85);border:1px solid rgba(148,163,184,0.25);border-radius:8px;color:#f1f5f9;font-size:13px;font-weight:700;padding:8px 10px;text-align:left;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.chat-preset-btn:hover,.chat-preset-btn:active{background:rgba(2,132,199,0.4);border-color:#38bdf8;color:#fff;transform:translateX(2px)}
+#chatHudBanner{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:45;background:rgba(15,23,42,0.92);border:1.5px solid #38bdf8;border-radius:24px;padding:8px 18px;color:#fff;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.6);display:flex;align-items:center;gap:8px;pointer-events:none;transition:opacity 0.3s,transform 0.3s}
+#chatHudBanner.hide{display:none!important}
+
 @media (prefers-reduced-motion:reduce){.card{transition:none}}
 </style>
 </head>
 <body>
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
 <button id="btnTitleReturn" class="hide" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
+<button id="btnChatFab" class="hide" title="定型文チャット">💬 チャット</button>
 <button id="btnOnlineHud" class="online-hud-btn">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
 <div id="gameTutorialHUD" class="hide">
   <div class="tut-hud-step" id="tutHudStep">💡 運転ガイド</div>
@@ -254,7 +267,22 @@ html,body{overscroll-behavior:none}
   <div class="tut-hud-sub" id="tutHudSub">画面ドラッグで見回し / モニターをタップで拡大</div>
 </div>
 <div id="onlinePanel" class="hide"><div class="op-box"><div class="op-header"><span>🌐 オンライン乗務員一覧</span><button id="opClose">✕</button></div><div id="opList" class="op-list"></div></div></div>
-<div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・設定</div><div class="qbtns"><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div>
+<div id="chatTray" class="hide">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;margin-bottom:2px;">
+    <span style="font-size:12.5px;font-weight:800;color:#38bdf8;">💬 定型文チャット</span>
+    <button id="btnChatClose" style="background:none;border:none;color:#94a3b8;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>
+  </div>
+  <button class="chat-preset-btn" data-msg="こんにちは">💬 こんにちは</button>
+  <button class="chat-preset-btn" data-msg="よろしくお願いします">🤝 よろしくお願いします</button>
+  <button class="chat-preset-btn" data-msg="並走しましょう">🚆 並走しましょう</button>
+  <button class="chat-preset-btn" data-msg="発車します">🟢 発車します</button>
+  <button class="chat-preset-btn" data-msg="そろそろ抜けます">👋 そろそろ抜けます</button>
+</div>
+<div id="chatHudBanner" class="hide"><span style="font-size:16px;">💬</span><span id="chatHudText"></span></div>
+<div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・設定</div><div class="qbtns"><button data-q="ultralight">超軽量</button><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div>
+<div style="margin:10px 0 4px;">
+  <button id="btnReloadOtherTrainsSheet" type="button" class="q-reload-btn">🔄 他人が表示されない時にタップ（他列車再読み込み）</button>
+</div>
 <div style="margin:14px 0 6px;border-top:1px solid rgba(255,255,255,0.15);padding-top:12px;">
   <div style="font-weight:700;font-size:14.5px;margin-bottom:8px;color:#38bdf8;">💡 チュートリアル説明表示</div>
   <div style="display:flex;gap:8px;">
@@ -322,7 +350,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.1)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.2)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -350,7 +378,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.0 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.2 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -428,7 +456,17 @@ html,body{overscroll-behavior:none}
         <button id="btnBackFromSettings" class="backbtn">← 閉じる</button>
         <h2>設定・操作</h2>
       </div>
-      <div id="qualRow"><span class="ql">画質・動作</span><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button><div class="qd" id="qualDesc"></div></div>
+      <div id="qualRow">
+        <span class="ql">画質・動作</span>
+        <button data-q="ultralight">超軽量</button>
+        <button data-q="light">軽い</button>
+        <button data-q="normal">普通</button>
+        <button data-q="heavy">重い</button>
+        <div class="qd" id="qualDesc"></div>
+        <div style="margin-top:10px;width:100%;">
+          <button id="btnReloadOtherTrains" type="button" class="q-reload-btn">🔄 他の人が表示されない時はここをタップ（他列車を再読み込み）</button>
+        </div>
+      </div>
       <div id="tutRow"><span class="ql">チュートリアル表示</span><button id="btnTutOff">OFF</button><button id="btnTutOn" class="on">ON</button><div class="qd" id="tutDesc">ONにすると、ゲーム中やメニュー画面に運転手順や操作説明が分かりやすく表示されます。</div></div>
       <div id="autoAnnRow" style="margin-top:12px;"><span class="ql">自動次駅放送</span><button id="btnAutoAnnOff">OFF</button><button id="btnAutoAnnOn" class="on">ON</button><div class="qd" id="autoAnnDesc">ONまたは完全オート時、発車後と駅手前600mで自動的に車内アナウンス（次は〜 / まもなく〜）を流します。</div></div>
       <div class="help" style="margin-top:20px;">
@@ -448,6 +486,7 @@ html,body{overscroll-behavior:none}
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">J キー</b> : ミュージックホーン</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Q / E</b> : 視点左右回転</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">V キー</b> : 視点を正面に戻す</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">T キー</b> : 定型文チャットを開く</div>
         </div>
       </div>
     </div>
@@ -459,7 +498,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.0)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.2)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -505,6 +544,21 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.2 (2026.11.14)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">マルチ音響強化・定型文チャット・超軽量モード＆規約モーダル大型アップデート</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>他列車の警笛・ミュージックホーン・乗降促進メロディ立体音響化</b>：すれ違う他プレイヤーの警笛や発車メロディ、ドア開閉チャイムをリアルな立体音響でしっかり響くよう強化（運転室内でも臨場感ある音響を再現）</li>
+            <li><b>定型文チャット機能の新設</b>：画面右上の「💬 チャット」ボタンから「こんにちは」「よろしくお願いします」「並走しましょう」「発車します」「そろそろ抜けます」の5種類のあいさつをワンタップ送信可能に。自車の吹き出しや他列車の頭上にも吹き出しが表示されます</li>
+            <li><b>超低スペック向け「超軽量モード」追加</b>：古いスマートフォンや低スペックPCでも全機能・音・演出を一切削らずサクサク快適に動作する超軽量画質モードを新設</li>
+            <li><b>他列車再読み込みUIの追加</b>：画質設定画面に「他列車を再読み込み」ボタンを新設。他プレイヤーが見えなくなった際にワンタップで表示リセット可能に</li>
+            <li><b>ご意見箱に「作者からのお返事」コーナー新設</b>：プレイヤーから寄せられたご意見・ご要望に作者（サトタケ / riku06568）が直接回答・返信する掲示板を追加</li>
+            <li><b>利用規約・匿名データ収集同意モーダル</b>：ゲーム改善のための匿名データ収集方針を明記し、同意・不同意をプレイヤーが自由に選択可能に（不同意でも全機能プレイ可能）</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.1</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.1 (2026.11.13)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">マスコン滑らか化＆オンラインプレイ接続強化アップデート</div>
@@ -646,6 +700,49 @@ html,body{overscroll-behavior:none}
           <div id="fbStatus" style="font-size:14px;text-align:center;min-height:20px;line-height:1.5;"></div>
         </form>
       </div>
+
+      <!-- Feedback Replies Section (作者からのお返事) -->
+      <div id="fbRepliesSection" style="position:relative;z-index:20;background:rgba(18,28,48,0.92);border:1px solid rgba(130,160,210,0.3);border-radius:16px;padding:22px;max-width:540px;margin:20px auto 40px;box-shadow:0 8px 32px rgba(0,0,0,0.4);text-align:left;">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:10px;margin-bottom:14px;">
+          <h3 style="margin:0;font-size:16.5px;font-weight:800;color:#38bdf8;display:flex;align-items:center;gap:6px;">
+            <span>📢</span> 作者からのお返事・回答
+          </h3>
+          <span style="font-size:12px;color:#94a3b8;">随時更新</span>
+        </div>
+        <div style="margin:0 0 14px;font-size:12.5px;color:#cbd5e1;line-height:1.5;">
+          みなさまから届いたご意見・ご要望に作者（サトタケ / riku06568）が回答しています！
+        </div>
+        <div id="fbRepliesList" style="display:flex;flex-direction:column;gap:12px;max-height:420px;overflow-y:auto;padding-right:4px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms of Service & Privacy Modal (利用規約・データ収集) -->
+    <div id="termsModal" class="home-modal hide">
+      <div class="home-modal-box" style="max-width:520px;padding:24px;">
+        <div class="home-modal-header" style="border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:12px;margin-bottom:14px;">
+          <h3 style="display:flex;align-items:center;gap:8px;font-size:18px;color:#38bdf8;">
+            <span>📋</span> 利用規約およびデータ収集について
+          </h3>
+        </div>
+        <div style="font-size:13.5px;line-height:1.7;color:#cbd5e1;max-height:50vh;overflow-y:auto;padding-right:6px;margin-bottom:18px;">
+          <p style="margin:0 0 10px;">本作『汐見環状線 3Dトレインシミュレーター』をご利用いただきありがとうございます。</p>
+          <p style="margin:0 0 10px;">当ゲームでは、ゲーム体験の改善、不具合・クラッシュの調査・迅速な修正、およびオンラインマルチプレイの同期品質向上のため、プレイ中の以下のデータを<b>個人を特定しない完全な匿名情報</b>として自動収集・分析させていただく場合がございます。</p>
+          <ul style="margin:0 0 10px;padding-left:20px;color:#94a3b8;font-size:12.5px;line-height:1.7;">
+            <li>ゲーム内の乗務路線・駅・車両などのプレイ状況</li>
+            <li>動作フレームレートやプレイ端末の動作環境（OS・ブラウザ種別）</li>
+            <li>スクリプトエラーや通信切断の発生情報</li>
+          </ul>
+          <p style="margin:0 0 8px;color:#e2e8f0;font-weight:700;">※氏名・メールアドレス・電話番号・正確な位置情報などの個人情報は一切収集・保存いたしません。</p>
+          <div style="background:rgba(2,132,199,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 12px;font-size:12.5px;color:#7dd3fc;margin-top:12px;line-height:1.5;">
+            💡 <b>【いつでも安心】</b>「同意しない」を選択された場合でも、ゲームのすべての機能（オンライン・全路線乗務・見学など）を一切の制限なくそのまま快適にプレイしていただけます。
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+          <button id="btnTermsDisagree" type="button" style="flex:1;min-width:120px;padding:12px 16px;border-radius:10px;border:1px solid #475569;background:#1e293b;color:#cbd5e1;font-weight:700;font-size:14px;cursor:pointer;">同意しない</button>
+          <button id="btnTermsAgree" type="button" style="flex:1;min-width:140px;padding:12px 18px;border-radius:10px;border:1px solid #0284c7;background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 14px rgba(2,132,199,0.4);">✓ 同意してプレイ</button>
+        </div>
+      </div>
     </div>
 
     <!-- Driver Account / Name & Password Modal -->
@@ -726,11 +823,11 @@ html,body{overscroll-behavior:none}
 <script>
 (function(){
 'use strict';
-/* 画質・動作の設定：light=軽い（自動調整＋見えない物を省く） normal=普通（前のバージョンと同じ） heavy=重い（最高画質） */
+/* 画質・動作の設定：ultralight=超軽量（低スペック向け） light=軽い normal=普通 heavy=重い（最高画質） */
 const AV_DEF={female:false,height:170,skin:0,hair:0,hairLong:false,tails:false,topStyle:'shirt',top:0x2f3b52,sleeve:'long',bottom:'long',bottomC:0x2b2d33,skirtType:1,skirtLen:0.36,sock:0,sockC:0xf4f2ec,shoeC:0x2a2a2a,bag:0,glasses:false};
 let AVATAR=(()=>{try{return Object.assign({},AV_DEF,JSON.parse(localStorage.getItem('td_avatar')||'{}'));}catch(e){return Object.assign({},AV_DEF);}})(); /* 乗客モードの自分の見た目 */
 let CREWSEL=(()=>{try{const v=localStorage.getItem('td_crew');return v==='twoD'||v==='twoC'?v:'one';}catch(e){return 'one';}})(); /* 快速特急の乗務：one=ワンマン twoD=ツーマン（運転士） twoC=ツーマン（車掌） */
-let QMODE=(()=>{try{const v=localStorage.getItem('td_quality');return v==='normal'||v==='heavy'?v:'light';}catch(e){return 'light';}})();
+let QMODE=(()=>{try{const v=localStorage.getItem('td_quality');return (v==='ultralight'||v==='normal'||v==='heavy')?v:'light';}catch(e){return 'light';}})();
 const rand=(a,b)=>a+Math.random()*(b-a);
 const irand=(a,b)=>Math.floor(rand(a,b+1));
 const pick=a=>a[(Math.random()*a.length)|0];
@@ -1158,6 +1255,8 @@ function initOnlineClient() {
       if (onlineConnectTimer) { clearTimeout(onlineConnectTimer); onlineConnectTimer = null; }
       ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/accounts/#', { qos: 1 });
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/events', { qos: 0 });
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/chat', { qos: 0 });
       startOnlinePublishLoop();
       publishPresence();
       syncDriverToMQTT();
@@ -1177,6 +1276,20 @@ function initOnlineClient() {
     
     ONLINE_CLIENT.on('message', (topic, message) => {
       try {
+        if (topic === 'shiomi3d/v1/chat') {
+          const chat = JSON.parse(message.toString());
+          if (chat && chat.id && chat.id !== ONLINE_CLIENT_ID && chat.text) {
+            handleIncomingChat(chat);
+          }
+          return;
+        }
+        if (topic === 'shiomi3d/v1/events') {
+          const ev = JSON.parse(message.toString());
+          if (ev && ev.id && ev.id !== ONLINE_CLIENT_ID) {
+            handleIncomingEvent(ev);
+          }
+          return;
+        }
         if (topic.startsWith('shiomi3d/v1/accounts/')) {
           const acc = JSON.parse(message.toString());
           if (acc && acc.name) {
@@ -1258,61 +1371,26 @@ function handleRemotePlayerUpdate(data) {
     // 他プレイヤーの乗降促進メロディ再生
     if (data.promoT && (!p.lastPromoT || data.promoT > p.lastPromoT)) {
       p.lastPromoT = data.promoT;
-      if (p.tr && p.tr.cars && p.tr.cars[0]) {
-        try {
-          playAt(p.tr.cars[0].position, dest => {
-            const pn = data.promoN || 0;
-            if (pn === 4) ponSnd(dest);
-            else if (pn === 1) chime(dest);
-            else melody(dest, 1);
-          });
-        } catch(e) {}
-      }
+      playRemoteTrainSound(p, 'promo', { promoN: data.promoN, stName: data.stName });
     }
     // 他プレイヤーのドア開閉音・チャイム再生
     if (data.door && data.door !== p.lastDoor) {
-      if (p.tr && p.tr.cars && p.tr.cars[0]) {
-        const carPos = p.tr.cars[0].position;
-        if (data.door === 'opening') {
-          try { playAt(carPos, dest => doorOpenSnd(dest)); } catch(e) {}
-        } else if (data.door === 'closing') {
-          try { playAt(carPos, dest => doorCloseSnd(dest)); } catch(e) {}
-        }
+      if (data.door === 'opening') {
+        playRemoteTrainSound(p, 'doorOpen');
+      } else if (data.door === 'closing') {
+        playRemoteTrainSound(p, 'doorClose');
       }
       p.lastDoor = data.door;
     }
     // 他プレイヤーの警笛再生
     if (data.hornT && (!p.lastHornT || data.hornT > p.lastHornT)) {
       p.lastHornT = data.hornT;
-      if (p.tr && p.tr.cars && p.tr.cars[0]) {
-        try {
-          playAt(p.tr.cars[0].position, dest => {
-            tone(349, 0, 0.9, 'square', 0.25, dest);
-            tone(440, 0, 0.9, 'square', 0.25, dest);
-            tone(349, 0.05, 0.85, 'sawtooth', 0.14, dest);
-            tone(440, 0.05, 0.85, 'sawtooth', 0.14, dest);
-          });
-        } catch(e) {}
-      }
+      playRemoteTrainSound(p, 'horn');
     }
     // 他プレイヤーのミュージックホーン再生
     if (data.mhornT && (!p.lastMhornT || data.mhornT > p.lastMhornT)) {
       p.lastMhornT = data.mhornT;
-      if (p.tr && p.tr.cars && p.tr.cars[0]) {
-        try {
-          playAt(p.tr.cars[0].position, dest => {
-            if (typeof AC === 'undefined' || !AC) return;
-            const t0 = AC.currentTime + 0.03;
-            const seq = [[72,0.22],[76,0.22],[79,0.3],[84,0.72],[81,0.24],[79,0.24],[84,1.05]];
-            let curT = t0;
-            for (const [m, dur] of seq) {
-              mnote(m, curT, dur, 'triangle', 0.35, dest, true);
-              mnote(m + 12, curT, dur, 'sine', 0.15, dest, true);
-              curT += dur * 0.55;
-            }
-          });
-        } catch(e) {}
-      }
+      playRemoteTrainSound(p, 'mhorn');
     }
 
     p.name = data.name || p.name;
@@ -1377,6 +1455,250 @@ function removeRemotePlayer(id) {
     toast('👤 ' + pName + ' さんが乗務を終了しました', 'info');
   } catch(e) {}
   updateOnlineHud(true);
+}
+
+function playRemoteTrainSound(p, type, opt) {
+  if (typeof AC === 'undefined' || !AC || !p) return;
+  try {
+    let pos = null;
+    if (p.tr && p.tr.cars && p.tr.cars[0]) {
+      pos = p.tr.cars[0].position;
+    } else if (p.s != null && typeof offsG === 'function') {
+      const o = (typeof TK !== 'undefined' && p.key && TK[p.key]) ? TK[p.key].off(p.s) : 0;
+      pos = offsG(p.s, o, 1.5);
+    }
+    if (!pos || typeof camera === 'undefined' || !camera) return;
+    const cw = camera.getWorldPosition(new THREE.Vector3());
+    const d = pos.distanceTo(cw);
+    if (!isFinite(d)) return;
+
+    const isHorn = (type === 'horn' || type === 'mhorn');
+    const maxD = isHorn ? 1600 : 650;
+    if (d > maxD) return;
+
+    // 運転室内・客室内にいる場合の音響減衰（窓ガラス越しにリアルに響かせる）
+    const inCab = (typeof listenerSealed === 'function') ? listenerSealed() : false;
+    const cabFilter = inCab ? 3400 : 18000;
+    const cabVolMult = inCab ? (isHorn ? 0.65 : 0.48) : 1.0;
+
+    const refD = isHorn ? 110 : 55;
+    const distGain = Math.min(3.8, 5.0 / (1 + Math.pow(d / refD, 1.35)));
+    const totalGain = distGain * cabVolMult;
+
+    const g = AC.createGain();
+    g.gain.value = totalGain;
+
+    const lp = AC.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = cabFilter;
+    g.connect(lp);
+
+    let out = g;
+    try {
+      const panner = AC.createStereoPanner();
+      const cr = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.getWorldQuaternion(new THREE.Quaternion()));
+      panner.pan.value = clamp(new THREE.Vector3().subVectors(pos, cw).dot(cr) / (d + 1), -0.9, 0.9);
+      lp.connect(panner);
+      panner.connect(master);
+      out = g;
+    } catch(e) {
+      lp.connect(master);
+      out = g;
+    }
+
+    if (type === 'horn') {
+      tone(349, 0, 0.9, 'square', 0.28, out);
+      tone(440, 0, 0.9, 'square', 0.28, out);
+      tone(349, 0.04, 0.85, 'sawtooth', 0.16, out);
+      tone(440, 0.04, 0.85, 'sawtooth', 0.16, out);
+    } else if (type === 'mhorn') {
+      const t0 = AC.currentTime + 0.02;
+      const seq = [[72,0.22],[76,0.22],[79,0.3],[84,0.72],[81,0.24],[79,0.24],[84,1.05]];
+      let curT = t0;
+      for (const [m, dur] of seq) {
+        if (typeof mnote === 'function') {
+          mnote(m, curT, dur, 'triangle', 0.4, out, true);
+          mnote(m + 12, curT, dur, 'sine', 0.18, out, true);
+        }
+        curT += dur * 0.55;
+      }
+    } else if (type === 'promo') {
+      const pn = opt && opt.promoN != null ? opt.promoN : 0;
+      if (pn === 4 && typeof ponSnd === 'function') ponSnd(out);
+      else if (pn === 1 && typeof chime === 'function') chime(out);
+      else if (pn === 2 && typeof playSong === 'function' && typeof SONG_A !== 'undefined') playSong(SONG_A, out, 1.1);
+      else if (pn === 3 && typeof playSong === 'function' && typeof SONG_B !== 'undefined') playSong(SONG_B, out, 1.1);
+      else if (pn === 'st' && opt && opt.stName && typeof ltdSong === 'function' && typeof STATIONS !== 'undefined') {
+        const found = STATIONS.findIndex(s => s.name === opt.stName);
+        playSong(ltdSong(found >= 0 ? found : 0), out, 1.1);
+      } else if (typeof melody === 'function') {
+        melody(out, 1.1);
+      }
+    } else if (type === 'doorOpen' && typeof doorOpenSnd === 'function') {
+      doorOpenSnd(out);
+    } else if (type === 'doorClose' && typeof doorCloseSnd === 'function') {
+      doorCloseSnd(out);
+    }
+  } catch(e) {
+    console.warn('playRemoteTrainSound err', e);
+  }
+}
+
+function broadcastEvent(type, extra) {
+  if (typeof IS_ONLINE !== 'undefined' && IS_ONLINE && typeof ONLINE_CLIENT !== 'undefined' && ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+    try {
+      const curG = (typeof G !== 'undefined' ? G : (window.G || null));
+      const payload = Object.assign({
+        id: ONLINE_CLIENT_ID,
+        type: type,
+        s: (curG && curG.s != null) ? curG.s : null,
+        key: (curG && curG.key) ? curG.key : 'A',
+        t: Date.now()
+      }, extra || {});
+      ONLINE_CLIENT.publish('shiomi3d/v1/events', JSON.stringify(payload), { qos: 0 });
+    } catch(e) {}
+  }
+}
+
+function makeSpeechBubbleSprite(text) {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 140;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(12, 22, 40, 0.94)';
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 5;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(8, 8, 496, 96, 24);
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    ctx.fillRect(8, 8, 496, 96);
+    ctx.strokeRect(8, 8, 496, 96);
+  }
+  ctx.fillStyle = 'rgba(12, 22, 40, 0.94)';
+  ctx.beginPath();
+  ctx.moveTo(236, 104);
+  ctx.lineTo(256, 130);
+  ctx.lineTo(276, 104);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px "Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('💬 ' + text, 256, 56);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(6.6, 1.8, 1);
+  return sprite;
+}
+
+function sendQuickChat(text) {
+  if (!text) return;
+  const curG = (typeof G !== 'undefined' ? G : (window.G || null));
+  const stFn = typeof stOf === 'function' ? stOf : null;
+  const stObj = (curG && stFn) ? (curG.atStation !== null ? stFn(curG.atStation) : (curG.nv != null ? stFn(curG.nv) : null)) : null;
+  const payload = {
+    id: ONLINE_CLIENT_ID,
+    name: MY_PLAYER_NAME,
+    text: text,
+    s: curG ? curG.s : null,
+    stName: stObj ? stObj.name : '',
+    ts: Date.now()
+  };
+  if (typeof ONLINE_CLIENT !== 'undefined' && ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+    try {
+      ONLINE_CLIENT.publish('shiomi3d/v1/chat', JSON.stringify(payload), { qos: 0 });
+    } catch(e) {}
+  }
+  displayChatBubble(ONLINE_CLIENT_ID, MY_PLAYER_NAME, text, true);
+  showChatHudMsg(MY_PLAYER_NAME, text, true);
+  toast('💬 ' + text, 'info');
+}
+
+function handleIncomingChat(chat) {
+  const name = chat.name || '運転士';
+  const text = chat.text || '';
+  if (!text) return;
+  chatChime();
+  showChatHudMsg(name, text, false);
+  displayChatBubble(chat.id, name, text, false);
+}
+
+function handleIncomingEvent(ev) {
+  const p = ONLINE_PLAYERS[ev.id] || { s: ev.s, key: ev.key };
+  if (ev.type === 'horn') {
+    if (p) p.lastHornT = ev.t || Date.now();
+    playRemoteTrainSound(p, 'horn');
+  } else if (ev.type === 'mhorn') {
+    if (p) p.lastMhornT = ev.t || Date.now();
+    playRemoteTrainSound(p, 'mhorn');
+  } else if (ev.type === 'promo') {
+    if (p) p.lastPromoT = ev.t || Date.now();
+    playRemoteTrainSound(p, 'promo', { promoN: ev.promoN, stName: ev.stName });
+  }
+}
+
+let chatHudTimer = null;
+function showChatHudMsg(name, text, isMe) {
+  const el = document.getElementById('chatHudBanner');
+  const txtEl = document.getElementById('chatHudText');
+  if (!el || !txtEl) return;
+  txtEl.textContent = (isMe ? 'あなた: ' : (name + ': ')) + text;
+  el.classList.remove('hide');
+  if (chatHudTimer) clearTimeout(chatHudTimer);
+  chatHudTimer = setTimeout(() => {
+    el.classList.add('hide');
+  }, 5000);
+}
+
+function displayChatBubble(playerId, name, text, isMe) {
+  try {
+    let targetCar = null;
+    if (isMe) {
+      if (typeof ownTrain !== 'undefined' && ownTrain && ownTrain.cars && ownTrain.cars[0]) {
+        targetCar = ownTrain.cars[0];
+      }
+    } else if (typeof ONLINE_PLAYERS !== 'undefined' && ONLINE_PLAYERS[playerId]) {
+      const p = ONLINE_PLAYERS[playerId];
+      if (p.tr && p.tr.cars && p.tr.cars[0]) {
+        targetCar = p.tr.cars[0];
+      }
+    }
+    if (!targetCar) return;
+
+    if (targetCar.chatBubble) {
+      try { targetCar.remove(targetCar.chatBubble); } catch(e) {}
+      targetCar.chatBubble = null;
+    }
+
+    const bubble = makeSpeechBubbleSprite(text);
+    bubble.position.set(0, 6.8, -CARHALF + 2.5);
+    targetCar.add(bubble);
+    targetCar.chatBubble = bubble;
+
+    setTimeout(() => {
+      if (targetCar && targetCar.chatBubble === bubble) {
+        try { targetCar.remove(bubble); } catch(e) {}
+        targetCar.chatBubble = null;
+      }
+    }, 6000);
+  } catch(e) {}
+}
+
+function chatChime() {
+  if (typeof AC === 'undefined' || !AC) return;
+  try {
+    tone(880, 0, 0.12, 'sine', 0.14, master);
+    tone(1320, 0.08, 0.18, 'sine', 0.14, master);
+  } catch(e) {}
 }
 
 let lastHudUpdateTime = 0;
@@ -4200,7 +4522,7 @@ function airHiss(vol,dur){if(!AC)return;try{const src=AC.createBufferSource();if
 function tone(freq,start,dur,type,vol,dest){if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=freq;
   const t=AC.currentTime+start;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((vol||0.15)*7.5,t+0.02);g.gain.linearRampToValueAtTime(0,t+dur);
   o.connect(g);g.connect(dest||master);o.start(t);o.stop(t+dur+0.05);}
-function horn(){initAudio();tone(349,0,0.9,'square',0.22);tone(440,0,0.9,'square',0.22);tone(349,0.05,0.85,'sawtooth',0.12);tone(440,0.05,0.85,'sawtooth',0.12);}
+function horn(){initAudio();tone(349,0,0.9,'square',0.22);tone(440,0,0.9,'square',0.22);tone(349,0.05,0.85,'sawtooth',0.12);tone(440,0.05,0.85,'sawtooth',0.12);if(typeof broadcastEvent==='function')broadcastEvent('horn');}
 function chime(dest, type){
   if (!AC) return;
   initAudio();
@@ -4510,7 +4832,7 @@ function ltdSong(i){const S=branchSong(300+i);S.name=STATIONS[i]?STATIONS[i].nam
 function promoPlay(fn){if(!AC)return 0;promoCut();const b=AC.createGain();b.gain.value=1;b.connect(master);b.connect(getReverb());promoOnce=b;return fn(b);}
 function promoCut(){if(promoOnce){const b=promoOnce;promoOnce=null;try{b.gain.setTargetAtTime(0,AC.currentTime,0.06);setTimeout(()=>{try{b.disconnect();}catch(e){}},800);}catch(e){}}}
 // music horn: a short brass fanfare with harmony, like the real thing
-function musicHorn(){initAudio();if(!AC)return;const t0=AC.currentTime+0.03;
+function musicHorn(){initAudio();if(typeof broadcastEvent==='function')broadcastEvent('mhorn');if(!AC)return;const t0=AC.currentTime+0.03;
   const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(900,t0);f.frequency.linearRampToValueAtTime(2600,t0+0.12);f.Q.value=0.7;
   const bus=AC.createGain();bus.gain.value=1.5;f.connect(bus);bus.connect(master);const rv=AC.createGain();rv.gain.value=0.7;bus.connect(rv);rv.connect(getReverb());
   const seq=[[72,0.22,[0,4,7]],[76,0.22,[0,3,7]],[79,0.3,[0,4,7]],[84,0.72,[0,4,7,12]],[81,0.24,[0,3,7]],[79,0.24,[0,4,7]],[84,1.05,[0,4,7,12]]];
@@ -4756,6 +5078,7 @@ function openDoor(local,sys){if(sigStopped()){toast('停止信号で止まって
   if(d>17.9||d<-6.5){toast('ホームがありません','warn');return;}
   if(local!==localSide(st)){toast('ホームは'+(localSide(st)<0?'左':'右')+'側です','warn');return;}
   G.atStation=v;D.local=local;D.side=local*G.dir;D.state='opening';G.flowPending=true;doorOpenSnd();toast(st.name+' に到着','ok');
+  if(typeof broadcastEvent==='function')broadcastEvent('doorOpen');
   const end=v>=lastStop();if(!G.said['arr_'+v]){G.said['arr_'+v]=true;setTimeout(()=>sayJE(arriveAnn(st,end),arriveAnnEn(st,end)),400);}
   if(!G.list&&(st.cls==='M'||st.i===0)&&G.nv>0)askStation(st,false);
 }
@@ -4781,6 +5104,7 @@ function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new mel
   if(G.promoLoop){stopPromoLoop(true);return;} /* もう一度押すと止まる */
   if(G.promoOn){toast('放送中です','info');return;}
   G.promoOn=true;if(G.atStation!==null)G.promoted[G.atStation]=true;const fi=flowSt(),fk=fkey();
+  if(typeof broadcastEvent==='function')broadcastEvent('promo',{promoN:n,stName:(G.atStation!==null&&typeof stOf==='function'&&stOf(G.atStation)?stOf(G.atStation).name:'')});
   for(const p of active){if(p.flow!==fk||p.st!==fi)continue;
     if(p.kind==='board'||p.kind==='alight'||p.kind==='runner'){p.speed*=1.5;p.delay*=0.5;}
     if(p.kind==='jam')pushInJam(p);}
@@ -4800,7 +5124,7 @@ function pushInJam(p){ /* 奥へ押し込み、強制乗車（再詰まりしな
   p.kind='board';p.end='board';p.train='OWN';p.forceIn=true;p.delay=rand(0.2,1.2);p.speed=rand(1.4,2.0);
   const sd=Math.sign(p.o-p.trackO)||1;p.path=[[p.doorS||p.s,p.trackO+sd*0.35],[p.doorS||p.s,p.trackO+sd*0.12]];}
 function pushInAllJams(){const fi=flowSt(),fk=fkey();for(const p of active)if(p.flow===fk&&p.st===fi&&p.kind==='jam')pushInJam(p);}
-function startClosing(){const D=G.door;G.closeWait=null;promoAbort();abandonPending();D.state='closing';doorCloseSnd();}
+function startClosing(){const D=G.door;G.closeWait=null;promoAbort();abandonPending();D.state='closing';doorCloseSnd();if(typeof broadcastEvent==='function')broadcastEvent('doorClose');}
 function promoAbort(){if(!G.promoOn)return;clearTimeout(promoVoiceT);promoCut();G.promoOn=false;}
 /* 乗りに向かっている電車のドアがもう閉まった／発車した → ドアのすぐ前なら乗る、そうでなければ列に戻って次を待つ */
 function boardOpen(p){if(p.train==='OWN')return !PAX&&(G.door.state==='open'||G.door.state==='opening');const a=p.train;return !!(a&&a.state==='dwell'&&a.frac>0.3&&a.t>2.8);}
@@ -6503,7 +6827,7 @@ function updateTutorialHUD() {
 window.updateTutorialHUD = updateTutorialHUD;
 /* 自動画質：フレームが遅いときは描画解像度を少しずつ下げ、速くなったら戻す（ゲームの中身は変わらない） */
 const QUAL={max:Math.min(window.devicePixelRatio||1,1.1),min:0.5,pr:0,ema:16,t:0,lock:0,pend:null};QUAL.pr=QUAL.max;
-function updQuality(ms){if(QMODE!=='light')return;ms=Math.min(ms,100);QUAL.ema+=(ms-QUAL.ema)*0.06;QUAL.t+=ms;if(QUAL.lock>0){QUAL.lock-=ms;return;}if(QUAL.t<1200)return;QUAL.t=0;
+function updQuality(ms){if(QMODE!=='light'&&QMODE!=='ultralight')return;ms=Math.min(ms,100);QUAL.ema+=(ms-QUAL.ema)*0.06;QUAL.t+=ms;if(QUAL.lock>0){QUAL.lock-=ms;return;}if(QUAL.t<1200)return;QUAL.t=0;
   if(QUAL.ema>24){if(QUAL.pend){if(QUAL.ema>QUAL.pend.ema*0.93){QUAL.pr=QUAL.pend.pr;renderer.setPixelRatio(QUAL.pr);QUAL.pend=null;QUAL.lock=60000;return;}QUAL.pend=null;} // 下げても効かない（画面の更新上限）→戻す
     if(QUAL.pr>QUAL.min+0.01){QUAL.pend={ema:QUAL.ema,pr:QUAL.pr};QUAL.pr=Math.max(QUAL.min,QUAL.pr*0.85);renderer.setPixelRatio(QUAL.pr);}}
   else{QUAL.pend=null;if(QUAL.ema<16.8&&QUAL.pr<QUAL.max-0.01){QUAL.pr=Math.min(QUAL.max,QUAL.pr*1.07);renderer.setPixelRatio(QUAL.pr);QUAL.t=-2500;}}}
@@ -6524,7 +6848,7 @@ function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,fals
   for(const t of cityTrains) if (t) _trsList.push(t);
   for(const t of depotTrains) if (t) _trsList.push(t);
   if(IS_ONLINE && window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){if(ONLINE_PLAYERS[pid].tr)_trsList.push(ONLINE_PLAYERS[pid].tr);}}
-  for(const tr of _trsList){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=car.position.distanceTo(cp)<far+14;}}
+  for(const tr of _trsList){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=tr.isRemotePlayer?(car.position.distanceTo(cp)<3200):(car.position.distanceTo(cp)<far+14);}}
 function frameBody(now){
   updQuality(now-last);
   const dt=Math.min(0.05,(now-last)/1000);last=now;frameN++;
@@ -6584,6 +6908,7 @@ function frameBody(now){
             tr.cars[0].add(plate);
             tr.nameplate = plate;
             addCustomCrew(tr, isTwoMan, p.avatar);
+            tr.isRemotePlayer = true;
             p.tr = tr;
             p.currentKey = k;
             p.currentNCars = nCar;
@@ -6840,15 +7165,60 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
 /* 画質・動作の設定を反映（ゲーム中に変えても、その場で切り替わる） */
 window.__applyQ=()=>{const dpr=window.devicePixelRatio||1;
   const isMob = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  QUAL.max=QMODE==='heavy'?(isMob?Math.min(dpr,1.2):Math.min(dpr,2)):(isMob?Math.min(dpr,1.0):Math.min(dpr,1.1));QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;QUAL.ema=16;renderer.setPixelRatio(QUAL.pr);
-  for(const k in RT)QMODE==='heavy'?(isMob?RT[k].setSize(384,288):RT[k].setSize(640,480)):RT[k].setSize(320,240);
+  if (QMODE==='ultralight') {
+    QUAL.max = isMob ? 0.6 : 0.72;
+    QUAL.min = 0.42;
+  } else if (QMODE==='heavy') {
+    QUAL.max = isMob ? Math.min(dpr, 1.2) : Math.min(dpr, 2);
+    QUAL.min = 0.5;
+  } else {
+    QUAL.max = isMob ? Math.min(dpr, 1.0) : Math.min(dpr, 1.1);
+    QUAL.min = 0.5;
+  }
+  QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;QUAL.ema=16;renderer.setPixelRatio(QUAL.pr);
+  for(const k in RT) {
+    if (QMODE==='ultralight') RT[k].setSize(240, 180);
+    else if (QMODE==='heavy') isMob ? RT[k].setSize(384, 288) : RT[k].setSize(640, 480);
+    else RT[k].setSize(320, 240);
+  }
   if(QMODE==='normal'){for(const ch of CHUNKS)if(ch&&ch.g)ch.g.visible=true;const trs=[ownTrain];for(const a of OT)trs.push(a.tr);for(const t of cityTrains)trs.push(t);for(const t of depotTrains)trs.push(t);for(const tr of trs)if(tr&&tr.cars)for(const c of tr.cars)c.visible=true;}
   if(TRAF.ready){for(const k of ['body','cab','whl','hl','tl','pb','ph','pl'])if(TRAF[k]){scene.remove(TRAF[k]);TRAF[k].geometry.dispose();TRAF[k].dispose&&TRAF[k].dispose();}TRAF.ready=false;}
-  try{toast('画質：'+({light:'軽い',normal:'普通',heavy:'重い'})[QMODE],'info');}catch(e){}};
+  try{toast('画質：'+({ultralight:'超軽量',light:'軽い',normal:'普通',heavy:'重い'})[QMODE],'info');}catch(e){}};
+window.__reloadOtherTrains=()=>{
+  let reloadedCount = 0;
+  if (IS_ONLINE && window.ONLINE_PLAYERS) {
+    for (const pid in ONLINE_PLAYERS) {
+      const p = ONLINE_PLAYERS[pid];
+      if (!p) continue;
+      if (p.tr) {
+        if (p.tr.grp) p.tr.grp.visible = true;
+        if (p.tr.cars) for (const c of p.tr.cars) c.visible = true;
+        if (p.tr.nameplate) p.tr.nameplate.visible = true;
+      }
+      reloadedCount++;
+    }
+  }
+  for (const ch of CHUNKS) if (ch && ch.g) ch.g.visible = true;
+  if (IS_ONLINE && ONLINE_CLIENT && !ONLINE_CLIENT.connected && !isConnectingOnline) {
+    initOnlineClient();
+  }
+  toast('🔄 他列車の表示をリフレッシュしました' + (reloadedCount ? '（' + reloadedCount + '両同期中）' : ''), 'ok');
+};
 (function applyQMode(){const dpr=window.devicePixelRatio||1;
   const isMob = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  QUAL.max=QMODE==='heavy'?(isMob?Math.min(dpr,1.2):Math.min(dpr,2)):(isMob?Math.min(dpr,1.0):Math.min(dpr,1.1));QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;renderer.setPixelRatio(QUAL.pr);
+  if (QMODE==='ultralight') {
+    QUAL.max = isMob ? 0.6 : 0.72;
+    QUAL.min = 0.42;
+  } else if (QMODE==='heavy') {
+    QUAL.max = isMob ? Math.min(dpr, 1.2) : Math.min(dpr, 2);
+    QUAL.min = 0.5;
+  } else {
+    QUAL.max = isMob ? Math.min(dpr, 1.0) : Math.min(dpr, 1.1);
+    QUAL.min = 0.5;
+  }
+  QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;renderer.setPixelRatio(QUAL.pr);
   if(QMODE==='heavy')for(const k in RT)OLDMON?RT[k].setSize(768,288):(isMob?RT[k].setSize(384,288):RT[k].setSize(640,480)); // ホームカメラ映像を高精細に
+  else if(QMODE==='ultralight')for(const k in RT)RT[k].setSize(240,180);
 })();
 requestAnimationFrame(frame);
 startRoute(SVC,START_I);
@@ -6860,6 +7230,8 @@ if (IS_ONLINE) {
   startOnlinePublishLoop();
   const hudBtn = document.getElementById('btnOnlineHud');
   if (hudBtn) hudBtn.classList.remove('hide');
+  const chatFab = document.getElementById('btnChatFab');
+  if (chatFab) chatFab.classList.remove('hide');
   updateOnlineHud(true);
 }
 const btr = document.getElementById('btnTitleReturn');
@@ -7569,18 +7941,172 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       g.appendChild(bt);
     }
   }
-  {const QD={light:'軽い：重いときは自動で描く細かさを下げ、見えない物（カメラの後ろ・霧の向こう）を描かずにさくさく動かします。低スペックのパソコンやスマホ向け。',
+  {const QD={
+      ultralight:'超軽量：低スペック端末向け。描画解像度と遠景負荷を極限まで抑えてサクサク動かします。機能や音、演出は一切削りません。',
+      light:'軽い：重いときは自動で描く細かさを下げ、見えない物（カメラの後ろ・霧の向こう）を描かずにさくさく動かします。低スペックのパソコンやスマホ向け。',
       normal:'普通：描く細かさを固定して、すべてを毎回描きます（前のバージョンと同じ）。',
       heavy:'重い：最高画質。高解像度で描き、ホームカメラの映像も高精細・毎フレーム更新、車内の乗客も遠くまで表示します。高性能な端末向け。'};
-    const row=document.getElementById('qualRow'),upd=()=>{for(const b of row.querySelectorAll('button'))b.classList.toggle('on',b.dataset.q===QMODE);document.getElementById('qualDesc').textContent=QD[QMODE];};
-    const sh=document.getElementById('qualSheet'),upd2=()=>{for(const b of sh.querySelectorAll('.qbtns button'))b.classList.toggle('on',b.dataset.q===QMODE);document.getElementById('qualDesc2').textContent=QD[QMODE]+(window.__applyQ?'（すぐに切り替わります）':'');};
+    const row=document.getElementById('qualRow'),upd=()=>{for(const b of row.querySelectorAll('button[data-q]'))b.classList.toggle('on',b.dataset.q===QMODE);document.getElementById('qualDesc').textContent=QD[QMODE];};
+    const sh=document.getElementById('qualSheet'),upd2=()=>{for(const b of sh.querySelectorAll('.qbtns button[data-q]'))b.classList.toggle('on',b.dataset.q===QMODE);document.getElementById('qualDesc2').textContent=QD[QMODE]+(window.__applyQ?'（すぐに切り替わります）':'');};
     const setQ=m=>{QMODE=m;try{localStorage.setItem('td_quality',QMODE);}catch(e){}upd();upd2();if(window.__applyQ)window.__applyQ();};
-    for(const b of row.querySelectorAll('button'))b.addEventListener('click',()=>setQ(b.dataset.q));
-    for(const b of sh.querySelectorAll('.qbtns button'))b.addEventListener('click',()=>setQ(b.dataset.q));
+    for(const b of row.querySelectorAll('button[data-q]'))b.addEventListener('click',()=>setQ(b.dataset.q));
+    for(const b of sh.querySelectorAll('.qbtns button[data-q]'))b.addEventListener('click',()=>setQ(b.dataset.q));
+    const btnRel1 = document.getElementById('btnReloadOtherTrains');
+    if (btnRel1) btnRel1.addEventListener('click', () => { if (window.__reloadOtherTrains) window.__reloadOtherTrains(); });
+    const btnRel2 = document.getElementById('btnReloadOtherTrainsSheet');
+    if (btnRel2) btnRel2.addEventListener('click', () => { if (window.__reloadOtherTrains) window.__reloadOtherTrains(); });
     document.getElementById('qualFab').addEventListener('click',e=>{e.stopPropagation();upd2();sh.classList.remove('hide');});
     document.getElementById('qualClose').addEventListener('click',()=>sh.classList.add('hide'));sh.addEventListener('click',e=>{if(e.target===sh)sh.classList.add('hide');});
     for(const ev of ['pointerdown','touchstart'])sh.addEventListener(ev,e=>e.stopPropagation(),{passive:true});
-    upd();}
+    upd();
+
+    // 定型文チャット
+    const btnChatFab = document.getElementById('btnChatFab');
+    const chatTray = document.getElementById('chatTray');
+    const btnChatClose = document.getElementById('btnChatClose');
+    if (btnChatFab && chatTray) {
+      btnChatFab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        chatTray.classList.toggle('hide');
+      });
+    }
+    if (btnChatClose && chatTray) {
+      btnChatClose.addEventListener('click', () => chatTray.classList.add('hide'));
+    }
+    document.querySelectorAll('.chat-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const msg = btn.dataset.msg;
+        if (typeof sendQuickChat === 'function') sendQuickChat(msg);
+        if (chatTray) chatTray.classList.add('hide');
+      });
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyT' && typeof G !== 'undefined' && G && G.phase === 'play') {
+        if (chatTray) chatTray.classList.toggle('hide');
+      }
+    });
+
+    // ご意見箱 返信コーナー（作者サトタケ / riku06568 が反映）
+    window.FEEDBACK_REPLIES = [
+      {
+        id: 1,
+        date: '2026/11/14',
+        sender: '運転士#9045さん',
+        q: '他の人の電車の警笛や乗降促進メロディも聞こえるようにしてほしいです！',
+        a: 'ご意見ありがとうございます！最新アップデート（v1.8.2）で、すれ違う他列車の警笛や発車メロディがしっかり響くように音響を大幅強化しました！並走時や駅でのすれ違いをお楽しみください。'
+      },
+      {
+        id: 2,
+        date: '2026/11/13',
+        sender: '名無し運転士さん',
+        q: '古いスマホだとたまに動作が重くなります。サクサク動かす設定はありますか？',
+        a: '設定画面とゲーム中の画質設定に「超軽量モード」を追加しました！機能や音は一切削らずに、描画負荷を極限まで抑えて快適に動くよう最適化しています。ぜひお試しください！'
+      },
+      {
+        id: 3,
+        date: '2026/11/12',
+        sender: '快速ファンさん',
+        q: '他の人が急に見えなくなる時があります。どうすればいいですか？',
+        a: '画質設定画面に「他列車を再読み込み」ボタンを追加しました！他プレイヤーが見えなくなった時にタップすると、即座に車両の表示をリセット・再描画できます。'
+      }
+    ];
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    window.renderFeedbackReplies = function() {
+      const list = document.getElementById('fbRepliesList');
+      if (!list) return;
+      list.innerHTML = '';
+      (window.FEEDBACK_REPLIES || []).forEach(item => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background:rgba(30,41,59,0.7);border:1px solid rgba(148,163,184,0.2);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;';
+        
+        const top = document.createElement('div');
+        top.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:4px;';
+        top.innerHTML = '<span>👤 ' + escapeHtml(item.sender) + '</span><span>' + escapeHtml(item.date) + '</span>';
+        card.appendChild(top);
+
+        const qBox = document.createElement('div');
+        qBox.style.cssText = 'font-size:13px;color:#e2e8f0;line-height:1.5;background:rgba(15,23,42,0.5);border-radius:8px;padding:8px 10px;';
+        qBox.innerHTML = '<span style="color:#38bdf8;font-weight:700;margin-right:4px;">Q.</span>' + escapeHtml(item.q);
+        card.appendChild(qBox);
+
+        const aBox = document.createElement('div');
+        aBox.style.cssText = 'font-size:13px;color:#f8fafc;line-height:1.55;background:rgba(2,132,199,0.15);border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:8px 10px;';
+        aBox.innerHTML = '<div style="font-weight:800;color:#38bdf8;font-size:12px;margin-bottom:3px;display:flex;align-items:center;gap:4px;"><span>🛠️ 作者</span><span style="font-size:10.5px;color:#94a3b8;font-weight:normal;">（サトタケ / riku06568）</span></div>' + escapeHtml(item.a);
+        if (item.img) {
+          const img = document.createElement('img');
+          img.src = item.img;
+          img.style.cssText = 'max-width:100%;border-radius:6px;margin-top:6px;';
+          aBox.appendChild(img);
+        }
+        card.appendChild(aBox);
+
+        list.appendChild(card);
+      });
+    };
+    window.renderFeedbackReplies();
+
+    // 利用規約モーダル表示制御
+    function checkAndShowTermsModal() {
+      let answered = false;
+      let seenNov15_16 = false;
+      try {
+        answered = localStorage.getItem('td_terms_answered') === 'true';
+        seenNov15_16 = localStorage.getItem('td_terms_seen_nov15_16') === 'true';
+      } catch(e) {}
+      const now = new Date();
+      const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+      // 明日・明後日（2026年11月15日・16日）の二日間
+      const isTargetDates = (y === 2026 && m === 11 && (d === 15 || d === 16));
+
+      let shouldShow = false;
+      if (!answered) {
+        shouldShow = true; // 新規プレイヤー
+      } else if (isTargetDates && !seenNov15_16) {
+        shouldShow = true; // 明日と明後日の二日間
+      }
+
+      const modal = document.getElementById('termsModal');
+      if (shouldShow && modal) {
+        modal.classList.remove('hide');
+      }
+
+      const btnAgree = document.getElementById('btnTermsAgree');
+      const btnDisagree = document.getElementById('btnTermsDisagree');
+      if (btnAgree) {
+        btnAgree.onclick = () => {
+          try {
+            localStorage.setItem('td_terms_answered', 'true');
+            localStorage.setItem('td_terms_consent', 'agree');
+            if (isTargetDates) localStorage.setItem('td_terms_seen_nov15_16', 'true');
+          } catch(e) {}
+          if (modal) modal.classList.add('hide');
+          toast('✓ 利用規約に同意しました。ありがとうございます！', 'ok');
+        };
+      }
+      if (btnDisagree) {
+        btnDisagree.onclick = () => {
+          try {
+            localStorage.setItem('td_terms_answered', 'true');
+            localStorage.setItem('td_terms_consent', 'disagree');
+            if (isTargetDates) localStorage.setItem('td_terms_seen_nov15_16', 'true');
+          } catch(e) {}
+          if (modal) modal.classList.add('hide');
+          toast('利用規約を確認しました（全機能を制限なくプレイできます）', 'info');
+        };
+      }
+    }
+    checkAndShowTermsModal();
+  }
   
   let TUTORIAL_ENABLED = localStorage.getItem('shiomi_tutorial') === '1'; // 設定でオンにすると有効
   window.TUTORIAL_ENABLED = TUTORIAL_ENABLED;
