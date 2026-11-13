@@ -350,7 +350,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.3)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.4)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -378,7 +378,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.3 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.4 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -498,7 +498,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.3)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.4)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -544,6 +544,17 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.4 (2026.11.14)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">完全オート時の自動次駅放送デフォルトON化アップデート</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>完全オート運転時の自動次駅放送</b>：完全オート運転（自動運転）中は、手動でタブレットをタップしなくても、発車後の「次は〇〇」案内および駅到着前600mの「まもなく〇〇」案内がデフォルトで自動的に再生されるよう改修（手動運転時はこれまで通りタブレットから手動放送も可能）</li>
+            <li><b>車内チャイム・多言語アナウンス完全連動</b>：発車後・到着前の自動放送時にも、汐見線オリジナルチャイムとともに事前録音の高品質アナウンス（日・英・中・韓・仏・独）が最適なタイミングでスムーズに流れます</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.3</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.3 (2026.11.14)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗降促進メロディ改良・内外回り専用化＆完全オート停車時間最適化</div>
@@ -5324,7 +5335,29 @@ function updCondUI(){const ui=document.getElementById('condUI');if(!ui)return;ui
   if(h)h.textContent=G.walkOn?(open?(nearCondBox()?'メロディのボタンの前です':'最後尾の近くに発車メロディのボタンがあります'):'ドアを開けてください'):(G.v>0.5?'乗務中（立って乗務）':open?'ホームに出て発車メロディ／乗降促進、ドアを閉めて戻ったら合図':G.depCheck!==null&&!G.condOK?'ドアを閉めたら運転士へ合図を送ります':'停車したらホームに出てドアを開けます');}
 /* 停止信号で止まっている（駅の停止位置より手前）か */
 function sigStopped(){if(G.atStation!==null||G.depCheck!==null||G.v>0.3)return false;const d=stopDist(G.nv);return !!(G.sig&&G.sig.asp==='R'&&G.sig.dist<90&&d>2.5);}
-function toggleAuto(){if(G.crew==='twoC'){toast('車掌乗務中は運転士が運転します','info');return;}if(BRANCH){toast('支線の電車に完全オートはありません','warn');return;}G.auto=!G.auto;G.autoPh='';G.autoT=0;toast(G.auto?'完全オート ON':'完全オート OFF',G.auto?'ok':'warn',G.auto?'完全オート、開始。':'完全オート、解除。');}
+function shouldAutoNextAnn(){
+  if(typeof G === 'undefined' || !G) return false;
+  // 完全オート時はデフォルトで自動次駅放送をオン（設定画面で手動OFFにされていない限り有効）
+  if(G.auto){
+    return (G.autoAnn !== false);
+  }
+  return !!G.autoAnn;
+}
+function toggleAuto(){
+  if(G.crew==='twoC'){toast('車掌乗務中は運転士が運転します','info');return;}
+  if(BRANCH){toast('支線の電車に完全オートはありません','warn');return;}
+  G.auto=!G.auto;G.autoPh='';G.autoT=0;
+  toast(G.auto?'完全オート ON':'完全オート OFF',G.auto?'ok':'warn',G.auto?'完全オート、開始。':'完全オート、解除。');
+  if(G.auto && G.tabNextAnn && G.phase==='play' && shouldAutoNextAnn()){
+    setTimeout(()=>{
+      if(G.auto && G.tabNextAnn && G.phase==='play'){
+        triggerNextStationAnnounce(G.tabAnnMode || 'next');
+        G.tabNextAnn = false;
+        if(typeof drawPanel==='function') drawPanel();
+      }
+    }, 600);
+  }
+}
 let annAudio = null;
 function playStationAnnounce(st, mode){
   if(!st) return;
@@ -5547,12 +5580,30 @@ function physics(dt){
       G.tabAnnMode = 'next';
       G.tabNextAnn = true;
       if (typeof drawPanel === 'function') drawPanel();
+      if (shouldAutoNextAnn()) {
+        setTimeout(() => {
+          if (G.tabNextAnn && G.tabAnnMode === 'next' && G.phase === 'play') {
+            triggerNextStationAnnounce('next');
+            G.tabNextAnn = false;
+            if (typeof drawPanel === 'function') drawPanel();
+          }
+        }, 1600);
+      }
     }
     if (d <= 600 && d > 25 && isDepartedRun && !G.tabSoonAnnDone) {
       G.tabSoonAnnDone = true;
       G.tabAnnMode = 'soon';
       G.tabNextAnn = true;
       if (typeof drawPanel === 'function') drawPanel();
+      if (shouldAutoNextAnn()) {
+        setTimeout(() => {
+          if (G.tabNextAnn && G.tabAnnMode === 'soon' && G.phase === 'play') {
+            triggerNextStationAnnounce('soon');
+            G.tabNextAnn = false;
+            if (typeof drawPanel === 'function') drawPanel();
+          }
+        }, 800);
+      }
     }
 
     /* 自動放送は消去（タブレットの「次駅放送」「まもなく放送」ボタンによる手動放送のみ） */
@@ -5744,6 +5795,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   G.s=st.s+TK[G.key].so;G.nv=G.list?Math.max(0,G.list.indexOf(si)):0;G.atStation=G.nv;G.depCheck=null;G.depAt=G.s;
   try{preloadStationAnnounce(stOf(G.nv));}catch(e){}
   G.tabNextAnn=false;G.tabDepSwitched=false;G.tabAnnMode=null;G.tabDepAnnDone=false;G.tabSoonAnnDone=false;
+  G.autoAnn = (typeof autoAnnEnabled !== 'undefined') ? autoAnnEnabled : true;
   ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;setLook(ownTrain,G.key);if(G.list)drawOwnDest();
   updChunks(G.s,true);
   for(const p of active.slice())freePerson(p);for(const s2 of STATIONS){s2.sp={};s2.staff=null;for(const k in s2.wait)s2.wait[k].length=0;}
