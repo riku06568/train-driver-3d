@@ -350,7 +350,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.2)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.3)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -378,7 +378,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.2 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.3 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -498,7 +498,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.2)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.3)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -544,6 +544,17 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.3 (2026.11.14)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗降促進メロディ改良＆外回り・内回り別専用メロディ実装</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>結びのチャラりん音の完全除去</b>：メロディの最後に鳴っていた高音ベルの上昇アルペジオ（チャラりん音）を完全撤廃。主旋律と和音本来の美しい余韻をそのまま保ち、自然に響きが溶け込む上品な終止へ改修</li>
+            <li><b>外回り・内回りで異なる雰囲気のメロディ</b>：外回りは明るく爽快に駆け上がる『汐鳴り』（Dメジャー・136BPM）、内回りはゆったり温かく落ち着いた優しい情緒を奏でる『潮風』（Gメジャー・116BPM）へと雰囲気を明確に差別化。乗務種別に応じて自動で切り替わります</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.2</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.2 (2026.11.14)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">マルチ音響強化・定型文チャット・超軽量モード＆規約モーダル大型アップデート</div>
@@ -4729,10 +4740,9 @@ function melody(dest,vol,maxDur){
   });
 
   if (t0 + total < lim + 0.5) {
-    [74, 78, 81, 86, 90].forEach((m, i) => {
-      mbell(m + 12, t0 + total + i * 0.08, 0.24 * V, dest);
-    });
-    [50, 57, 62, 66].forEach(m => mnote(m, t0 + total, 2.0, 'triangle', 0.18 * V, dest, true));
+    // 最後にチャラりん音（高音ベル上昇アルペジオ）を鳴らさず、そのままの爽やかな和音余韻を保って終わる
+    [50, 57, 62, 66].forEach(m => mnote(m, t0 + total, 2.5, 'triangle', 0.18 * V, dest, true));
+    mnote(38, t0 + total, 2.5, 'triangle', 0.22 * V, dest, false);
   }
   return Math.min(total, maxDur || 99) + 1.2;
 }
@@ -4752,29 +4762,35 @@ function playSong(S,dest,vol,maxDur){if(!AC)return 0;dest=dest||master;const V=v
     let tc=t0+total;if(S.endChords)for(const [notes,d] of S.endChords){if(tc<lim){notes.forEach(m=>mnote(m,tc,d*e*1.05,S.pad,0.13*V,dest,true));mnote(notes[0]-12,tc,d*e*0.9,'triangle',0.17*V,dest,false);}tc+=d*e;}
     if(S.endBells)S.endBells.forEach(([m,at],i)=>{if(t0+total+at*e<lim)mbell(m,t0+total+at*e,0.16*V,dest);});
     len=Math.max(te,tc)-(t0+total);return Math.min(total+len,maxDur||99)+0.8;}
-  if(t0+total<=lim)S.end.forEach((m,i)=>mbell(m,t0+total+i*0.08,0.2*V,dest));return Math.min(total,maxDur||99)+1.0;}
-// 汐見線オリジナル乗降促進メロディ「潮風」（完全オリジナル）
+  // 最後にチャラりん音（高音ベル上昇アルペジオ）を鳴らさず、そのままの和音の余韻を保って終わる
+  if(t0+total<=lim && S.chords && S.chords.length){
+    const lastChord = S.chords[S.chords.length - 1];
+    lastChord.forEach(m => mnote(m, t0 + total, 2.5, S.pad || 'triangle', 0.16 * V, dest, true));
+    mnote(lastChord[0] - 12, t0 + total, 2.5, 'triangle', 0.22 * V, dest, false);
+  }
+  return Math.min(total,maxDur||99)+1.2;}
+// 汐見線オリジナル乗降促進メロディ「潮風（内回り）」（完全オリジナル）
+// 外回りの「汐鳴り」と雰囲気を変え、落ち着き・温かみ・安らぎを感じさせるメロウで優しい旋律
 const SONG_A = {
-  name: '潮風',
-  bpm: 142,
+  name: '潮風（内回り）',
+  bpm: 116,
   bar: 4,
   pad: 'triangle',
-  bellEvery: true,
-  voices: [['triangle', 1.3, 0.35, 0], ['sine', 1.1, 0.22, 12]],
+  bellEvery: false,
+  voices: [['triangle', 1.4, 0.35, 0], ['sine', 1.2, 0.22, 12]],
   lead: [
-    [79, 1], [83, 1], [86, 1], [83, 1], [84, 1], [86, 1], [88, 2],
-    [86, 1], [83, 1], [79, 1], [81, 1], [83, 2], [79, 2],
-    [72, 1], [76, 1], [79, 1], [84, 2], [83, 1], [79, 1], [81, 1],
-    [74, 1], [79, 1], [83, 1], [81, 1], [79, 4]
+    [74, 1], [79, 1], [78, 1], [76, 1], [74, 2], [71, 2],
+    [72, 1], [74, 1], [76, 1], [79, 2], [78, 1], [76, 1], [74, 1],
+    [71, 1], [74, 1], [76, 1], [79, 1], [81, 2], [83, 2],
+    [81, 1], [79, 1], [76, 1], [74, 1], [71, 2], [67, 4]
   ],
   chords: [
     [55, 59, 62, 67],
     [52, 55, 59, 64],
     [48, 55, 60, 64],
-    [50, 57, 62, 66],
+    [50, 57, 60, 66],
     [55, 59, 62, 67]
-  ],
-  end: [86, 91, 95, 98]
+  ]
 };
 // 汐見線オリジナル乗降促進メロディ「灯台」（完全オリジナル）
 const SONG_B = {
@@ -4782,8 +4798,8 @@ const SONG_B = {
   bpm: 118,
   bar: 4,
   pad: 'sawtooth',
-  bellEvery: true,
-  voices: [['triangle', 1.2, 0.34, 0], ['sine', 1.0, 0.20, 12], ['square', 0.8, 0.08, 0]],
+  bellEvery: false,
+  voices: [['triangle', 1.2, 0.34, 0], ['sine', 1.0, 0.20, 12]],
   lead: [
     [77, 1], [81, 1], [84, 2], [86, 1], [84, 1], [81, 2],
     [82, 1], [86, 1], [89, 2], [86, 2], [84, 2],
@@ -4796,8 +4812,7 @@ const SONG_B = {
     [50, 57, 62, 65],
     [48, 55, 60, 64],
     [53, 57, 60, 65]
-  ],
-  end: [84, 89, 93, 96]
+  ]
 };
 let promoOnce=null;
 /* 支線の駅ごとの発車メロディ（駅ごとに調・音階・テンポ・拍子・音色・和音進行・旋律がすべて違う） */
@@ -5092,9 +5107,15 @@ function closeDoor(local,sys){if(G.crew==='twoD'&&!sys){toast('ツーマン運�
     return;}
   startClosing();
 }
-const PROMO_NAMES=['乗降促進「汐鳴り」','乗降促進（音声のみ）','メロディ「潮風」','メロディ「灯台」','乗降促進（オリジナルチャイム）'];
+const PROMO_NAMES=['外回り「汐鳴り」','乗降促進（音声のみ）','内回り「潮風」','黄昏「灯台」','乗降促進（オリジナルチャイム）'];
 const PROMO_DEF={local:0,rapid:2,ltd:3,branch:0}; // 支線は駅ごとのメロディ
-function defaultPromo(){const S=SERVICES[G.route];return PROMO_DEF[S?S.kind:'local']||0;}
+function defaultPromo(){
+  const S=SERVICES[G.route];
+  if(BRANCH) return 0; // 支線
+  if(!S) return 0;
+  const isInner = (S.short && S.short.includes('内回り')) || (S.name && S.name.includes('内回り')) || S.key === 'B' || S.key === 'D' || S.key === 'F';
+  return isInner ? 2 : 0; // 外回りは0（汐鳴り）、内回りは2（潮風）
+}
 let promoVoiceT=0;
 function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new melodies (+voice), 'st' 駅ごとのメロディ
   if(G.phase!=='play')return;n=n||0;
@@ -5610,7 +5631,12 @@ function drawSideOverlay(k,st,active){const D0=G.door,sig=[hms(nowMs()),st?st.na
 function drawPanel(){const x=CANV.T.x,W=512,H=284;x.fillStyle='#07101e';x.fillRect(0,0,W,H);x.textBaseline='middle';x.textAlign='center';
   if(G.panel==='ann'||G.panel==='promo'){const pr=G.panel==='promo';x.fillStyle=pr?'#5a4410':'#0d2a52';x.fillRect(0,0,W,52);x.fillStyle='#fff';x.font='700 24px '+FONT;x.textAlign='left';x.fillText(pr?'乗降促進を選択':'放送を選択',14,27);
     x.fillStyle='#34445e';x.fillRect(392,8,112,36);x.fillStyle='#fff';x.textAlign='center';x.font='700 20px '+FONT;x.fillText('戻る',448,27);
-    const dp=defaultPromo(),bS=BRANCH&&G.atStation!==null?stOf(G.atStation):null,opts=pr?[[bS?'駅メロディ':'汐鳴り',bS?'「'+branchSong(bS.i).name+'」＋放送':'オリジナルメロディ'],['音声のみ','ドアが閉まります'],['潮風','オリジナルメロディ'],['灯台','オリジナルメロディ']].map((o,i)=>i===dp?[o[0],'★既定　'+o[1]]:o)
+    const dp=defaultPromo(),bS=BRANCH&&G.atStation!==null?stOf(G.atStation):null,opts=pr?[
+      [bS?'駅メロディ':'外回り「汐鳴り」',bS?'「'+branchSong(bS.i).name+'」＋放送':'外回り専用（明るく爽快）'],
+      ['音声のみ','ドアが閉まります'],
+      ['内回り「潮風」','内回り専用（温かく落ち着き）'],
+      ['黄昏「灯台」','オリジナルメロディ']
+    ].map((o,i)=>i===dp?[o[0],'★既定　'+o[1]]:o)
       :[['案内放送',G.atStation!==null||G.depCheck!==null?'〇〇方面行き':'この先の停車駅'],['遅れのお詫び',''],['しばらく停車',''],['まもなく発車','ドアが閉まります']];
     opts.forEach(([t,sub],i)=>{const bx=(i%2)*256+6,by=58+Math.floor(i/2)*113;x.fillStyle=pr?'#6b4f12':'#1c3d6e';x.fillRect(bx,by,244,105);x.fillStyle='#fff';x.font='700 28px '+FONT;x.fillText((i+1)+'. '+t,bx+122,by+(sub?42:52));
       if(sub){x.fillStyle='#d6dde8';x.font='500 17px '+FONT;x.fillText(sub,bx+122,by+76);}});}
