@@ -7989,6 +7989,13 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     // ご意見箱 返信コーナー（作者サトタケ / riku06568 が反映）
     window.FEEDBACK_REPLIES = [
       {
+        id: 4,
+        date: '2026/11/14',
+        sender: '名無し運転士さん',
+        q: '楽しかったです！乗降促進の音を増やしてくれると嬉しいです。',
+        a: '貴重なご意見をいただきありがとうございます。\n乗降促進の件ですが、今あるバグを修正した後増やす予定です。ご期待ください。'
+      },
+      {
         id: 1,
         date: '2026/11/14',
         sender: '運転士#9045さん',
@@ -8040,7 +8047,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         card.appendChild(qBox);
 
         const aBox = document.createElement('div');
-        aBox.style.cssText = 'font-size:13px;color:#f8fafc;line-height:1.55;background:rgba(2,132,199,0.15);border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:8px 10px;';
+        aBox.style.cssText = 'font-size:13px;color:#f8fafc;line-height:1.55;background:rgba(2,132,199,0.15);border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:8px 10px;white-space:pre-wrap;';
         aBox.innerHTML = '<div style="font-weight:800;color:#38bdf8;font-size:12px;margin-bottom:3px;display:flex;align-items:center;gap:4px;"><span>🛠️ 作者</span><span style="font-size:10.5px;color:#94a3b8;font-weight:normal;">（サトタケ / riku06568）</span></div>' + escapeHtml(item.a);
         if (item.img) {
           const img = document.createElement('img');
