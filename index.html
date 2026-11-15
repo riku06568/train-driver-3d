@@ -372,7 +372,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.10)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.11)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -400,7 +400,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.10 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.11 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -527,7 +527,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.10)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.11)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -573,6 +573,16 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.11 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">起動時のオンライン接続タイミング最適化</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>起動直後の接続詰まりを解消</b>：タイトル画面や路線生成の重い処理と通信開始が重なってスマホで再接続ループに入り、他プレイヤーが見えなくなる問題を修正しました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.10</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.10 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">オンライン受信抜け・サーバー制限による接続不良を根本修正</div>
@@ -1317,7 +1327,6 @@ let isConnectingOnline = false;
 function initOnlineClient() {
   if (ONLINE_CLIENT && ONLINE_CLIENT.connected) return;
   if (isConnectingOnline) return;
-  if (ONLINE_CLIENT && ONLINE_CLIENT.reconnecting) return;
   if (typeof mqtt === 'undefined') {
     const s = document.createElement('script');
     s.src = 'assets/js/mqtt.min.js';
@@ -2166,7 +2175,7 @@ if (LINE_ID !== 'loop' && typeof isVeteranDriver === 'function' && !isVeteranDri
 }
 IS_ONLINE = (LINE_ID !== 'branch4'); // 港見支線以外は全種別・全駅必ずオンライン！
 window.IS_ONLINE = IS_ONLINE;
-initOnlineClient();
+setTimeout(() => initOnlineClient(), 300);
 const CFG=lineConfig(LINE_ID);
 window.CFG = CFG;
 const ST0=layoutStations(CFG);const L=CFG.L,BRANCH=!!CFG.branch,MINI=!!CFG.mini;
@@ -7577,7 +7586,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const o=window.__AC.createOscillator(),g=window.__AC.createGain();g.gain.value=0.0001;o.connect(g);g.connect(window.__AC.destination);o.start();o.stop(window.__AC.currentTime+0.05);}catch(e){}
   try{const ss=window.speechSynthesis;if(ss){ss.cancel();ss.resume();const u=new SpeechSynthesisUtterance(' ');u.lang='ja-JP';ss.speak(u);window.__speechOK=true;}}catch(e){}}
 (function home(){
-  initOnlineClient();
+  setTimeout(() => initOnlineClient(), 200);
   const cfg=lineConfig('loop'),sts=layoutStations(cfg);const LN={};for(const id of ['branch','branch2','branch3','branch4']){const c=lineConfig(id);LN[id]={cfg:c,sts:layoutStations(c)};}const bcfg=LN.branch.cfg,bsts=LN.branch.sts;
   const path=genPath(cfg.L,0);
   // route map
