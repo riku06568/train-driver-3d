@@ -385,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.19)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.20)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -413,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.19 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.20 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -578,7 +578,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.19)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.20)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -624,6 +624,16 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.20 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">「一駅先まで運転再開」「一駅前まで戻る」を実際の徐行運転仕様に修正</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li>駅ワープではなく、指令の許可として「次の駅まで徐行運転（上限25km/h）」「一駅前まで退行徐行運転（上限20km/h）」を行うリアルな仕様に改めました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.19</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.19 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">総合指令所の中央に「📡 司令所で乗務中」バッジを表示</div>
@@ -6083,6 +6093,7 @@ function physics(dt){
   if(G.dispatchHold){G.notch=-9;G.mnotch=-9;G.bc=400;G.prevV=G.v;G.v=Math.max(0,G.v-4.5*dt);G.s+=G.dir*G.v*dt;return;}
   if(G.manual){G.notch=G.mnotch;manualSafety();}
   else if(G.ato&&G.door.state==='closed')atoControl();else if(!G.ato)G.notch=G.v>0?-8:-4;
+  if(G.slowMode&&G.v>(G.slowMaxV||25/3.6)){G.notch=Math.min(G.notch,-3);}
   if(!G.ato)G.sig=nextSignal(mainAt(G.key,G.s),G.s,G.dir);
   const v=G.v,closed=G.door.state==='closed';let a=0;
   const holdDep=(G.twoMan&&!G.condOK&&v<1&&(G.atStation!==null||G.depCheck!==null))||(v<1&&miniHold()); /* ツーマン：合図が出るまで力行しない */
@@ -6093,7 +6104,26 @@ function physics(dt){
   G.bc+=(Math.max(bcT,closed?0:200)-G.bc)*Math.min(1,dt*2.5);
   if(v>0)a-=G.bc/400*1.15;
   const gr=9.8*trkSlope()*G.dir;if(v>0||(a-gr>0))a-=gr;else if(G.bc<150)a-=gr;
-  G.prevV=G.v;G.v=Math.max(0,v+a*dt);G.s+=G.dir*G.v*dt;
+  G.prevV=G.v;G.v=Math.max(0,v+a*dt);
+  if(G.slowMode&&G.slowMaxV&&G.v>G.slowMaxV)G.v=Math.max(G.slowMaxV,G.v-2.2*dt);
+  if(G.slowMode==='prev'){
+    G.s-=G.dir*G.v*dt;
+    if(G.slowPrevTargetS!=null&&Math.abs(sdiff(G.s,G.slowPrevTargetS))<2.5){
+      G.s=G.slowPrevTargetS;G.v=0;G.notch=-4;G.mnotch=-4;
+      if(G.list&&G.list.length)G.nv=Math.max(0,G.nv-1);
+      else if(G.cyc&&G.cyc.length){G.cpos=mod(G.cpos-1,G.cyc.length);G.nv=0;}
+      G.atStation=G.nv;G.slowMode=null;G.slowPrevTargetS=null;
+      toast('✅ 一駅前に到着したため退行徐行運転を終了しました','ok');
+    }
+  }else{
+    G.s+=G.dir*G.v*dt;
+    if(G.slowMode==='next'&&G.atStation!==null&&G.v<0.05&&G.slowDeparted){
+      G.slowMode=null;G.slowDeparted=false;
+      toast('✅ 次の駅に到着したため徐行運転を解除しました','ok');
+    }else if(G.slowMode==='next'&&G.atStation===null&&G.v>0.5){
+      G.slowDeparted=true;
+    }
+  }
   G.clackDist+=G.v*dt;if(G.clackDist>=25){G.clackDist-=25;jointPass(G.v);}
   for(const z of LIMITS){const en=G.dir>0?z.a:z.b,ex=G.dir>0?z.b:z.a,dz=G.dir*sdiff(G.s,en),db=G.dir*sdiff(ex,G.s);const lap=Math.floor(G.s/L);
     if(onRapid(G.key,en))continue;
@@ -8710,43 +8740,41 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         appendDispatchLog('システム', '列車を緊急停止しました（運転再開まで停車保持）', 'sys');
       } else if (cmd === 'resume') {
         g.dispatchHold = false;
+        g.slowMode = null;
+        g.slowMaxV = null;
         g.notch = 0;
         g.mnotch = 0;
         if (typeof T.drawPanel === 'function') T.drawPanel();
-        toast('▶️ ' + (byWho || '指令') + '：運転を再開しました', 'ok');
-        appendDispatchLog('システム', '緊急停止を解除し運転再開可能にしました', 'sys');
-      } else if (cmd === 'prevStation' || cmd === 'nextStation') {
-        const delta = cmd === 'prevStation' ? -1 : 1;
-        if (g.list && g.list.length) {
-          g.nv = Math.max(0, Math.min(g.list.length - 1, g.nv + delta));
-        } else if (g.cyc && g.cyc.length) {
-          g.cpos = ((g.cpos + delta) % g.cyc.length + g.cyc.length) % g.cyc.length;
-          g.nv = 0;
+        toast('▶️ ' + (byWho || '指令') + '：通常運転を再開しました', 'ok');
+        appendDispatchLog('システム', '緊急停止・徐行を解除し通常運転を再開しました', 'sys');
+      } else if (cmd === 'prevStation') {
+        g.dispatchHold = false;
+        g.slowMode = 'prev';
+        g.slowMaxV = 20 / 3.6;
+        let prevIdx = 0;
+        if (g.list && g.list.length) prevIdx = g.list[Math.max(0, g.nv - 1)];
+        else if (g.cyc && g.cyc.length) prevIdx = g.cyc[((g.cpos - 1) % g.cyc.length + g.cyc.length) % g.cyc.length];
+        const targetSt = T.STATIONS[prevIdx];
+        if (targetSt && T.TK && T.TK[g.key]) {
+          g.slowPrevTargetS = targetSt.s + T.TK[g.key].so;
         }
-        const targetSt = T.stOf(g.nv);
-        if (targetSt && T.TK && T.TK[g.key] && T.CFG) {
-          const L = T.CFG.L;
-          g.s = (((targetSt.s + T.TK[g.key].so - g.dir * 0.5) % L) + L) % L;
-          g.v = 0;
-          g.atStation = g.nv;
-          g.depCheck = null;
-          g.passed = false;
-          g.over = false;
-          g.annNext = false;
-          g.annSoon = false;
-          g.dispatchHold = false;
-          if (delta === 1) {
-            g.notch = 0;
-            g.mnotch = 0;
-            g.bc = 0;
-            if (g.door && g.door.state !== 'closed' && typeof T.startClosing === 'function') T.startClosing();
-          }
-          if (typeof T.updChunksForce === 'function') T.updChunksForce();
-          if (typeof T.drawPanel === 'function') T.drawPanel();
-          const msg = delta < 0 ? ('⏮️ ' + targetSt.name + '駅（一駅前）へ戻りました') : ('⏭️ ' + targetSt.name + '駅（一駅先）で運転再開しました');
-          toast(msg, 'ok');
-          appendDispatchLog('システム', msg, 'sys');
-        }
+        g.atStation = null;
+        if (g.door && g.door.state !== 'closed' && typeof T.startClosing === 'function') T.startClosing();
+        if (typeof T.drawPanel === 'function') T.drawPanel();
+        const msg = '⏮️ ' + (targetSt ? targetSt.name + '駅（一駅前）' : '一駅前') + 'まで退行徐行運転（上限20km/h）が許可されました';
+        toast(msg, 'warn');
+        appendDispatchLog('システム', msg, 'sys');
+      } else if (cmd === 'nextStation') {
+        g.dispatchHold = false;
+        g.slowMode = 'next';
+        g.slowMaxV = 25 / 3.6;
+        g.slowDeparted = (g.atStation === null);
+        if (g.door && g.door.state !== 'closed' && typeof T.startClosing === 'function') T.startClosing();
+        if (typeof T.drawPanel === 'function') T.drawPanel();
+        const nextSt = T.stOf(g.nv);
+        const msg = '⏭️ ' + (nextSt ? nextSt.name + '駅（次の駅）' : '次の駅') + 'まで徐行運転（上限25km/h）で運転再開が許可されました';
+        toast(msg, 'ok');
+        appendDispatchLog('システム', msg, 'sys');
       }
     };
     const sendDispatchAutoReply = (text) => {
