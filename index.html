@@ -372,7 +372,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.13)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.14)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -400,7 +400,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.13 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.14 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -527,7 +527,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.13)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.14)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -573,6 +573,17 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.14 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">他プレイヤーの乗降促進・警笛・ドア音の立体音響が鳴らない不具合を修正</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>他列車の乗降促進・警笛・ドア開閉音を修正</b>：音声参照のスコープ不具合で他プレイヤーの乗降促進メロディや警笛がすべて無音になっていた問題を修正し、乗客モードでも運転中でもしっかり聞こえるようにしました</li>
+            <li><b>AI列車の駅発車メロディ音量を調整</b>：ホーム上から聞こえるAI列車の乗降促進音をより聞き取りやすくしました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.13</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.13 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗客モードの走行音・車内音不具合を修正</div>
@@ -1517,9 +1528,12 @@ function handleRemotePlayerUpdate(data) {
       }
     } catch(e) {}
   } else {
-    // 他プレイヤーの乗降促進メロディ再生
-    if (data.promoT && (!p.lastPromoT || data.promoT > p.lastPromoT)) {
-      p.lastPromoT = data.promoT;
+    // 他プレイヤーの乗降促進メロディ再生（ループ継続にも対応）
+    const promoChanged = data.promoT && (!p.lastPromoT || data.promoT > p.lastPromoT);
+    const promoLoopTick = !!(data.promoOn && (!p._lastPromoPlayMs || now - p._lastPromoPlayMs > 6500));
+    if (promoChanged || promoLoopTick) {
+      if (data.promoT) p.lastPromoT = data.promoT;
+      p._lastPromoPlayMs = now;
       playRemoteTrainSound(p, 'promo', { promoN: data.promoN, stName: data.stName });
     }
     // 他プレイヤーのドア開閉音・チャイム再生
@@ -1607,17 +1621,20 @@ function removeRemotePlayer(id) {
 }
 
 function playRemoteTrainSound(p, type, opt) {
-  if (typeof AC === 'undefined' || !AC || !p) return;
+  const A = window.__AUD;
+  if (!A || !A.AC || !A.master || !p) return;
+  const _AC = A.AC, _master = A.master, _camera = A.camera;
+  if (_AC.state === 'suspended') { try { _AC.resume(); } catch(e) {} }
   try {
     let pos = null;
     if (p.tr && p.tr.cars && p.tr.cars[0]) {
       pos = p.tr.cars[0].position;
-    } else if (p.s != null && typeof offsG === 'function') {
-      const o = (typeof TK !== 'undefined' && p.key && TK[p.key]) ? TK[p.key].off(p.s) : 0;
-      pos = offsG(p.s, o, 1.5);
+    } else if (p.s != null && typeof A.offsG === 'function') {
+      const o = (A.TK && p.key && A.TK[p.key]) ? A.TK[p.key].off(p.s) : 0;
+      pos = A.offsG(p.s, o, 1.5);
     }
-    if (!pos || typeof camera === 'undefined' || !camera) return;
-    const cw = camera.getWorldPosition(new THREE.Vector3());
+    if (!pos || !_camera) return;
+    const cw = _camera.getWorldPosition(new THREE.Vector3());
     const d = pos.distanceTo(cw);
     if (!isFinite(d)) return;
 
@@ -1626,7 +1643,7 @@ function playRemoteTrainSound(p, type, opt) {
     if (d > maxD) return;
 
     // 運転室内・客室内にいる場合の音響減衰（窓ガラス越しにリアルに響かせる）
-    const inCab = (typeof listenerSealed === 'function') ? listenerSealed() : false;
+    const inCab = (typeof A.listenerSealed === 'function') ? A.listenerSealed() : false;
     const cabFilter = inCab ? 3400 : 18000;
     const cabVolMult = inCab ? (isHorn ? 0.65 : 0.48) : 1.0;
 
@@ -1634,59 +1651,59 @@ function playRemoteTrainSound(p, type, opt) {
     const distGain = Math.min(3.8, 5.0 / (1 + Math.pow(d / refD, 1.35)));
     const totalGain = distGain * cabVolMult;
 
-    const g = AC.createGain();
+    const g = _AC.createGain();
     g.gain.value = totalGain;
 
-    const lp = AC.createBiquadFilter();
+    const lp = _AC.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = cabFilter;
     g.connect(lp);
 
     let out = g;
     try {
-      const panner = AC.createStereoPanner();
-      const cr = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.getWorldQuaternion(new THREE.Quaternion()));
-      panner.pan.value = clamp(new THREE.Vector3().subVectors(pos, cw).dot(cr) / (d + 1), -0.9, 0.9);
+      const panner = _AC.createStereoPanner();
+      const cr = new THREE.Vector3(1, 0, 0).applyQuaternion(_camera.getWorldQuaternion(new THREE.Quaternion()));
+      panner.pan.value = A.clamp(new THREE.Vector3().subVectors(pos, cw).dot(cr) / (d + 1), -0.9, 0.9);
       lp.connect(panner);
-      panner.connect(master);
+      panner.connect(_master);
       out = g;
     } catch(e) {
-      lp.connect(master);
+      lp.connect(_master);
       out = g;
     }
 
     if (type === 'horn') {
-      tone(349, 0, 0.9, 'square', 0.28, out);
-      tone(440, 0, 0.9, 'square', 0.28, out);
-      tone(349, 0.04, 0.85, 'sawtooth', 0.16, out);
-      tone(440, 0.04, 0.85, 'sawtooth', 0.16, out);
+      A.tone(349, 0, 0.9, 'square', 0.28, out);
+      A.tone(440, 0, 0.9, 'square', 0.28, out);
+      A.tone(349, 0.04, 0.85, 'sawtooth', 0.16, out);
+      A.tone(440, 0.04, 0.85, 'sawtooth', 0.16, out);
     } else if (type === 'mhorn') {
-      const t0 = AC.currentTime + 0.02;
+      const t0 = _AC.currentTime + 0.02;
       const seq = [[72,0.22],[76,0.22],[79,0.3],[84,0.72],[81,0.24],[79,0.24],[84,1.05]];
       let curT = t0;
       for (const [m, dur] of seq) {
-        if (typeof mnote === 'function') {
-          mnote(m, curT, dur, 'triangle', 0.4, out, true);
-          mnote(m + 12, curT, dur, 'sine', 0.18, out, true);
+        if (typeof A.mnote === 'function') {
+          A.mnote(m, curT, dur, 'triangle', 0.4, out, true);
+          A.mnote(m + 12, curT, dur, 'sine', 0.18, out, true);
         }
         curT += dur * 0.55;
       }
     } else if (type === 'promo') {
       const pn = opt && opt.promoN != null ? opt.promoN : 0;
-      if (pn === 4 && typeof ponSnd === 'function') ponSnd(out);
-      else if (pn === 1 && typeof chime === 'function') chime(out);
-      else if (pn === 2 && typeof playSong === 'function' && typeof SONG_A !== 'undefined') playSong(SONG_A, out, 1.1);
-      else if (pn === 3 && typeof playSong === 'function' && typeof SONG_B !== 'undefined') playSong(SONG_B, out, 1.1);
-      else if (pn === 'st' && opt && opt.stName && typeof ltdSong === 'function' && typeof STATIONS !== 'undefined') {
-        const found = STATIONS.findIndex(s => s.name === opt.stName);
-        playSong(ltdSong(found >= 0 ? found : 0), out, 1.1);
-      } else if (typeof melody === 'function') {
-        melody(out, 1.1);
+      if (pn === 4 && typeof A.ponSnd === 'function') A.ponSnd(out);
+      else if (pn === 1 && typeof A.chime === 'function') A.chime(out);
+      else if (pn === 2 && typeof A.playSong === 'function' && A.SONG_A) A.playSong(A.SONG_A, out, 1.1);
+      else if (pn === 3 && typeof A.playSong === 'function' && A.SONG_B) A.playSong(A.SONG_B, out, 1.1);
+      else if (pn === 'st' && opt && opt.stName && typeof A.ltdSong === 'function' && A.STATIONS) {
+        const found = A.STATIONS.findIndex(s => s.name === opt.stName);
+        A.playSong(A.ltdSong(found >= 0 ? found : 0), out, 1.1);
+      } else if (typeof A.melody === 'function') {
+        A.melody(out, 1.1);
       }
-    } else if (type === 'doorOpen' && typeof doorOpenSnd === 'function') {
-      doorOpenSnd(out);
-    } else if (type === 'doorClose' && typeof doorCloseSnd === 'function') {
-      doorCloseSnd(out);
+    } else if (type === 'doorOpen' && typeof A.doorOpenSnd === 'function') {
+      A.doorOpenSnd(out);
+    } else if (type === 'doorClose' && typeof A.doorCloseSnd === 'function') {
+      A.doorCloseSnd(out);
     }
   } catch(e) {
     console.warn('playRemoteTrainSound err', e);
@@ -4453,7 +4470,7 @@ function aiSounds(a,el,tot){const d=a.tr.cars[2].position.distanceTo(camera.getW
   if(!a.sndF.o&&el>0.1){a.sndF.o=1;playAt(a.tr.cars[1].position,doorOpenSnd);}
   if(a.sndF.mStart==null)a.sndF.mStart=(a.doors?26:22)-rand(3,10);                                     /* ドアが開いてから少しして */
   if(a.t<a.sndF.mStart&&a.t>(BRANCH?8.2:4.9)){const now=AC.currentTime;if(!a.sndF.mEnd||now>a.sndF.mEnd){const kd=BRANCH?'branch':KIND[a.key];let dur=6;      /* 終わったらまた流す */
-      playAt(a.tr.cars[1].position,dest=>{dur=kd==='branch'?playSong(branchSong(a.stSt.i),dest,0.5):kd==='rapid'?playSong(SONG_A,dest,0.5):kd==='ltd'?playSong(SONG_B,dest,0.5):melody(dest,0.5);return dur;});
+      playAt(a.tr.cars[1].position,dest=>{dur=kd==='branch'?playSong(branchSong(a.stSt.i),dest,0.85):kd==='rapid'?playSong(SONG_A,dest,0.85):kd==='ltd'?playSong(SONG_B,dest,0.85):melody(dest,0.85);return dur;});
       a.sndF.mEnd=now+Math.max(2,dur||6)+0.25;}}
   if(!a.sndF.c&&a.t<3.2){a.sndF.c=1;playAt(a.tr.cars[1].position,doorCloseSnd);}}
 /* station PA: simple approach announcement for the platform the player is on */
@@ -7611,6 +7628,7 @@ if (IS_ONLINE) {
 }
 const btr = document.getElementById('btnTitleReturn');
 if (btr) btr.classList.remove('hide');
+window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,ltdSong,SONG_A,SONG_B,listenerSealed,clamp};
 window.__T={enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks};
 }
 /* ================= home screen (before the world is built) ================= */
