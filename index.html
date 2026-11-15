@@ -385,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.16)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.17)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -413,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.16 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.17 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -464,6 +464,13 @@ html,body{overscroll-behavior:none}
           <h3>🔀 各支線（4路線）</h3>
           <p>白峰支線・紫雲地下線・天宮高架線・港見支線。白峰・紫雲・天宮はオンライン対応。港見支線は短距離のためオフライン専用です。</p>
           <div class="meta"><span>4路線</span><span>3路線オンライン対応</span><span>港見支線オフライン専用</span></div>
+        </button>
+
+        <button id="btnSelectDispatch" class="duty-cat-card hide" style="background:linear-gradient(135deg, rgba(245,158,11,0.18), rgba(180,83,9,0.22));border:1px solid #f59e0b;">
+          <div class="cat-badge" style="background:#f59e0b;color:#111827;">指令専用</div>
+          <h3>📡 指令業務（総合指令所）</h3>
+          <p>接続中の全運転士への指示（緊急停止・運転再開・一駅前/先移動）と手動チャット対応を行います。</p>
+          <div class="meta"><span>製作者手動対応</span><span>全線リアルタイム監視</span></div>
         </button>
       </div>
     </div>
@@ -540,7 +547,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.16)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.17)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -586,6 +593,16 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.17 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">指令業務モードを「乗務開始」の選択画面に統合</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li>パスワード欄に指令用パスワードを入力すると、「乗務開始」の路線選択画面に「📡 指令業務（総合指令所）」モードが出現するようにしました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.16</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.16 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">戸締め放送修正・乗客アバター同期・運転士タブレット＆指令業務実装</div>
@@ -8075,13 +8092,53 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (btnOnlineCancel) btnOnlineCancel.onclick = hideOnlineModal;
   if (closeOnlineModal) closeOnlineModal.onclick = hideOnlineModal;
 
+  const unlockDispatchMode = (fromSubmit) => {
+    try { sessionStorage.setItem('shiomi_dispatch_unlocked', '1'); } catch(e) {}
+    const btnDisp = document.getElementById('btnSelectDispatch');
+    if (btnDisp) btnDisp.classList.remove('hide');
+    if (fromSubmit) {
+      hideOnlineModal();
+      if (typeof toast === 'function') toast('📡 指令業務モードが解放されました！「乗務開始」から入れます', 'ok');
+    } else if (driverModalStatus) {
+      driverModalStatus.style.display = 'block';
+      driverModalStatus.style.background = 'rgba(245, 158, 11, 0.16)';
+      driverModalStatus.style.border = '1px solid #f59e0b';
+      driverModalStatus.style.color = '#fde68a';
+      driverModalStatus.textContent = '📡 指令業務モードが解放されました！「乗務開始」の中に「指令業務」が表示されます。';
+    }
+  };
+  try {
+    if (sessionStorage.getItem('shiomi_dispatch_unlocked') === '1') {
+      const btnDisp = document.getElementById('btnSelectDispatch');
+      if (btnDisp) btnDisp.classList.remove('hide');
+    }
+  } catch(e) {}
+  if (driverPassInput) {
+    driverPassInput.addEventListener('input', () => {
+      if ((driverPassInput.value || '').trim() === '291129') {
+        unlockDispatchMode(false);
+      }
+    });
+    driverPassInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (driverPassInput.value || '').trim() === '291129') {
+        e.preventDefault();
+        unlockDispatchMode(true);
+      }
+    });
+  }
+  const btnSelectDispatch = document.getElementById('btnSelectDispatch');
+  if (btnSelectDispatch) {
+    btnSelectDispatch.addEventListener('click', () => {
+      if (typeof window.__openDispatchConsole === 'function') window.__openDispatchConsole();
+    });
+  }
+
   if (btnOnlineProceed) {
     btnOnlineProceed.onclick = async () => {
       const name = (onlineNameInput.value || '').trim();
       const pwd = (driverPassInput.value || '').trim();
       if (pwd === '291129') {
-        hideOnlineModal();
-        if (typeof window.__openDispatchConsole === 'function') window.__openDispatchConsole();
+        unlockDispatchMode(true);
         return;
       }
       const statusEl = document.getElementById('driverModalStatus');
