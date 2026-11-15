@@ -248,10 +248,22 @@ html,body{overscroll-behavior:none}
 #btnChatFab{position:fixed;top:calc(100px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(56,189,248,0.4);background:rgba(12,24,44,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#38bdf8;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.5);transition:background 0.15s,transform 0.15s}
 #btnChatFab.hide{display:none!important}
 #btnChatFab:hover{background:rgba(14,116,144,0.95);color:#fff;transform:scale(1.02)}
-#chatTray{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));right:calc(12px + env(safe-area-inset-right,0px));z-index:50;background:rgba(15,23,42,0.96);border:1.5px solid rgba(56,189,248,0.45);border-radius:16px;padding:12px;box-shadow:0 12px 36px rgba(0,0,0,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);width:210px;max-width:85vw;display:flex;flex-direction:column;gap:8px}
+#chatTray{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));right:calc(12px + env(safe-area-inset-right,0px));z-index:50;background:rgba(15,23,42,0.96);border:1.5px solid rgba(56,189,248,0.45);border-radius:16px;padding:12px;box-shadow:0 12px 36px rgba(0,0,0,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);width:285px;max-width:90vw;display:flex;flex-direction:column;gap:8px}
 #chatTray.hide{display:none!important}
-.chat-preset-btn{background:rgba(30,41,59,0.85);border:1px solid rgba(148,163,184,0.25);border-radius:8px;color:#f1f5f9;font-size:13px;font-weight:700;padding:8px 10px;text-align:left;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px}
-.chat-preset-btn:hover,.chat-preset-btn:active{background:rgba(2,132,199,0.4);border-color:#38bdf8;color:#fff;transform:translateX(2px)}
+#chatLog{max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding:6px 8px;background:rgba(2,6,23,0.6);border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;line-height:1.45}
+.chat-log-empty{color:#64748b;text-align:center;padding:8px 0;font-size:11.5px}
+.chat-log-item{color:#e2e8f0;word-break:break-word}
+.chat-log-item .cn{color:#38bdf8;font-weight:700;margin-right:4px}
+.chat-log-item.me .cn{color:#4ade80}
+.chat-log-item .ct{color:#64748b;font-size:10px;margin-right:5px}
+#chatForm{display:flex;gap:6px;align-items:center}
+#chatInput{flex:1;min-width:0;background:rgba(30,41,59,0.95);border:1px solid rgba(148,163,184,0.35);border-radius:8px;color:#fff;font-size:13px;padding:7px 9px;outline:none;font-family:inherit}
+#chatInput:focus{border-color:#38bdf8;box-shadow:0 0 0 2px rgba(56,189,248,0.2)}
+#btnChatSend{background:#0284c7;border:none;border-radius:8px;color:#fff;font-size:12.5px;font-weight:700;padding:7px 11px;cursor:pointer;white-space:nowrap}
+#btnChatSend:hover,#btnChatSend:active{background:#0369a1}
+.chat-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.chat-preset-btn{background:rgba(30,41,59,0.85);border:1px solid rgba(148,163,184,0.25);border-radius:8px;color:#f1f5f9;font-size:11.5px;font-weight:700;padding:6px 7px;text-align:left;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-preset-btn:hover,.chat-preset-btn:active{background:rgba(2,132,199,0.4);border-color:#38bdf8;color:#fff}
 #chatHudBanner{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:45;background:rgba(15,23,42,0.92);border:1.5px solid #38bdf8;border-radius:24px;padding:8px 18px;color:#fff;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.6);display:flex;align-items:center;gap:8px;pointer-events:none;transition:opacity 0.3s,transform 0.3s}
 #chatHudBanner.hide{display:none!important}
 
@@ -261,7 +273,7 @@ html,body{overscroll-behavior:none}
 <body>
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
 <button id="btnTitleReturn" class="hide" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
-<button id="btnChatFab" class="hide" title="定型文チャット">💬 チャット</button>
+<button id="btnChatFab" class="hide" title="オンラインチャット">💬 チャット</button>
 <button id="btnOnlineHud" class="online-hud-btn">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
 <div id="gameTutorialHUD" class="hide">
   <div class="tut-hud-step" id="tutHudStep">💡 運転ガイド</div>
@@ -271,14 +283,22 @@ html,body{overscroll-behavior:none}
 <div id="onlinePanel" class="hide"><div class="op-box"><div class="op-header"><span>🌐 オンライン乗務員一覧</span><button id="opClose">✕</button></div><div id="opList" class="op-list"></div></div></div>
 <div id="chatTray" class="hide">
   <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;margin-bottom:2px;">
-    <span style="font-size:12.5px;font-weight:800;color:#38bdf8;">💬 定型文チャット</span>
+    <span style="font-size:12.5px;font-weight:800;color:#38bdf8;">💬 オンラインチャット</span>
     <button id="btnChatClose" style="background:none;border:none;color:#94a3b8;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>
   </div>
-  <button class="chat-preset-btn" data-msg="こんにちは">💬 こんにちは</button>
-  <button class="chat-preset-btn" data-msg="よろしくお願いします">🤝 よろしくお願いします</button>
-  <button class="chat-preset-btn" data-msg="並走しましょう">🚆 並走しましょう</button>
-  <button class="chat-preset-btn" data-msg="発車します">🟢 発車します</button>
-  <button class="chat-preset-btn" data-msg="そろそろ抜けます">👋 そろそろ抜けます</button>
+  <div id="chatLog"><div class="chat-log-empty">まだメッセージはありません</div></div>
+  <form id="chatForm">
+    <input id="chatInput" type="text" maxlength="60" placeholder="自由にメッセージを入力..." autocomplete="off">
+    <button id="btnChatSend" type="submit">送信</button>
+  </form>
+  <div class="chat-preset-grid">
+    <button type="button" class="chat-preset-btn" data-msg="こんにちは">💬 こんにちは</button>
+    <button type="button" class="chat-preset-btn" data-msg="よろしくお願いします">🤝 よろしく</button>
+    <button type="button" class="chat-preset-btn" data-msg="並走しましょう">🚆 並走しよう</button>
+    <button type="button" class="chat-preset-btn" data-msg="発車します">🟢 発車します</button>
+    <button type="button" class="chat-preset-btn" data-msg="ありがとうございます！">✨ ありがとう</button>
+    <button type="button" class="chat-preset-btn" data-msg="そろそろ抜けます">👋 抜けます</button>
+  </div>
 </div>
 <div id="chatHudBanner" class="hide"><span style="font-size:16px;">💬</span><span id="chatHudText"></span></div>
 <div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・設定</div><div class="qbtns"><button data-q="ultralight">超軽量</button><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div>
@@ -352,7 +372,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.7)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.8)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -380,7 +400,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.7 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.8 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -495,7 +515,7 @@ html,body{overscroll-behavior:none}
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">J キー</b> : ミュージックホーン</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Q / E</b> : 視点左右回転</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">V キー</b> : 視点を正面に戻す</div>
-          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">T キー</b> : 定型文チャットを開く</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">T キー</b> : オンラインチャットを開く</div>
         </div>
       </div>
     </div>
@@ -507,7 +527,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.7)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.8)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -553,6 +573,17 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.8 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">自由入力オンラインチャット＆履歴表示に対応</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>フリーチャット入力に対応</b>：定型文だけでなく、チャット欄から好きなメッセージを自由に入力（最大60文字）して他の運転士へ送信できるようになりました</li>
+            <li><b>チャット履歴表示＆定型文拡充</b>：チャット画面内でこれまでのやりとりを遡って確認できるようになり、定型文もコンパクトに6種類へ増やしました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.7</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.7 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗客の乗車消失バグ修正＆駅規模別・乗降バランス最適化</div>
@@ -1665,34 +1696,66 @@ function makeSpeechBubbleSprite(text) {
   return sprite;
 }
 
+let _lastChatAt = 0;
+function appendChatLog(name, text, isMe) {
+  const log = document.getElementById('chatLog');
+  if (!log) return;
+  const empty = log.querySelector('.chat-log-empty');
+  if (empty) empty.remove();
+  const item = document.createElement('div');
+  item.className = 'chat-log-item' + (isMe ? ' me' : '');
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const tSpan = document.createElement('span');
+  tSpan.className = 'ct';
+  tSpan.textContent = hh + ':' + mm;
+  const nSpan = document.createElement('span');
+  nSpan.className = 'cn';
+  nSpan.textContent = (isMe ? 'あなた' : name) + ':';
+  const mSpan = document.createElement('span');
+  mSpan.textContent = text;
+  item.appendChild(tSpan);
+  item.appendChild(nSpan);
+  item.appendChild(mSpan);
+  log.appendChild(item);
+  while (log.children.length > 30) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
 function sendQuickChat(text) {
-  if (!text) return;
+  const clean = String(text || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 60);
+  if (!clean) return;
+  const now = Date.now();
+  if (now - _lastChatAt < 700) return;
+  _lastChatAt = now;
   const curG = (typeof G !== 'undefined' ? G : (window.G || null));
   const stFn = typeof stOf === 'function' ? stOf : null;
   const stObj = (curG && stFn) ? (curG.atStation !== null ? stFn(curG.atStation) : (curG.nv != null ? stFn(curG.nv) : null)) : null;
   const payload = {
     id: ONLINE_CLIENT_ID,
     name: MY_PLAYER_NAME,
-    text: text,
+    text: clean,
     s: curG ? curG.s : null,
     stName: stObj ? stObj.name : '',
-    ts: Date.now()
+    ts: now
   };
   if (typeof ONLINE_CLIENT !== 'undefined' && ONLINE_CLIENT && ONLINE_CLIENT.connected) {
     try {
       ONLINE_CLIENT.publish('shiomi3d/v1/chat', JSON.stringify(payload), { qos: 0 });
     } catch(e) {}
   }
-  displayChatBubble(ONLINE_CLIENT_ID, MY_PLAYER_NAME, text, true);
-  showChatHudMsg(MY_PLAYER_NAME, text, true);
-  toast('💬 ' + text, 'info');
+  appendChatLog(MY_PLAYER_NAME, clean, true);
+  displayChatBubble(ONLINE_CLIENT_ID, MY_PLAYER_NAME, clean, true);
+  showChatHudMsg(MY_PLAYER_NAME, clean, true);
+  toast('💬 ' + clean, 'info');
 }
 
 function handleIncomingChat(chat) {
   const name = chat.name || '運転士';
-  const text = chat.text || '';
+  const text = String(chat.text || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 60);
   if (!text) return;
   chatChime();
+  appendChatLog(name, text, false);
   showChatHudMsg(name, text, false);
   displayChatBubble(chat.id, name, text, false);
 }
@@ -6701,6 +6764,7 @@ document.getElementById('paxAlight').addEventListener('click',()=>alightTrain())
 
 addEventListener('keyup',e=>{W.keys[e.code]=false;});
 addEventListener('keydown',e=>{
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;
   initAudio();unlockSpeech();
   if(G.walkOn){W.keys[e.code]=true;e.preventDefault();return;}
   if(e.repeat&&!['KeyQ','KeyE'].includes(e.code))return;
@@ -7389,9 +7453,9 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
 {const on=(id,f)=>{const e=document.getElementById(id);if(e)e.addEventListener('click',ev=>{ev.stopPropagation();initAudio();f();});};
   on('leanBackB',()=>leanBack());
   on('paxView',()=>toggle3P());on('liveBtn',()=>toggleLive());on('mcUp',()=>setMNotch(G.mnotch<0?0:G.mnotch+1));on('mcDn',()=>setMNotch(G.mnotch>0?0:G.mnotch-1));on('mcN',()=>setMNotch(0));on('mcEB',()=>setMNotch(-8));
-  addEventListener('keydown',e=>{if(!G.manual)return;if(e.code==='KeyQ')setMNotch(G.mnotch<0?0:G.mnotch+1);else if(e.code==='KeyZ')setMNotch(G.mnotch>0?0:G.mnotch-1);});on('paxPhone',()=>openDev('phone'));on('paxTab',()=>openDev('tablet'));on('paxResv',()=>goReserved());
+  addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(!G.manual)return;if(e.code==='KeyQ')setMNotch(G.mnotch<0?0:G.mnotch+1);else if(e.code==='KeyZ')setMNotch(G.mnotch>0?0:G.mnotch-1);});on('paxPhone',()=>openDev('phone'));on('paxTab',()=>openDev('tablet'));on('paxResv',()=>goReserved());
   on('devClose',()=>closeDev());on('devHome',()=>devHome());
-  addEventListener('keydown',e=>{if(e.code==='KeyV'&&PAX)toggle3P();});
+  addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(e.code==='KeyV'&&PAX)toggle3P();});
   on('cExit',()=>enterWalk());on('cOpen',()=>{const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);openDoor(localSide(st));});on('cClose',()=>closeDoor(G.door.local));
   on('cMelo',()=>promote('st'));on('cPromo',()=>promote(1));on('cSig',()=>giveSignal());on('meloBtn',()=>promote(defaultPromo()));
   if(OWNOLD)setTimeout(()=>toast('支線の古い電車：乗降確認・戸開閉・発車メロディは、運転室の左右の壁「窓から顔を出す」から（メロディはホームのボタンでも）','info'),4200);}
@@ -8193,10 +8257,12 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     for(const ev of ['pointerdown','touchstart'])sh.addEventListener(ev,e=>e.stopPropagation(),{passive:true});
     upd();
 
-    // 定型文チャット
+    // オンラインチャット（自由入力＆定型文）
     const btnChatFab = document.getElementById('btnChatFab');
     const chatTray = document.getElementById('chatTray');
     const btnChatClose = document.getElementById('btnChatClose');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
     if (btnChatFab && chatTray) {
       btnChatFab.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -8206,16 +8272,36 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     if (btnChatClose && chatTray) {
       btnChatClose.addEventListener('click', () => chatTray.classList.add('hide'));
     }
+    if (chatForm && chatInput) {
+      chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msg = chatInput.value.trim();
+        if (!msg) return;
+        if (typeof sendQuickChat === 'function') sendQuickChat(msg);
+        chatInput.value = '';
+      });
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && chatTray) {
+          chatInput.blur();
+          chatTray.classList.add('hide');
+        }
+      });
+    }
     document.querySelectorAll('.chat-preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const msg = btn.dataset.msg;
         if (typeof sendQuickChat === 'function') sendQuickChat(msg);
-        if (chatTray) chatTray.classList.add('hide');
       });
     });
     window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
       if (e.code === 'KeyT' && typeof G !== 'undefined' && G && G.phase === 'play') {
-        if (chatTray) chatTray.classList.toggle('hide');
+        if (chatTray) {
+          chatTray.classList.toggle('hide');
+          if (!chatTray.classList.contains('hide') && chatInput) {
+            setTimeout(() => chatInput.focus(), 30);
+          }
+        }
       }
     });
 
