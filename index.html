@@ -385,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.25)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.26)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -413,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.25 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.26 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -589,7 +589,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.25)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.26)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -635,6 +635,16 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.26 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">トラブル発生時のタブレット自動起動・通知バナー不発を修正</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li>トラブル発生時に通知表示の参照エラーでタブレット自動起動とバナー表示が止まっていた不具合を修正しました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.25</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.25 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">総合指令所で各列車のトラブル発生モード状態を確認可能に</div>
@@ -1159,7 +1169,7 @@ html,body{overscroll-behavior:none}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.8.25)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.8.26)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -8102,6 +8112,7 @@ function updTroubleVisual(dt){
 }
 window.__spawnTroubleVisual=spawnTroubleVisual;
 window.__clearTroubleVisual=clearTroubleVisual;
+window.toast=toast;
 window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,playGuide,playStationAnnounce,ltdSong,SONG_A,SONG_B,listenerSealed,clamp};
 window.__T={AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
@@ -8937,6 +8948,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         b.classList.add('hide');
       }
     };
+    const showToast = (m, t) => { try { if (typeof window.toast === 'function') window.toast(m, t); } catch(e) {} };
     const isDispatchManual = () => Date.now() < dispatchManualUntil;
     const updateDispatchBadges = () => {
       const b = document.getElementById('dtDispatchBadge');
@@ -8975,11 +8987,6 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         g.dispatchHold = true;
         g.ato = false;
         g.auto = false;
-        if (typeof T.drawPanel === 'function') T.drawPanel();
-        if (typeof window.__spawnTroubleVisual === 'function') window.__spawnTroubleVisual(reason);
-        playDispatchChime();
-        toast('🚨 ' + reason, 'warn');
-        appendDispatchLog('🚨 異常検知', reason + '（指令の許可があるまで運転再開できません）', 'sys');
         const tb = document.getElementById('dtTroubleBanner');
         const tt = document.getElementById('dtTroubleText');
         if (tb && tt) {
@@ -8993,11 +9000,16 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
           dtUnreadCount = 0;
           updateDtUnreadBadge();
         }
+        if (typeof T.drawPanel === 'function') T.drawPanel();
+        if (typeof window.__spawnTroubleVisual === 'function') window.__spawnTroubleVisual(reason);
+        playDispatchChime();
+        showToast('🚨 ' + reason, 'warn');
+        appendDispatchLog('🚨 異常検知', reason + '（指令の許可があるまで運転再開できません）', 'sys');
         publishDispatchMsg({ from: 'driver', id: ONLINE_CLIENT_ID, name: MY_PLAYER_NAME, text: '🚨 【自動通報】' + reason });
         return;
       }
       if (g.troubleActive && !isFromDispatch && (cmd === 'resume' || cmd === 'prevStation' || cmd === 'nextStation')) {
-        toast('⚠️ トラブル対応中は司令の許可なしに運転再開できません', 'warn');
+        showToast('⚠️ トラブル対応中は司令の許可なしに運転再開できません', 'warn');
         appendDispatchLog('システム', '⚠️ 司令の許可が出るまで運転再開できません。指令室へ連絡してください。', 'sys');
         return;
       }
@@ -9006,28 +9018,28 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         g.ato = false;
         g.auto = false;
         if (typeof T.drawPanel === 'function') T.drawPanel();
-        toast('🛑 ' + (byWho || '指令') + '：緊急停止しました', 'warn');
+        showToast('🛑 ' + (byWho || '指令') + '：緊急停止しました', 'warn');
         appendDispatchLog('システム', '列車を緊急停止しました（運転再開まで停車保持）', 'sys');
       } else if (cmd === 'resume') {
         g.troubleActive = false;
         g.troubleReason = null;
-        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         const tb = document.getElementById('dtTroubleBanner');
         if (tb) tb.classList.add('hide');
+        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         g.dispatchHold = false;
         g.slowMode = null;
         g.slowMaxV = null;
         g.notch = 0;
         g.mnotch = 0;
         if (typeof T.drawPanel === 'function') T.drawPanel();
-        toast('▶️ ' + (byWho || '指令') + '：通常運転を再開しました', 'ok');
+        showToast('▶️ ' + (byWho || '指令') + '：通常運転を再開しました', 'ok');
         appendDispatchLog('システム', '停止・徐行を解除し通常運転を再開しました', 'sys');
       } else if (cmd === 'prevStation') {
         g.troubleActive = false;
         g.troubleReason = null;
-        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         const tb = document.getElementById('dtTroubleBanner');
         if (tb) tb.classList.add('hide');
+        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         g.dispatchHold = false;
         g.slowMode = 'prev';
         g.slowMaxV = 20 / 3.6;
@@ -9042,14 +9054,14 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         if (g.door && g.door.state !== 'closed' && typeof T.startClosing === 'function') T.startClosing();
         if (typeof T.drawPanel === 'function') T.drawPanel();
         const msg = '⏮️ ' + (targetSt ? targetSt.name + '駅（一駅前）' : '一駅前') + 'まで退行徐行運転（上限20km/h）が許可されました';
-        toast(msg, 'warn');
+        showToast(msg, 'warn');
         appendDispatchLog('システム', msg, 'sys');
       } else if (cmd === 'nextStation') {
         g.troubleActive = false;
         g.troubleReason = null;
-        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         const tb = document.getElementById('dtTroubleBanner');
         if (tb) tb.classList.add('hide');
+        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         g.dispatchHold = false;
         g.slowMode = 'next';
         g.slowMaxV = 25 / 3.6;
@@ -9058,7 +9070,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         if (typeof T.drawPanel === 'function') T.drawPanel();
         const nextSt = T.stOf(g.nv);
         const msg = '⏭️ ' + (nextSt ? nextSt.name + '駅（次の駅）' : '次の駅') + 'まで徐行運転（上限25km/h）で運転再開が許可されました';
-        toast(msg, 'ok');
+        showToast(msg, 'ok');
         appendDispatchLog('システム', msg, 'sys');
       }
     };
@@ -9155,7 +9167,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
         try { ONLINE_CLIENT.publish('shiomi3d/v1/dispatch/msg', JSON.stringify(obj), { qos: 0 }); return true; } catch(e) {}
       }
-      if (typeof toast === 'function') toast('⚠️ オンライン未接続のため送信できませんでした', 'warn');
+      if (typeof showToast === 'function') showToast('⚠️ オンライン未接続のため送信できませんでした', 'warn');
       return false;
     };
     const btnDriverTablet = document.getElementById('btnDriverTablet');
@@ -9382,7 +9394,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const bindDispCmd = (id, cmd, label) => {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => {
-        if (!dispSelectedId) { toast('先に対象の運転士を選択してください', 'warn'); return; }
+        if (!dispSelectedId) { showToast('先に対象の運転士を選択してください', 'warn'); return; }
         const p = ONLINE_PLAYERS[dispSelectedId];
         const msg = '【指令】' + (p ? p.name : '') + ' へ「' + label + '」を送信しました';
         appendDispatchLog('📡 製作者指令', msg, 'disp');
@@ -9397,7 +9409,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const dispTroubleSelect = document.getElementById('dispTroubleSelect');
     if (dispCmdTrouble && dispTroubleSelect) {
       dispCmdTrouble.addEventListener('click', () => {
-        if (!dispSelectedId) { toast('先に対象の運転士を選択してください', 'warn'); return; }
+        if (!dispSelectedId) { showToast('先に対象の運転士を選択してください', 'warn'); return; }
         const reason = dispTroubleSelect.value;
         const p = ONLINE_PLAYERS[dispSelectedId];
         appendDispatchLog('📡 指令メモ', (p ? p.name : '') + ' の路線でトラブルを発生させました: ' + reason, 'sys');
