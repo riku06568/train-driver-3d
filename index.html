@@ -266,6 +266,18 @@ html,body{overscroll-behavior:none}
 .chat-preset-btn:hover,.chat-preset-btn:active{background:rgba(2,132,199,0.4);border-color:#38bdf8;color:#fff}
 #chatHudBanner{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:45;background:rgba(15,23,42,0.92);border:1.5px solid #38bdf8;border-radius:24px;padding:8px 18px;color:#fff;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.6);display:flex;align-items:center;gap:8px;pointer-events:none;transition:opacity 0.3s,transform 0.3s}
 #chatHudBanner.hide{display:none!important}
+#btnDriverTablet{position:fixed;top:calc(146px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:40;height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(52,211,153,0.45);background:rgba(12,24,44,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#34d399;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,0.5);transition:background 0.15s,transform 0.15s}
+#btnDriverTablet.hide{display:none!important}
+#btnDriverTablet:hover{background:rgba(6,95,70,0.95);color:#fff;transform:scale(1.02)}
+.dt-modal{position:fixed;inset:0;z-index:95;background:rgba(4,9,18,0.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:12px}
+.dt-modal.hide{display:none!important}
+.dt-card{width:min(460px,96vw);max-height:90vh;overflow-y:auto;background:#0b1322;border:1px solid rgba(56,189,248,0.35);border-radius:18px;padding:16px;color:#e6eef8;box-shadow:0 20px 50px rgba(0,0,0,0.65);display:flex;flex-direction:column;gap:12px}
+.dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dt-btn{padding:11px 10px;border-radius:11px;border:1px solid rgba(255,255,255,0.16);background:#17253d;color:#f1f5f9;font:inherit;font-weight:700;font-size:13px;cursor:pointer;text-align:center}
+.dt-btn.danger{background:rgba(185,28,28,0.85);border-color:#f87171}
+.dt-btn.ok{background:rgba(21,128,61,0.85);border-color:#4ade80}
+.dt-btn.warn{background:rgba(180,83,9,0.85);border-color:#fbbf24}
+.dt-log{background:rgba(4,9,18,0.75);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 10px;height:150px;overflow-y:auto;font-size:12.5px;line-height:1.5;display:flex;flex-direction:column;gap:5px}
 
 @media (prefers-reduced-motion:reduce){.card{transition:none}}
 </style>
@@ -274,6 +286,7 @@ html,body{overscroll-behavior:none}
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
 <button id="btnTitleReturn" class="hide" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
 <button id="btnChatFab" class="hide" title="オンラインチャット">💬 チャット</button>
+<button id="btnDriverTablet" class="hide" title="運転士用タブレット（指令連絡・異常時対応）">📲 運転士タブレット</button>
 <button id="btnOnlineHud" class="online-hud-btn">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
 <div id="gameTutorialHUD" class="hide">
   <div class="tut-hud-step" id="tutHudStep">💡 運転ガイド</div>
@@ -372,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.15)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.16)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -400,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.15 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.16 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -527,7 +540,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.15)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.16)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -573,6 +586,19 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.16 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">戸締め放送修正・乗客アバター同期・運転士タブレット＆指令業務実装</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>戸締め放送の音声を修正</b>：Web Audio API再生へ統一し、AI列車・他プレイヤー列車のドア閉めアナウンスが乗客モードでもしっかり聞こえるようにしました</li>
+            <li><b>乗客モードのアバターをリアルタイム同期</b>：各端末の乗客モードプレイヤーの位置・歩行・乗車を同期し、カスタムアバターを3D空間にリアルタイム表示するようにしました</li>
+            <li><b>運転士用タブレットを追加</b>：運転画面の「📲 運転士タブレット」から、指令との連絡・緊急停止・運転再開・一駅前へ戻る・一駅先で再開（自列車のみ反映）を操作できます</li>
+            <li><b>指令業務モードを追加</b>：ホーム画面のパスワード欄に指令用パスワードを入力するとどの端末からでも指令所が開き、手動対応／自動対応の切り替え表示・個別列車への指示・指令チャットが行えます</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.15</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.15 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗客モード中のプレイヤーが運転士側に電車として表示される不具合を修正</div>
@@ -968,6 +994,66 @@ html,body{overscroll-behavior:none}
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- 運転士用タブレットモーダル -->
+<div id="driverTabletModal" class="dt-modal hide">
+  <div class="dt-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
+      <div>
+        <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中</div>
+      </div>
+      <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+    <div style="font-size:12px;color:#93c5fd;font-weight:700;">自列車・運行操作（この列車のみに反映）</div>
+    <div class="dt-grid">
+      <button id="dtBtnStop" class="dt-btn danger">🛑 緊急停止</button>
+      <button id="dtBtnResume" class="dt-btn ok">▶️ 運転再開</button>
+      <button id="dtBtnPrev" class="dt-btn warn">⏮️ 一駅前まで戻る</button>
+      <button id="dtBtnNext" class="dt-btn">⏭️ 一駅先まで運転再開</button>
+    </div>
+    <div style="font-size:12px;color:#93c5fd;font-weight:700;">指令室との連絡</div>
+    <div id="dtLog" class="dt-log"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;">
+      <button class="dt-quick dt-btn" data-msg="緊急停止しました。指示願います。" style="padding:5px 8px;font-size:11px;">緊急停止報告</button>
+      <button class="dt-quick dt-btn" data-msg="運転再開してよろしいでしょうか？" style="padding:5px 8px;font-size:11px;">運転再開要請</button>
+      <button class="dt-quick dt-btn" data-msg="一駅前へ退行・復旧します。" style="padding:5px 8px;font-size:11px;">一駅前復帰</button>
+      <button class="dt-quick dt-btn" data-msg="一駅先へ進めて運転再開します。" style="padding:5px 8px;font-size:11px;">一駅先再開</button>
+    </div>
+    <form id="dtForm" style="display:flex;gap:6px;">
+      <input id="dtInput" type="text" maxlength="80" placeholder="指令室へメッセージ..." style="flex:1;min-width:0;background:#111d33;border:1px solid rgba(56,189,248,0.35);border-radius:9px;padding:8px 10px;color:#fff;font:inherit;font-size:13px;">
+      <button type="submit" class="dt-btn ok" style="padding:8px 14px;">送信</button>
+    </form>
+  </div>
+</div>
+
+<!-- 指令業務コンソールモーダル（パスワード 291129） -->
+<div id="dispatchModal" class="dt-modal hide">
+  <div class="dt-card" style="width:min(540px,96vw);border-color:#f59e0b;">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:8px;">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#fbbf24;">📡 総合指令所（製作者手動対応モード）</div>
+        <div style="font-size:11.5px;color:#86efac;margin-top:2px;">🟢 接続中の全運転士に「製作者が手動対応」と表示中</div>
+      </div>
+      <button id="dispClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+    <div style="font-size:12px;color:#cbd5e1;font-weight:700;">乗務中の運転士（指示を送る列車を選択）</div>
+    <div id="dispDriversList" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+    <div id="dispTargetLabel" style="font-size:12px;color:#fbbf24;font-weight:700;">対象列車: 未選択（下のリストから選択、または全体チャット）</div>
+    <div class="dt-grid">
+      <button id="dispCmdStop" class="dt-btn danger">🛑 対象へ緊急停止</button>
+      <button id="dispCmdResume" class="dt-btn ok">▶️ 対象へ運転再開</button>
+      <button id="dispCmdPrev" class="dt-btn warn">⏮️ 対象を一駅前へ</button>
+      <button id="dispCmdNext" class="dt-btn">⏭️ 対象を一駅先再開</button>
+    </div>
+    <div style="font-size:12px;color:#cbd5e1;font-weight:700;">指令チャット</div>
+    <div id="dispLog" class="dt-log"></div>
+    <form id="dispForm" style="display:flex;gap:6px;">
+      <input id="dispInput" type="text" maxlength="80" placeholder="運転士へ指令・メッセージ..." style="flex:1;min-width:0;background:#111d33;border:1px solid rgba(251,191,36,0.45);border-radius:9px;padding:8px 10px;color:#fff;font:inherit;font-size:13px;">
+      <button type="submit" class="dt-btn warn" style="padding:8px 14px;">指令送信</button>
+    </form>
   </div>
 </div>
 <div id="loading" class="hide">路線を準備しています…</div>
@@ -1427,6 +1513,7 @@ function initOnlineClient() {
       ONLINE_CLIENT.subscribe('shiomi3d/v1/accounts/#', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/events', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/chat', { qos: 0 });
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/dispatch/#', { qos: 0 });
       startOnlinePublishLoop();
       publishPresence(true);
       syncDriverToMQTT();
@@ -1457,6 +1544,13 @@ function initOnlineClient() {
           const ev = JSON.parse(message.toString());
           if (ev && ev.id && ev.id !== ONLINE_CLIENT_ID) {
             handleIncomingEvent(ev);
+          }
+          return;
+        }
+        if (topic.startsWith('shiomi3d/v1/dispatch/')) {
+          const dp = JSON.parse(message.toString());
+          if (dp && typeof handleDispatchPacket === 'function') {
+            handleDispatchPacket(topic, dp);
           }
           return;
         }
@@ -1523,6 +1617,13 @@ function handleRemotePlayerUpdate(data) {
       snd: null,
       tr: null,
       avatar: data.avatar || null,
+      paxS: data.paxS != null ? data.paxS : null,
+      paxO: data.paxO != null ? data.paxO : 0,
+      paxYaw: data.paxYaw != null ? data.paxYaw : 0,
+      paxWalk: !!data.paxWalk,
+      paxArea: data.paxArea || 'plat',
+      paxRide: data.paxRide || null,
+      paxG: null,
       nCar: data.nCar || null,
       greenCars: data.greenCars || null,
       liv: data.liv != null ? data.liv : null,
@@ -1581,6 +1682,12 @@ function handleRemotePlayerUpdate(data) {
     p.dest = data.dest || p.dest || '';
     p.old = data.old !== undefined ? data.old : p.old;
     p.avatar = data.avatar || p.avatar || null;
+    if (data.paxS != null) p.paxS = data.paxS;
+    if (data.paxO != null) p.paxO = data.paxO;
+    if (data.paxYaw != null) p.paxYaw = data.paxYaw;
+    if (data.paxWalk !== undefined) p.paxWalk = !!data.paxWalk;
+    if (data.paxArea) p.paxArea = data.paxArea;
+    p.paxRide = data.paxRide !== undefined ? data.paxRide : p.paxRide;
     p.nCar = data.nCar || p.nCar;
     p.greenCars = data.greenCars || p.greenCars;
     p.liv = data.liv != null ? data.liv : p.liv;
@@ -1622,6 +1729,16 @@ function removeRemotePlayer(id) {
       } catch(e) {}
     }
     p.tr = null;
+  }
+  if (p.paxG) {
+    try {
+      if (p.paxG.parent) p.paxG.parent.remove(p.paxG);
+      if (p.paxG.userData && p.paxG.userData.plate && p.paxG.userData.plate.material) {
+        if (p.paxG.userData.plate.material.map) p.paxG.userData.plate.material.map.dispose();
+        p.paxG.userData.plate.material.dispose();
+      }
+    } catch(e) {}
+    p.paxG = null;
   }
   delete ONLINE_PLAYERS[id];
   try {
@@ -1714,6 +1831,9 @@ function playRemoteTrainSound(p, type, opt) {
       A.doorOpenSnd(out);
     } else if (type === 'doorClose' && typeof A.doorCloseSnd === 'function') {
       A.doorCloseSnd(out);
+      if (d < 220 && typeof A.playGuide === 'function') {
+        A.playGuide('tab_doors', out, 1.0);
+      }
     }
   } catch(e) {
     console.warn('playRemoteTrainSound err', e);
@@ -2089,7 +2209,16 @@ function publishPresence(force) {
     liv: (typeof ownTrain !== 'undefined' && ownTrain && ownTrain.mats && ownTrain.mats.liv1) ? ownTrain.mats.liv1.color.getHex() : null,
     twoMan: (typeof curG !== 'undefined' && curG) ? !!curG.twoMan : false,
     crew: (typeof CREWSEL !== 'undefined' ? CREWSEL : 'one'),
-    avatar: (typeof AVATAR !== 'undefined' ? AVATAR : null),
+    avatar: (typeof AVATAR !== 'undefined' ? AVATAR : (window.__T && window.__T.AVATAR ? window.__T.AVATAR : null)),
+    paxS: (isPax && window.__T && window.__T.W) ? window.__T.W.s : null,
+    paxO: (isPax && window.__T && window.__T.W) ? window.__T.W.o : 0,
+    paxYaw: (isPax && window.__T && window.__T.W) ? window.__T.W.yaw : 0,
+    paxArea: (isPax && window.__T && window.__T.W) ? window.__T.W.area : 'plat',
+    paxWalk: (isPax && window.__T && window.__T.W) ? !!(Math.hypot(window.__T.W.mv.x, window.__T.W.mv.y) > 0.1 || window.__T.W.keys.KeyW || window.__T.W.keys.KeyS || window.__T.W.keys.KeyA || window.__T.W.keys.KeyD || window.__T.W.keys.ArrowUp || window.__T.W.keys.ArrowDown || window.__T.W.keys.ArrowLeft || window.__T.W.keys.ArrowRight) : false,
+    paxRide: (isPax && window.__T && typeof window.__T.getRide === 'function' && window.__T.getRide()) ? (() => {
+      const r = window.__T.getRide();
+      return { pid: (r.a && r.a.p) ? r.a.p.id : null, k: r.k, lx: r.lx, lz: r.lz, fl: r.fl, seat: r.seat, s: r.a ? r.a.s : null };
+    })() : null,
     ts: Date.now()
   };
   try {
@@ -3544,6 +3673,65 @@ function updAvatar(dt){if(!AVG||!PAX)return;const g=AVG,u=g.userData,t=performan
   g.visible=AV3P;
   if(AV3P){ /* 三人称：自分の後ろ斜め上から */
     const back=RIDE?1.7:2.8,up=RIDE?0.35:0.55,fx=-Math.sin(W.yaw),fz=-Math.cos(W.yaw);camera.position.x-=fx*back;camera.position.z-=fz*back;camera.position.y+=up;camera.rotation.set(W.pitch-0.18,W.yaw,0);}}
+function buildRemotePassengerAvatar(p){
+  if(!p||p.paxG)return p&&p.paxG;
+  const A=Object.assign({},AV_DEF,p.avatar||{});const D=avatarDesc(A);let vi;
+  if(D.child){VDC.push(D);vi=VDC.length-1;CUPPERG[vi]=colored(partsOf(vi,true,'upper'));CSTANDG[vi]=colored(partsOf(vi,true,'stand'));CSITG[vi]=colored(partsOf(vi,true,'sit'));CLEGG[vi]=colored(legPartsOf(vi,true));}
+  else{VD.push(D);vi=VD.length-1;STRAPG[vi]=colored(partsOf(vi,false,'strap'));UPPERG[vi]=colored(partsOf(vi,false,'upper'));STANDG[vi]=colored(partsOf(vi,false,'stand'));SITG[vi]=colored(partsOf(vi,false,'sit'));LEGG[vi]=colored(legPartsOf(vi,false));}
+  const g=new THREE.Group();g.rotation.order='YXZ';
+  const geo=D.child?CSTANDG[vi]:STANDG[vi];
+  const mesh=new THREE.Mesh(geo,upperMat);g.add(mesh);
+  g.userData={legs:[],mesh,vi,child:D.child,staff:false,mode:'stand'};
+  geo.computeBoundingBox();const mh=Math.max(0.5,geo.boundingBox.max.y);const h=(A.height||170)/100;const sc=h/mh;g.scale.set(sc,sc,sc);
+  if(typeof makeNameplateSprite==='function'){
+    const plate=makeNameplateSprite(p.name||'乗客','#34d399');
+    plate.position.set(0,mh+0.42,0);plate.scale.set(2.4,0.68,1);g.add(plate);g.userData.plate=plate;
+  }
+  g.traverse(o=>o.layers.enableAll());
+  scene.add(g);p.paxG=g;return g;
+}
+function updRemotePassengers(dt){
+  if(!IS_ONLINE||!window.ONLINE_PLAYERS)return;
+  const t=performance.now()/1000;
+  for(const pid in ONLINE_PLAYERS){
+    const p=ONLINE_PLAYERS[pid];if(!p)continue;
+    const isPaxP=!!(p.isPax||p.state==='passenger');
+    if(!isPaxP||p.paxS==null){if(p.paxG)p.paxG.visible=false;continue;}
+    if(!p.paxG){try{buildRemotePassengerAvatar(p);}catch(e){continue;}}
+    const g=p.paxG;if(!g)continue;
+    g.visible=true;
+    const r=p.paxRide;
+    if(r&&r.pid!==undefined){
+      let targetCar=null;
+      if(r.pid&&ONLINE_PLAYERS[r.pid]&&ONLINE_PLAYERS[r.pid].tr&&ONLINE_PLAYERS[r.pid].tr.cars){
+        targetCar=ONLINE_PLAYERS[r.pid].tr.cars[r.k||0]||ONLINE_PLAYERS[r.pid].tr.cars[0];
+      }else if(r.pid===null&&!PAX&&typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars){
+        targetCar=ownTrain.cars[r.k||0]||ownTrain.cars[0];
+      }
+      if(targetCar){
+        if(g.parent!==targetCar)targetCar.add(g);
+        g.position.set(r.lx||0,1.16,r.lz||0);
+        g.rotation.set(0,(p.paxYaw||0)+Math.PI,0);
+        personPose(g,r.seat!=null?'sit':(p.paxWalk?'walk':'stand'));
+      }else{
+        if(g.parent!==scene)scene.add(g);
+        g.position.copy(offs(p.paxS,p.paxO||0,PH));
+        g.rotation.set(0,(p.paxYaw||0)+Math.PI,0);
+        personPose(g,p.paxWalk?'walk':'stand');
+      }
+    }else{
+      if(g.parent!==scene)scene.add(g);
+      const tgt=offs(p.paxS,p.paxO||0,PH);
+      if(g.position.distanceTo(tgt)>12||g.position.lengthSq()<0.01)g.position.copy(tgt);
+      else g.position.lerp(tgt,Math.min(1,dt*12));
+      g.rotation.set(0,(p.paxYaw||0)+Math.PI,0);
+      personPose(g,p.paxWalk?'walk':'stand');
+    }
+    if(g.userData&&g.userData.mode==='walk'){
+      g.userData.legs.forEach((l,i)=>l.rotation.x=Math.sin(t*8.5+i*Math.PI)*0.5);
+    }
+  }
+}
 function makePerson(kind){const child=kind==='child',staff=kind==='staff';const g=new THREE.Group();const vi=irand(0,(child?NVARC:NVAR)-1);
   const mesh=new THREE.Mesh(staff?SSTANDG[vi]:child?CSTANDG[vi]:STANDG[vi],upperMat);g.add(mesh);
   const sc=child?rand(0.60,0.80):rand(0.90,1.06);g.scale.set(sc,sc,sc);
@@ -4476,7 +4664,7 @@ function aiRun(a,dt){
   a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);}
 }
 function aiSounds(a,el,tot){const d=a.tr.cars[2].position.distanceTo(camera.getWorldPosition(camW));if(d>320)return;
-  if(!a.sndF.v&&a.t<(BRANCH?7.5:4.2)){a.sndF.v=1;if(d<180)say('ドアが閉まります。ご注意ください。','ann',false,clamp(1.0/(1+Math.pow(d/60,2)),0.35,1));}
+  if(!a.sndF.v&&a.t<(BRANCH?7.5:4.2)){a.sndF.v=1;if(d<180)playGuide('tab_doors',getExtBus()||master,clamp(1.2/(1+Math.pow(d/60,2)),0.35,1.2));}
   if(!AC)return;
   if(!a.sndF.o&&el>0.1){a.sndF.o=1;playAt(a.tr.cars[1].position,doorOpenSnd);}
   if(a.sndF.mStart==null)a.sndF.mStart=(a.doors?26:22)-rand(3,10);                                     /* ドアが開いてから少しして */
@@ -4664,19 +4852,30 @@ let guideAudio=null,guideTimer=0;
 const guideEls={};let guideReady=false;
 function preloadGuides(){if(guideReady)return;guideReady=true;
   for(const k of Object.keys(GUIDE_URI)){try{const a=new Audio();a.preload='auto';a.src=GUIDE_URI[k];a.volume=1;a.load();guideEls[k]=a;}catch(e){}}}
-function playGuide(kind){const src=GUIDE_URI[kind];if(!src)return;
-  try{initAudio();preloadGuides();
-    if(guideAudio){try{guideAudio.pause();guideAudio.currentTime=0;}catch(e){}}
-    let a=guideEls[kind];
-    if(!a){a=new Audio(src);a.volume=1;guideEls[kind]=a;}
-    guideAudio=a;a.volume=1;a.muted=false;
-    try{a.currentTime=0;}catch(e){}
-    const go=()=>{const p=a.play();if(p&&p.catch)p.catch(function(err){console.warn('guide play',err);
-      /* fallback: WebAudio decode */
-      try{fetch(src).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(buf=>{
-        const s=AC.createBufferSource(),g=AC.createGain();g.gain.value=3.5;s.buffer=buf;s.connect(g);g.connect(master);s.start();
-      }).catch(e2=>console.warn('guide decode',e2));}catch(e3){}});};
-    if(a.readyState>=2)go();else a.addEventListener('canplaythrough',go,{once:true}),a.load();
+const guideBufCache={};
+function playGuide(kind,dest,gainVal){const src=GUIDE_URI[kind];if(!src)return;
+  try{initAudio();
+    if(AC){
+      if(AC.state==='suspended'){try{AC.resume();}catch(e){}}
+      const playBuf=(buf)=>{
+        const s=AC.createBufferSource(),g=AC.createGain();
+        g.gain.value=(gainVal!=null?gainVal:0.95);
+        s.buffer=buf;s.connect(g);
+        if(dest){g.connect(dest);}else{g.connect(AC.destination);}
+        s.start(0);
+      };
+      if(guideBufCache[kind]){playBuf(guideBufCache[kind]);return;}
+      fetch(src).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(buf=>{
+        guideBufCache[kind]=buf;playBuf(buf);
+      }).catch(()=>{
+        try{const a=new Audio(src);a.volume=1;a.play().catch(()=>{});}catch(e2){}
+      });
+      return;
+    }
+    preloadGuides();
+    let a=guideEls[kind];if(!a){a=new Audio(src);a.volume=1;guideEls[kind]=a;}
+    a.volume=1;a.muted=false;try{a.currentTime=0;}catch(e){}
+    a.play().catch(()=>{});
   }catch(e){console.warn(e);}}
 function scheduleGuide(kind,delayMs){if(!kind)return;preloadGuides();clearTimeout(guideTimer);
   guideTimer=setTimeout(function(){playGuide(kind);},Math.max(300,delayMs|0));}
@@ -5837,6 +6036,7 @@ function askStation(st,atStart){ // 待ち合わせ（休憩）は廃止。車�
 
 /* ================= simulation ================= */
 function physics(dt){
+  if(G.dispatchHold){G.notch=-9;G.mnotch=-9;G.bc=400;G.prevV=G.v;G.v=Math.max(0,G.v-4.5*dt);G.s+=G.dir*G.v*dt;return;}
   if(G.manual){G.notch=G.mnotch;manualSafety();}
   else if(G.ato&&G.door.state==='closed')atoControl();else if(!G.ato)G.notch=G.v>0?-8:-4;
   if(!G.ato)G.sig=nextSignal(mainAt(G.key,G.s),G.s,G.dir);
@@ -7124,7 +7324,7 @@ function update(dt,now){
     const mb=document.getElementById('meloBtn');if(mb){const on=nearMeloBox()&&(G.door.state==='open'||G.door.state==='opening');mb.classList.toggle('hide',!on);mb.textContent=G.promoOn?'再生中…':'発車メロディ';}}
   updButtons(now);
   if(typeof updateTutorialHUD==='function')updateTutorialHUD();
-  updAudio();audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
+  updAudio();if(typeof updRemotePassengers==='function')updRemotePassengers(dt);audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
 }
 
 function updateTutorialHUD() {
@@ -7635,12 +7835,14 @@ if (IS_ONLINE) {
   if (hudBtn) hudBtn.classList.remove('hide');
   const chatFab = document.getElementById('btnChatFab');
   if (chatFab) chatFab.classList.remove('hide');
+  const dtFab = document.getElementById('btnDriverTablet');
+  if (dtFab && !PAX) dtFab.classList.remove('hide');
   updateOnlineHud(true);
 }
 const btr = document.getElementById('btnTitleReturn');
 if (btr) btr.classList.remove('hide');
-window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,ltdSong,SONG_A,SONG_B,listenerSealed,clamp};
-window.__T={enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks};
+window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,playGuide,playStationAnnounce,ltdSong,SONG_A,SONG_B,listenerSealed,clamp};
+window.__T={AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
 /* ================= home screen (before the world is built) ================= */
 // audio must be started inside the user's tap (iOS / Chrome autoplay rules)
@@ -7877,6 +8079,11 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     btnOnlineProceed.onclick = async () => {
       const name = (onlineNameInput.value || '').trim();
       const pwd = (driverPassInput.value || '').trim();
+      if (pwd === '291129') {
+        hideOnlineModal();
+        if (typeof window.__openDispatchConsole === 'function') window.__openDispatchConsole();
+        return;
+      }
       const statusEl = document.getElementById('driverModalStatus');
       
       const showErr = (msg) => {
@@ -8374,6 +8581,250 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       btnChatFab.addEventListener('click', (e) => {
         e.stopPropagation();
         chatTray.classList.toggle('hide');
+      });
+    }
+    // 運転士用タブレット＆総合指令所（パスワード 291129）
+    let dispatchManualUntil = 0;
+    let dispatchHB = null;
+    let dispSelectedId = null;
+    const isDispatchManual = () => Date.now() < dispatchManualUntil;
+    const updateDispatchBadges = () => {
+      const b = document.getElementById('dtDispatchBadge');
+      if (b) {
+        if (isDispatchManual()) {
+          b.textContent = '🟢 指令：製作者が手動対応中';
+          b.style.color = '#4ade80';
+        } else {
+          b.textContent = '🤖 指令：自動対応中';
+          b.style.color = '#94a3b8';
+        }
+      }
+    };
+    setInterval(updateDispatchBadges, 2000);
+    const appendDispatchLog = (who, text, kind) => {
+      const timeStr = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+      const html = `<div><span style="color:#64748b;font-size:10.5px;">[${timeStr}]</span> <b style="color:${kind==='disp'?'#fbbf24':kind==='sys'?'#34d399':'#38bdf8'};">${who}:</b> <span>${String(text).replace(/</g,'&lt;')}</span></div>`;
+      for (const id of ['dtLog', 'dispLog']) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.insertAdjacentHTML('beforeend', html);
+          while (el.children.length > 50) el.removeChild(el.firstChild);
+          el.scrollTop = el.scrollHeight;
+        }
+      }
+    };
+    const executeLocalTrainCmd = (cmd, byWho) => {
+      const T = window.__T;
+      if (!T || !T.G || T.G.phase !== 'play' || window.__PAX) return;
+      const g = T.G;
+      if (cmd === 'stop') {
+        g.dispatchHold = true;
+        g.ato = false;
+        g.auto = false;
+        if (typeof T.drawPanel === 'function') T.drawPanel();
+        toast('🛑 ' + (byWho || '指令') + '：緊急停止しました', 'warn');
+        appendDispatchLog('システム', '列車を緊急停止しました（運転再開まで停車保持）', 'sys');
+      } else if (cmd === 'resume') {
+        g.dispatchHold = false;
+        g.notch = 0;
+        g.mnotch = 0;
+        if (typeof T.drawPanel === 'function') T.drawPanel();
+        toast('▶️ ' + (byWho || '指令') + '：運転を再開しました', 'ok');
+        appendDispatchLog('システム', '緊急停止を解除し運転再開可能にしました', 'sys');
+      } else if (cmd === 'prevStation' || cmd === 'nextStation') {
+        const delta = cmd === 'prevStation' ? -1 : 1;
+        if (g.list && g.list.length) {
+          g.nv = Math.max(0, Math.min(g.list.length - 1, g.nv + delta));
+        } else if (g.cyc && g.cyc.length) {
+          g.cpos = ((g.cpos + delta) % g.cyc.length + g.cyc.length) % g.cyc.length;
+          g.nv = 0;
+        }
+        const targetSt = T.stOf(g.nv);
+        if (targetSt && T.TK && T.TK[g.key] && T.CFG) {
+          const L = T.CFG.L;
+          g.s = (((targetSt.s + T.TK[g.key].so - g.dir * 0.5) % L) + L) % L;
+          g.v = 0;
+          g.atStation = g.nv;
+          g.depCheck = null;
+          g.passed = false;
+          g.over = false;
+          g.annNext = false;
+          g.annSoon = false;
+          g.dispatchHold = false;
+          if (delta === 1) {
+            g.notch = 0;
+            g.mnotch = 0;
+            g.bc = 0;
+            if (g.door && g.door.state !== 'closed' && typeof T.startClosing === 'function') T.startClosing();
+          }
+          if (typeof T.updChunksForce === 'function') T.updChunksForce();
+          if (typeof T.drawPanel === 'function') T.drawPanel();
+          const msg = delta < 0 ? ('⏮️ ' + targetSt.name + '駅（一駅前）へ戻りました') : ('⏭️ ' + targetSt.name + '駅（一駅先）で運転再開しました');
+          toast(msg, 'ok');
+          appendDispatchLog('システム', msg, 'sys');
+        }
+      }
+    };
+    const sendDispatchAutoReply = (text) => {
+      if (isDispatchManual()) return;
+      setTimeout(() => {
+        if (isDispatchManual()) return;
+        let reply = '総合指令（自動対応）です。了解しました。安全を確認のうえ運転を継続してください。';
+        if (/緊急|停止|止ま/.test(text)) reply = '総合指令（自動対応）です。緊急停止を確認しました。安全確認後、タブレットの「運転再開」で再開してください。';
+        else if (/再開/.test(text)) reply = '総合指令（自動対応）です。進路開通を確認しました。運転再開を許可します。';
+        else if (/一駅前|戻/.test(text)) reply = '総合指令（自動対応）です。一駅前への退行・復旧を了解しました。';
+        else if (/一駅先|進/.test(text)) reply = '総合指令（自動対応）です。一駅先からの運転再開を許可します。';
+        appendDispatchLog('🤖 自動指令', reply, 'disp');
+      }, 650);
+    };
+    window.handleDispatchPacket = (topic, dp) => {
+      if (topic === 'shiomi3d/v1/dispatch/status') {
+        if (dp.active) dispatchManualUntil = Date.now() + 10000;
+        else dispatchManualUntil = 0;
+        updateDispatchBadges();
+        return;
+      }
+      if (topic === 'shiomi3d/v1/dispatch/msg') {
+        if (dp.from === 'dispatch') {
+          if (!dp.targetId || dp.targetId === ONLINE_CLIENT_ID) {
+            if (dp.text) appendDispatchLog('📡 製作者指令', dp.text, 'disp');
+            if (dp.cmd && dp.targetId === ONLINE_CLIENT_ID) {
+              executeLocalTrainCmd(dp.cmd, '製作者指令');
+            }
+          }
+        } else if (dp.from === 'driver') {
+          if (dp.id !== ONLINE_CLIENT_ID) {
+            appendDispatchLog(dp.name || '運転士', dp.text || ('[' + dp.cmd + ']'), 'drv');
+          }
+        }
+      }
+    };
+    const publishDispatchMsg = (obj) => {
+      if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+        try { ONLINE_CLIENT.publish('shiomi3d/v1/dispatch/msg', JSON.stringify(obj), { qos: 0 }); } catch(e) {}
+      }
+    };
+    const btnDriverTablet = document.getElementById('btnDriverTablet');
+    const driverTabletModal = document.getElementById('driverTabletModal');
+    const dtClose = document.getElementById('dtClose');
+    if (btnDriverTablet && driverTabletModal) {
+      btnDriverTablet.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateDispatchBadges();
+        driverTabletModal.classList.remove('hide');
+      });
+    }
+    if (dtClose && driverTabletModal) {
+      dtClose.addEventListener('click', () => driverTabletModal.classList.add('hide'));
+    }
+    const bindDtCmd = (id, cmd, label) => {
+      const b = document.getElementById(id);
+      if (b) b.addEventListener('click', () => {
+        executeLocalTrainCmd(cmd, 'タブレット');
+        publishDispatchMsg({ from: 'driver', id: ONLINE_CLIENT_ID, name: MY_PLAYER_NAME, cmd, text: label });
+      });
+    };
+    bindDtCmd('dtBtnStop', 'stop', '緊急停止を実行しました');
+    bindDtCmd('dtBtnResume', 'resume', '運転再開を実行しました');
+    bindDtCmd('dtBtnPrev', 'prevStation', '一駅前まで戻りました');
+    bindDtCmd('dtBtnNext', 'nextStation', '一駅先まで運転再開しました');
+    document.querySelectorAll('.dt-quick').forEach(b => {
+      b.addEventListener('click', () => {
+        const msg = b.dataset.msg;
+        if (!msg) return;
+        appendDispatchLog(MY_PLAYER_NAME, msg, 'drv');
+        publishDispatchMsg({ from: 'driver', id: ONLINE_CLIENT_ID, name: MY_PLAYER_NAME, text: msg });
+        sendDispatchAutoReply(msg);
+      });
+    });
+    const dtForm = document.getElementById('dtForm');
+    const dtInput = document.getElementById('dtInput');
+    if (dtForm && dtInput) {
+      dtForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msg = dtInput.value.trim();
+        if (!msg) return;
+        dtInput.value = '';
+        appendDispatchLog(MY_PLAYER_NAME, msg, 'drv');
+        publishDispatchMsg({ from: 'driver', id: ONLINE_CLIENT_ID, name: MY_PLAYER_NAME, text: msg });
+        sendDispatchAutoReply(msg);
+      });
+    }
+    const dispatchModal = document.getElementById('dispatchModal');
+    const dispClose = document.getElementById('dispClose');
+    const dispDriversList = document.getElementById('dispDriversList');
+    const dispTargetLabel = document.getElementById('dispTargetLabel');
+    const refreshDispatchDrivers = () => {
+      if (!dispDriversList || !dispatchModal || dispatchModal.classList.contains('hide')) return;
+      let html = '';
+      for (const pid in ONLINE_PLAYERS) {
+        const p = ONLINE_PLAYERS[pid];
+        if (!p || p.isPax || p.state === 'passenger') continue;
+        const sel = dispSelectedId === pid;
+        const spd = Math.round((p.v || 0) * 3.6);
+        html += `<button data-pid="${pid}" class="disp-drv-row dt-btn" style="text-align:left;padding:7px 10px;border-color:${sel?'#fbbf24':'rgba(255,255,255,0.14)'};background:${sel?'rgba(245,158,11,0.22)':'#132038'};display:flex;justify-content:space-between;align-items:center;"><span>🚆 ${p.name} <small style="color:#94a3b8;">(${p.stName || '走行中'})</small></span><span style="color:#38bdf8;font-size:11.5px;">${spd} km/h</span></button>`;
+      }
+      if (!html) html = '<div style="color:#64748b;font-size:12px;padding:6px;">現在オンライン運転中の列車はありません</div>';
+      dispDriversList.innerHTML = html;
+      dispDriversList.querySelectorAll('.disp-drv-row').forEach(btn => {
+        btn.addEventListener('click', () => {
+          dispSelectedId = btn.dataset.pid;
+          const p = ONLINE_PLAYERS[dispSelectedId];
+          if (dispTargetLabel) dispTargetLabel.textContent = '対象列車: ' + (p ? p.name : dispSelectedId);
+          refreshDispatchDrivers();
+        });
+      });
+    };
+    setInterval(refreshDispatchDrivers, 1500);
+    window.__openDispatchConsole = () => {
+      if (!dispatchModal) return;
+      dispatchModal.classList.remove('hide');
+      if (typeof initOnlineClient === 'function') initOnlineClient();
+      const sendHB = () => {
+        dispatchManualUntil = Date.now() + 10000;
+        if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+          try { ONLINE_CLIENT.publish('shiomi3d/v1/dispatch/status', JSON.stringify({ active: true, ts: Date.now() }), { qos: 0 }); } catch(e) {}
+        }
+        updateDispatchBadges();
+      };
+      sendHB();
+      if (dispatchHB) clearInterval(dispatchHB);
+      dispatchHB = setInterval(sendHB, 3000);
+      refreshDispatchDrivers();
+    };
+    if (dispClose && dispatchModal) {
+      dispClose.addEventListener('click', () => {
+        dispatchModal.classList.add('hide');
+        if (dispatchHB) { clearInterval(dispatchHB); dispatchHB = null; }
+        if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+          try { ONLINE_CLIENT.publish('shiomi3d/v1/dispatch/status', JSON.stringify({ active: false, ts: Date.now() }), { qos: 0 }); } catch(e) {}
+        }
+      });
+    }
+    const bindDispCmd = (id, cmd, label) => {
+      const b = document.getElementById(id);
+      if (b) b.addEventListener('click', () => {
+        if (!dispSelectedId) { toast('先に対象の運転士を選択してください', 'warn'); return; }
+        const p = ONLINE_PLAYERS[dispSelectedId];
+        const msg = '【指令】' + (p ? p.name : '') + ' へ「' + label + '」を送信しました';
+        appendDispatchLog('📡 製作者指令', msg, 'disp');
+        publishDispatchMsg({ from: 'dispatch', targetId: dispSelectedId, cmd, text: label + 'の指令を受信しました' });
+      });
+    };
+    bindDispCmd('dispCmdStop', 'stop', '緊急停止');
+    bindDispCmd('dispCmdResume', 'resume', '運転再開');
+    bindDispCmd('dispCmdPrev', 'prevStation', '一駅前まで移動');
+    bindDispCmd('dispCmdNext', 'nextStation', '一駅先まで運転再開');
+    const dispForm = document.getElementById('dispForm');
+    const dispInput = document.getElementById('dispInput');
+    if (dispForm && dispInput) {
+      dispForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msg = dispInput.value.trim();
+        if (!msg) return;
+        dispInput.value = '';
+        appendDispatchLog('📡 製作者指令', msg, 'disp');
+        publishDispatchMsg({ from: 'dispatch', targetId: dispSelectedId || null, text: msg });
       });
     }
     if (btnChatClose && chatTray) {
