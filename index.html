@@ -385,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.17)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.18)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -413,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.17 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.18 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -472,6 +472,37 @@ html,body{overscroll-behavior:none}
           <p>接続中の全運転士への指示（緊急停止・運転再開・一駅前/先移動）と手動チャット対応を行います。</p>
           <div class="meta"><span>製作者手動対応</span><span>全線リアルタイム監視</span></div>
         </button>
+      </div>
+    </div>
+
+    <!-- View 2B: Independent Dispatch Console (総合指令所) -->
+    <div id="viewDispatch" class="home-view hide">
+      <div class="view-header">
+        <button id="btnBackFromDispatch" class="backbtn">← 路線選択に戻る</button>
+        <h2>📡 総合指令所（製作者手動対応モード）</h2>
+      </div>
+      <div class="sub" style="color:#86efac;">🟢 接続中の全運転士のタブレットに「製作者が手動対応中」と表示しています</div>
+      <canvas id="dispMapCanvas" width="900" height="420" style="display:block;width:100%;height:auto;border-radius:14px;border:1px solid rgba(251,191,36,0.45);background:#070d18;margin-bottom:14px;cursor:pointer;"></canvas>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;text-align:left;">
+        <div style="background:#0b1322;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:13px;font-weight:800;color:#fbbf24;">🚆 運行中列車・在線モニター（タップで選択）</div>
+          <div id="dispDriversList" style="max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+          <div id="dispTargetLabel" style="font-size:12.5px;color:#fbbf24;font-weight:700;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);">対象列車: 未選択（マップまたは一覧から選択）</div>
+          <div class="dt-grid">
+            <button id="dispCmdStop" class="dt-btn danger">🛑 対象へ緊急停止</button>
+            <button id="dispCmdResume" class="dt-btn ok">▶️ 対象へ運転再開</button>
+            <button id="dispCmdPrev" class="dt-btn warn">⏮️ 対象を一駅前へ</button>
+            <button id="dispCmdNext" class="dt-btn">⏭️ 対象を一駅先再開</button>
+          </div>
+        </div>
+        <div style="background:#0b1322;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:13px;font-weight:800;color:#38bdf8;">💬 指令チャット（運転士との連絡）</div>
+          <div id="dispLog" class="dt-log" style="height:210px;"></div>
+          <form id="dispForm" style="display:flex;gap:6px;">
+            <input id="dispInput" type="text" maxlength="80" placeholder="運転士へ指令・メッセージ..." style="flex:1;min-width:0;background:#111d33;border:1px solid rgba(251,191,36,0.45);border-radius:9px;padding:8px 10px;color:#fff;font:inherit;font-size:13px;">
+            <button type="submit" class="dt-btn warn" style="padding:8px 14px;">指令送信</button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -547,7 +578,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.17)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.18)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -593,6 +624,17 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.18 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">総合指令所を独立画面化＆リアルタイム全列車位置モニターを追加</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>独立した指令業務専用画面（#viewDispatch）</b>：ポップアップではなく1つの独立モードとして開くようにしました</li>
+            <li><b>リアルタイム路線図モニター</b>：全列車・全乗客の現在地・速度・駅名をリアルタイムで路線図上に表示し、マップから直接列車をタップして指示を送れます</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.17</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.17 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">指令業務モードを「乗務開始」の選択画面に統合</div>
@@ -1046,33 +1088,7 @@ html,body{overscroll-behavior:none}
   </div>
 </div>
 
-<!-- 指令業務コンソールモーダル（パスワード 291129） -->
-<div id="dispatchModal" class="dt-modal hide">
-  <div class="dt-card" style="width:min(540px,96vw);border-color:#f59e0b;">
-    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:8px;">
-      <div>
-        <div style="font-size:16px;font-weight:800;color:#fbbf24;">📡 総合指令所（製作者手動対応モード）</div>
-        <div style="font-size:11.5px;color:#86efac;margin-top:2px;">🟢 接続中の全運転士に「製作者が手動対応」と表示中</div>
-      </div>
-      <button id="dispClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
-    </div>
-    <div style="font-size:12px;color:#cbd5e1;font-weight:700;">乗務中の運転士（指示を送る列車を選択）</div>
-    <div id="dispDriversList" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
-    <div id="dispTargetLabel" style="font-size:12px;color:#fbbf24;font-weight:700;">対象列車: 未選択（下のリストから選択、または全体チャット）</div>
-    <div class="dt-grid">
-      <button id="dispCmdStop" class="dt-btn danger">🛑 対象へ緊急停止</button>
-      <button id="dispCmdResume" class="dt-btn ok">▶️ 対象へ運転再開</button>
-      <button id="dispCmdPrev" class="dt-btn warn">⏮️ 対象を一駅前へ</button>
-      <button id="dispCmdNext" class="dt-btn">⏭️ 対象を一駅先再開</button>
-    </div>
-    <div style="font-size:12px;color:#cbd5e1;font-weight:700;">指令チャット</div>
-    <div id="dispLog" class="dt-log"></div>
-    <form id="dispForm" style="display:flex;gap:6px;">
-      <input id="dispInput" type="text" maxlength="80" placeholder="運転士へ指令・メッセージ..." style="flex:1;min-width:0;background:#111d33;border:1px solid rgba(251,191,36,0.45);border-radius:9px;padding:8px 10px;color:#fff;font:inherit;font-size:13px;">
-      <button type="submit" class="dt-btn warn" style="padding:8px 14px;">指令送信</button>
-    </form>
-  </div>
-</div>
+<!-- 指令業務は #viewDispatch（独立画面）へ統合 -->
 <div id="loading" class="hide">路線を準備しています…</div>
 <div id="avSel" class="hide"><div class="wrap"><div class="brand"><div class="led">乗客のカスタム</div></div><div class="sub">あなた（乗客）の見た目を選んでください。ゲーム中は「視点」ボタンで三人称にすると自分の姿が見えます</div>
   <div id="avBox"><canvas id="avPrev" width="240" height="380"></canvas><div id="avCtl"></div></div>
@@ -8807,19 +8823,114 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         sendDispatchAutoReply(msg);
       });
     }
-    const dispatchModal = document.getElementById('dispatchModal');
-    const dispClose = document.getElementById('dispClose');
+    const viewDispatch = document.getElementById('viewDispatch');
+    const btnBackFromDispatch = document.getElementById('btnBackFromDispatch');
     const dispDriversList = document.getElementById('dispDriversList');
     const dispTargetLabel = document.getElementById('dispTargetLabel');
+    const dispMapCanvas = document.getElementById('dispMapCanvas');
+    const dispHitBoxes = [];
+    const drawDispatchMap = () => {
+      if (!dispMapCanvas || !viewDispatch || viewDispatch.classList.contains('hide')) return;
+      const ctx = dispMapCanvas.getContext('2d');
+      const W = dispMapCanvas.width, H = dispMapCanvas.height;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.fillStyle = '#070d18';
+      ctx.fillRect(0,0,W,H);
+      const cfg = lineConfig('loop'), sts = layoutStations(cfg), path = genPath(cfg.L, 0);
+      let mnx=1e9, mxx=-1e9, mnz=1e9, mxz=-1e9;
+      for (let i=0; i<cfg.L; i+=200) { mnx=Math.min(mnx,path.px[i]); mxx=Math.max(mxx,path.px[i]); mnz=Math.min(mnz,path.pz[i]); mxz=Math.max(mxz,path.pz[i]); }
+      const sc = Math.min((W-160)/(mxx-mnx), (H-70)/(mxz-mnz));
+      const ox = (W-(mxx-mnx)*sc)/2 - 20, oz = (H-(mxz-mnz)*sc)/2;
+      const XY = s => { const i = Math.floor(mod(s, cfg.L)); return [ox+(path.px[i]-mnx)*sc, oz+(path.pz[i]-mnz)*sc]; };
+      for (const [w,c] of [[10,'#991b1b'],[6,'#c2410c'],[3,'#047857']]) {
+        ctx.lineWidth = w; ctx.strokeStyle = c; ctx.beginPath();
+        for (let s=0; s<=cfg.L; s+=300) { const [a,b]=XY(s); s?ctx.lineTo(a,b):ctx.moveTo(a,b); }
+        ctx.closePath(); ctx.stroke();
+      }
+      const cx = ox+(mxx-mnx)*sc/2, cz = oz+(mxz-mnz)*sc/2;
+      const stub = (si,col,label,len,dash) => {
+        const [a,b]=XY(sts[si].s), ux=a-cx, uz=b-cz, ul=Math.hypot(ux,uz)||1;
+        ctx.lineWidth=3; ctx.strokeStyle=col; ctx.setLineDash(dash||[]);
+        ctx.beginPath(); ctx.moveTo(a,b); ctx.lineTo(a+ux/ul*len,b+uz/ul*len); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle=col; ctx.font='700 12px '+FONT; ctx.textAlign='center';
+        ctx.fillText(label, a+ux/ul*(len+14), b+uz/ul*(len+14)+4); ctx.textAlign='left';
+      };
+      stub(cfg.junction,'#5aa832','白峰支線',64); stub(64,'#7a3fa0','紫雲地下線',74,[7,4]); stub(81,'#2aa6d8','天宮高架線',56); stub(17,'#2a5caa','港見支線',44,[3,3]);
+      for (const st of sts) {
+        const [a,b] = XY(st.s), m = st.cls === 'M';
+        ctx.fillStyle = m ? '#ffd23f' : st.cls === 'X' ? '#ff8a80' : '#94a3b8';
+        ctx.beginPath(); ctx.arc(a, b, m ? 5 : 2, 0, Math.PI*2); ctx.fill();
+        if (m || st.i === 0) {
+          ctx.fillStyle = '#e2e8f0'; ctx.font = '700 11.5px '+FONT;
+          ctx.fillText(st.name, a+(a>cx?8:-8-ctx.measureText(st.name).width), b+4);
+        }
+      }
+      dispHitBoxes.length = 0;
+      const SVCN = { A:'普通', B:'普通', C:'快速', D:'快速', E:'快特', F:'快特' };
+      if (window.ONLINE_PLAYERS) {
+        for (const pid in window.ONLINE_PLAYERS) {
+          const p = window.ONLINE_PLAYERS[pid];
+          if (!p) continue;
+          const isPaxP = !!(p.isPax || p.state === 'passenger');
+          const posS = isPaxP ? (p.paxS != null ? p.paxS : p.s) : p.s;
+          if (posS == null) continue;
+          const [a,b] = XY(posS);
+          if (isPaxP) {
+            ctx.fillStyle = '#34d399';
+            ctx.beginPath(); ctx.arc(a, b, 5, 0, Math.PI*2); ctx.fill();
+            ctx.font = '700 11px '+FONT;
+            ctx.fillText('🚶 '+p.name, a+7, b+4);
+            continue;
+          }
+          const sel = dispSelectedId === pid;
+          const pulse = 1 + 0.25 * Math.sin(Date.now()/180);
+          ctx.fillStyle = sel ? 'rgba(251,191,36,0.35)' : 'rgba(56,189,248,0.28)';
+          ctx.beginPath(); ctx.arc(a, b, (sel?18:13)*pulse, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = sel ? '#fbbf24' : '#38bdf8';
+          ctx.beginPath(); ctx.arc(a, b, sel?8:6.5, 0, Math.PI*2); ctx.fill();
+          if (sel) { ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+          const spd = Math.round((p.v||0)*3.6);
+          const tag = '🚆 '+p.name+' ['+(SVCN[p.key]||'列車')+'・'+(p.stName||'走行中')+' '+spd+'km/h]';
+          ctx.font = 'bold 12px '+FONT;
+          const tw = ctx.measureText(tag).width;
+          const tx = Math.min(W-tw-14, Math.max(8, a-(tw+12)/2)), ty = b<50 ? b+16 : b-28;
+          ctx.fillStyle = sel ? 'rgba(180,83,9,0.94)' : 'rgba(15,23,42,0.92)';
+          ctx.strokeStyle = sel ? '#fbbf24' : '#38bdf8';
+          ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.roundRect(tx, ty, tw+12, 21, 6); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#fff'; ctx.fillText(tag, tx+6, ty+14.5);
+          dispHitBoxes.push({ pid, x: a, y: b, rx: tx, ry: ty, rw: tw+12, rh: 21 });
+        }
+      }
+    };
+    if (dispMapCanvas) {
+      dispMapCanvas.addEventListener('click', (e) => {
+        const rect = dispMapCanvas.getBoundingClientRect();
+        const cx = (e.clientX - rect.left) * (dispMapCanvas.width / rect.width);
+        const cy = (e.clientY - rect.top) * (dispMapCanvas.height / rect.height);
+        for (const hb of dispHitBoxes) {
+          if (Math.hypot(cx-hb.x, cy-hb.y) < 22 || (cx>=hb.rx && cx<=hb.rx+hb.rw && cy>=hb.ry && cy<=hb.ry+hb.rh)) {
+            dispSelectedId = hb.pid;
+            const p = ONLINE_PLAYERS[dispSelectedId];
+            if (dispTargetLabel) dispTargetLabel.textContent = '対象列車: ' + (p ? p.name : dispSelectedId);
+            refreshDispatchDrivers();
+            drawDispatchMap();
+            break;
+          }
+        }
+      });
+    }
     const refreshDispatchDrivers = () => {
-      if (!dispDriversList || !dispatchModal || dispatchModal.classList.contains('hide')) return;
+      if (!dispDriversList || !viewDispatch || viewDispatch.classList.contains('hide')) return;
+      drawDispatchMap();
       let html = '';
       for (const pid in ONLINE_PLAYERS) {
         const p = ONLINE_PLAYERS[pid];
         if (!p || p.isPax || p.state === 'passenger') continue;
         const sel = dispSelectedId === pid;
         const spd = Math.round((p.v || 0) * 3.6);
-        html += `<button data-pid="${pid}" class="disp-drv-row dt-btn" style="text-align:left;padding:7px 10px;border-color:${sel?'#fbbf24':'rgba(255,255,255,0.14)'};background:${sel?'rgba(245,158,11,0.22)':'#132038'};display:flex;justify-content:space-between;align-items:center;"><span>🚆 ${p.name} <small style="color:#94a3b8;">(${p.stName || '走行中'})</small></span><span style="color:#38bdf8;font-size:11.5px;">${spd} km/h</span></button>`;
+        const dirTxt = p.dir > 0 ? '外回り' : '内回り';
+        html += `<button data-pid="${pid}" class="disp-drv-row dt-btn" style="text-align:left;padding:7px 10px;border-color:${sel?'#fbbf24':'rgba(255,255,255,0.14)'};background:${sel?'rgba(245,158,11,0.22)':'#132038'};display:flex;justify-content:space-between;align-items:center;"><span>🚆 ${p.name} <small style="color:#94a3b8;">(${dirTxt}・${p.stName || '走行中'})</small></span><span style="color:#38bdf8;font-size:11.5px;">${spd} km/h</span></button>`;
       }
       if (!html) html = '<div style="color:#64748b;font-size:12px;padding:6px;">現在オンライン運転中の列車はありません</div>';
       dispDriversList.innerHTML = html;
@@ -8832,10 +8943,11 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         });
       });
     };
-    setInterval(refreshDispatchDrivers, 1500);
+    setInterval(refreshDispatchDrivers, 500);
     window.__openDispatchConsole = () => {
-      if (!dispatchModal) return;
-      dispatchModal.classList.remove('hide');
+      if (!viewDispatch) return;
+      document.querySelectorAll('.home-view').forEach(v => v.classList.add('hide'));
+      viewDispatch.classList.remove('hide');
       if (typeof initOnlineClient === 'function') initOnlineClient();
       const sendHB = () => {
         dispatchManualUntil = Date.now() + 10000;
@@ -8849,9 +8961,11 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       dispatchHB = setInterval(sendHB, 3000);
       refreshDispatchDrivers();
     };
-    if (dispClose && dispatchModal) {
-      dispClose.addEventListener('click', () => {
-        dispatchModal.classList.add('hide');
+    if (btnBackFromDispatch && viewDispatch) {
+      btnBackFromDispatch.addEventListener('click', () => {
+        viewDispatch.classList.add('hide');
+        const vd = document.getElementById('viewDutySelect');
+        if (vd) vd.classList.remove('hide');
         if (dispatchHB) { clearInterval(dispatchHB); dispatchHB = null; }
         if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
           try { ONLINE_CLIENT.publish('shiomi3d/v1/dispatch/status', JSON.stringify({ active: false, ts: Date.now() }), { qos: 0 }); } catch(e) {}
