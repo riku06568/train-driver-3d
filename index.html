@@ -286,7 +286,7 @@ html,body{overscroll-behavior:none}
 <button id="qualFab" title="画質・動作">⚙ 画質</button>
 <button id="btnTitleReturn" class="hide" title="タイトル画面に戻る">🏠 タイトルに戻る</button>
 <button id="btnChatFab" class="hide" title="オンラインチャット">💬 チャット</button>
-<button id="btnDriverTablet" class="hide" title="運転士用タブレット（指令連絡・異常時対応）">📲 運転士タブレット</button>
+<button id="btnDriverTablet" class="hide" title="運転士用タブレット（指令連絡・異常時対応）">📲 運転士タブレット <span id="dtUnreadBadge" class="hide" style="background:#ef4444;color:#fff;font-size:11px;font-weight:800;min-width:18px;height:18px;line-height:18px;text-align:center;border-radius:9px;padding:0 5px;">1</span></button>
 <button id="btnOnlineHud" class="online-hud-btn">🌐 乗務中: <span id="onlineCountBadge">1</span>名</button>
 <div id="gameTutorialHUD" class="hide">
   <div class="tut-hud-step" id="tutHudStep">💡 運転ガイド</div>
@@ -385,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.20)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.21)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -413,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.20 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.21 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -493,6 +493,17 @@ html,body{overscroll-behavior:none}
             <button id="dispCmdResume" class="dt-btn ok">▶️ 対象へ運転再開</button>
             <button id="dispCmdPrev" class="dt-btn warn">⏮️ 対象を一駅前へ</button>
             <button id="dispCmdNext" class="dt-btn">⏭️ 対象を一駅先再開</button>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;padding-top:6px;border-top:1px solid rgba(255,255,255,0.08);">
+            <select id="dispTroubleSelect" style="flex:1;min-width:0;background:#111d33;border:1px solid rgba(248,113,113,0.45);border-radius:8px;padding:7px 8px;color:#fecaca;font:inherit;font-size:12px;">
+              <option value="踏切支障検知装置が作動しました。直ちに安全確認を行ってください。">踏切支障検知</option>
+              <option value="沿線火災（発煙）の通報が入りました。指令の指示を待ってください。">沿線火災・発煙</option>
+              <option value="先行列車で車両点検（ドア故障）が発生しています。">先行列車車両点検</option>
+              <option value="信号保安システム（ATC/ATS）に一時異常を検知しました。">信号機トラブル</option>
+              <option value="線路内人立ち入りの通報がありました。安全確認が完了するまで停車してください。">線路内人立ち入り</option>
+              <option value="強風規制（運転見合わせ基準）に達しました。">強風運転見合わせ</option>
+            </select>
+            <button id="dispCmdTrouble" class="dt-btn danger" style="padding:7px 10px;font-size:12px;white-space:nowrap;">⚡ トラブル発生</button>
           </div>
         </div>
         <div style="background:#0b1322;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
@@ -578,7 +589,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.20)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.21)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -624,6 +635,17 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.21 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">指令チャット通知音・未読バッジ＆トラブル発生モードを追加</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>指令連絡の通知音とバッジ</b>：指令チャット受信時にチャイム音を鳴らし、運転士側にはタブレットボタンに未読件数バッジを表示します</li>
+            <li><b>トラブル発生モード</b>：開始駅選択後にオン/オフを選べ、オンにすると踏切支障・沿線火災・人立ち入りなどのトラブルがランダム発生し、自動急停車＋タブレット自動表示（指令許可まで再開不可）になります</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.20</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.20 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">「一駅先まで運転再開」「一駅前まで戻る」を実際の徐行運転仕様に修正</div>
@@ -1073,6 +1095,21 @@ html,body{overscroll-behavior:none}
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- トラブル発生モード確認モーダル -->
+<div id="troubleConfirmModal" class="dt-modal hide">
+  <div class="dt-card" style="width:min(420px,94vw);border-color:#f59e0b;">
+    <div style="font-size:16px;font-weight:800;color:#fbbf24;">⚠️ トラブル発生モードをオンにしますか？</div>
+    <div style="font-size:13px;color:#cbd5e1;line-height:1.6;">
+      オンにすると、走行中に踏切支障・沿線火災・信号異常・人立ち入りなどの自然なトラブルがランダムに発生します。<br>
+      トラブル発生時は自動で急停車して運転士タブレットが開き、指令所の許可が出るまで運転再開できません。
+    </div>
+    <div class="dt-grid" style="margin-top:4px;">
+      <button id="btnTroubleOff" class="dt-btn">オフ（通常運転）</button>
+      <button id="btnTroubleOn" class="dt-btn warn">オン（トラブルあり）</button>
+    </div>
   </div>
 </div>
 
@@ -8646,22 +8683,40 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
             return;
           }
         }
-        unlockMedia(S.kind==='pax'||S.kind==='staff');
-        document.getElementById('stSel').classList.add('hide');
-        document.getElementById('loading').classList.remove('hide');
-        setTimeout(()=>{
-          try{
-            boot(S.line||'loop',id,st.i);
-            document.getElementById('loading').classList.add('hide');
-          }catch(err){
-            console.error(err);
-            const ld=document.getElementById('loading');
-            ld.style.flexDirection='column';
-            ld.style.padding='20px';
-            ld.style.textAlign='center';
-            ld.textContent='読み込み中にエラーが発生しました：'+(err&&err.message||err);
+        const launchSelectedStation = () => {
+          unlockMedia(S.kind==='pax'||S.kind==='staff');
+          document.getElementById('stSel').classList.add('hide');
+          document.getElementById('loading').classList.remove('hide');
+          setTimeout(()=>{
+            try{
+              boot(S.line||'loop',id,st.i);
+              document.getElementById('loading').classList.add('hide');
+            }catch(err){
+              console.error(err);
+              const ld=document.getElementById('loading');
+              ld.style.flexDirection='column';
+              ld.style.padding='20px';
+              ld.style.textAlign='center';
+              ld.textContent='読み込み中にエラーが発生しました：'+(err&&err.message||err);
+            }
+          },60);
+        };
+        if (S.kind === 'pax' || S.kind === 'staff') {
+          window.__TROUBLE_MODE = false;
+          launchSelectedStation();
+        } else {
+          const tm = document.getElementById('troubleConfirmModal');
+          const bOff = document.getElementById('btnTroubleOff');
+          const bOn = document.getElementById('btnTroubleOn');
+          if (tm && bOff && bOn) {
+            tm.classList.remove('hide');
+            bOff.onclick = () => { tm.classList.add('hide'); window.__TROUBLE_MODE = false; launchSelectedStation(); };
+            bOn.onclick = () => { tm.classList.add('hide'); window.__TROUBLE_MODE = true; launchSelectedStation(); };
+          } else {
+            window.__TROUBLE_MODE = false;
+            launchSelectedStation();
           }
-        },60);
+        }
       });
       g.appendChild(bt);
     }
@@ -8701,6 +8756,37 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     let dispatchManualUntil = 0;
     let dispatchHB = null;
     let dispSelectedId = null;
+    let dtUnreadCount = 0;
+    const playDispatchChime = () => {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!window.__DISP_AC) window.__DISP_AC = new Ctx();
+        const ac = window.__DISP_AC;
+        if (ac.state === 'suspended') ac.resume().catch(()=>{});
+        const now = ac.currentTime;
+        [[880, 0, 0.14], [1318.5, 0.11, 0.35]].forEach(([freq, off, dur]) => {
+          const osc = ac.createOscillator(), g = ac.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + off);
+          g.gain.setValueAtTime(0.001, now + off);
+          g.gain.exponentialRampToValueAtTime(0.24, now + off + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.001, now + off + dur);
+          osc.connect(g); g.connect(ac.destination);
+          osc.start(now + off); osc.stop(now + off + dur + 0.02);
+        });
+      } catch(e) {}
+    };
+    const updateDtUnreadBadge = () => {
+      const b = document.getElementById('dtUnreadBadge');
+      if (!b) return;
+      if (dtUnreadCount > 0) {
+        b.textContent = String(dtUnreadCount);
+        b.classList.remove('hide');
+      } else {
+        b.classList.add('hide');
+      }
+    };
     const isDispatchManual = () => Date.now() < dispatchManualUntil;
     const updateDispatchBadges = () => {
       const b = document.getElementById('dtDispatchBadge');
@@ -8727,10 +8813,37 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         }
       }
     };
-    const executeLocalTrainCmd = (cmd, byWho) => {
+    const executeLocalTrainCmd = (cmd, byWho, extra) => {
       const T = window.__T;
       if (!T || !T.G || T.G.phase !== 'play' || window.__PAX) return;
       const g = T.G;
+      const isFromDispatch = (byWho === '製作者指令' || byWho === '自動指令');
+      if (cmd === 'trouble') {
+        const reason = (extra && extra.reason) || '踏切支障検知装置が作動しました。直ちに安全確認を行ってください。';
+        g.troubleActive = true;
+        g.troubleReason = reason;
+        g.dispatchHold = true;
+        g.ato = false;
+        g.auto = false;
+        if (typeof T.drawPanel === 'function') T.drawPanel();
+        playDispatchChime();
+        toast('🚨 ' + reason, 'warn');
+        appendDispatchLog('🚨 異常検知', reason + '（指令の許可があるまで運転再開できません）', 'sys');
+        const dtm = document.getElementById('driverTabletModal');
+        if (dtm) {
+          updateDispatchBadges();
+          dtm.classList.remove('hide');
+          dtUnreadCount = 0;
+          updateDtUnreadBadge();
+        }
+        publishDispatchMsg({ from: 'driver', id: ONLINE_CLIENT_ID, name: MY_PLAYER_NAME, text: '🚨 【自動通報】' + reason });
+        return;
+      }
+      if (g.troubleActive && !isFromDispatch && (cmd === 'resume' || cmd === 'prevStation' || cmd === 'nextStation')) {
+        toast('⚠️ トラブル対応中は司令の許可なしに運転再開できません', 'warn');
+        appendDispatchLog('システム', '⚠️ 司令の許可が出るまで運転再開できません。指令室へ連絡してください。', 'sys');
+        return;
+      }
       if (cmd === 'stop') {
         g.dispatchHold = true;
         g.ato = false;
@@ -8739,6 +8852,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         toast('🛑 ' + (byWho || '指令') + '：緊急停止しました', 'warn');
         appendDispatchLog('システム', '列車を緊急停止しました（運転再開まで停車保持）', 'sys');
       } else if (cmd === 'resume') {
+        g.troubleActive = false;
+        g.troubleReason = null;
         g.dispatchHold = false;
         g.slowMode = null;
         g.slowMaxV = null;
@@ -8746,8 +8861,10 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         g.mnotch = 0;
         if (typeof T.drawPanel === 'function') T.drawPanel();
         toast('▶️ ' + (byWho || '指令') + '：通常運転を再開しました', 'ok');
-        appendDispatchLog('システム', '緊急停止・徐行を解除し通常運転を再開しました', 'sys');
+        appendDispatchLog('システム', '停止・徐行を解除し通常運転を再開しました', 'sys');
       } else if (cmd === 'prevStation') {
+        g.troubleActive = false;
+        g.troubleReason = null;
         g.dispatchHold = false;
         g.slowMode = 'prev';
         g.slowMaxV = 20 / 3.6;
@@ -8765,6 +8882,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         toast(msg, 'warn');
         appendDispatchLog('システム', msg, 'sys');
       } else if (cmd === 'nextStation') {
+        g.troubleActive = false;
+        g.troubleReason = null;
         g.dispatchHold = false;
         g.slowMode = 'next';
         g.slowMaxV = 25 / 3.6;
@@ -8777,17 +8896,55 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         appendDispatchLog('システム', msg, 'sys');
       }
     };
+    const NATURAL_TROUBLES = [
+      '踏切支障検知装置が作動しました。直ちに安全確認を行ってください。',
+      '沿線火災（発煙）の通報が入りました。指令の指示を待ってください。',
+      '先行列車で車両点検（ドア故障）が発生しています。',
+      '信号保安システム（ATC/ATS）に一時異常を検知しました。',
+      '線路内人立ち入りの通報がありました。安全確認が完了するまで停車してください。',
+      '強風規制（運転見合わせ基準）に達しました。'
+    ];
+    let nextRandomTroubleAt = 0;
+    setInterval(() => {
+      const T = window.__T;
+      if (!window.__TROUBLE_MODE || !T || !T.G || T.G.phase !== 'play' || window.__PAX || T.G.troubleActive) {
+        nextRandomTroubleAt = 0;
+        return;
+      }
+      if (T.G.v < 3) return;
+      if (!nextRandomTroubleAt) {
+        nextRandomTroubleAt = Date.now() + (45000 + Math.random() * 75000);
+        return;
+      }
+      if (Date.now() >= nextRandomTroubleAt) {
+        nextRandomTroubleAt = 0;
+        const reason = NATURAL_TROUBLES[Math.floor(Math.random() * NATURAL_TROUBLES.length)];
+        executeLocalTrainCmd('trouble', 'システム', { reason });
+      }
+    }, 3000);
     const sendDispatchAutoReply = (text) => {
       if (isDispatchManual()) return;
       setTimeout(() => {
         if (isDispatchManual()) return;
+        const T = window.__T;
+        const inTrouble = !!(T && T.G && T.G.troubleActive);
         let reply = '総合指令（自動対応）です。了解しました。安全を確認のうえ運転を継続してください。';
-        if (/緊急|停止|止ま/.test(text)) reply = '総合指令（自動対応）です。緊急停止を確認しました。安全確認後、タブレットの「運転再開」で再開してください。';
+        if (inTrouble && /再開|確認|許可|報告|解除|異常|対応/.test(text)) {
+          reply = '総合指令（自動対応）です。現地の安全確認完了を了解しました。通常運転の再開を許可します。';
+          appendDispatchLog('🤖 自動指令', reply, 'disp');
+          playDispatchChime();
+          executeLocalTrainCmd('resume', '自動指令');
+          return;
+        }
+        if (/緊急|停止|止ま/.test(text)) reply = '総合指令（自動対応）です。緊急停止を確認しました。安全確認後、再開要請を送信してください。';
         else if (/再開/.test(text)) reply = '総合指令（自動対応）です。進路開通を確認しました。運転再開を許可します。';
-        else if (/一駅前|戻/.test(text)) reply = '総合指令（自動対応）です。一駅前への退行・復旧を了解しました。';
-        else if (/一駅先|進/.test(text)) reply = '総合指令（自動対応）です。一駅先からの運転再開を許可します。';
+        else if (/一駅前|戻/.test(text)) reply = '総合指令（自動対応）です。一駅前への退行徐行運転を了解しました。';
+        else if (/一駅先|進/.test(text)) reply = '総合指令（自動対応）です。次の駅までの徐行運転再開を許可します。';
         appendDispatchLog('🤖 自動指令', reply, 'disp');
-      }, 650);
+        playDispatchChime();
+        const dtm = document.getElementById('driverTabletModal');
+        if (dtm && dtm.classList.contains('hide')) { dtUnreadCount++; updateDtUnreadBadge(); }
+      }, 800);
     };
     window.handleDispatchPacket = (topic, dp) => {
       if (topic === 'shiomi3d/v1/dispatch/status') {
@@ -8799,7 +8956,19 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       if (topic === 'shiomi3d/v1/dispatch/msg') {
         if (dp.from === 'dispatch') {
           if (!dp.targetId || dp.targetId === ONLINE_CLIENT_ID) {
-            if (dp.text) appendDispatchLog('📡 製作者指令', dp.text, 'disp');
+            if (dp.cmd === 'trouble' && dp.targetId === ONLINE_CLIENT_ID) {
+              executeLocalTrainCmd('trouble', 'システム', { reason: dp.reason });
+              return;
+            }
+            if (dp.text) {
+              appendDispatchLog('📡 製作者指令', dp.text, 'disp');
+              playDispatchChime();
+              const dtm = document.getElementById('driverTabletModal');
+              if (dtm && dtm.classList.contains('hide')) {
+                dtUnreadCount++;
+                updateDtUnreadBadge();
+              }
+            }
             if (dp.cmd && dp.targetId === ONLINE_CLIENT_ID) {
               executeLocalTrainCmd(dp.cmd, '製作者指令');
             }
@@ -8807,6 +8976,10 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         } else if (dp.from === 'driver') {
           if (dp.id !== ONLINE_CLIENT_ID) {
             appendDispatchLog(dp.name || '運転士', dp.text || ('[' + dp.cmd + ']'), 'drv');
+            const vd = document.getElementById('viewDispatch');
+            if (vd && !vd.classList.contains('hide')) {
+              playDispatchChime();
+            }
           }
         }
       }
@@ -8823,6 +8996,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       btnDriverTablet.addEventListener('click', (e) => {
         e.stopPropagation();
         updateDispatchBadges();
+        dtUnreadCount = 0;
+        updateDtUnreadBadge();
         driverTabletModal.classList.remove('hide');
       });
     }
@@ -9046,6 +9221,17 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     bindDispCmd('dispCmdResume', 'resume', '運転再開');
     bindDispCmd('dispCmdPrev', 'prevStation', '一駅前まで移動');
     bindDispCmd('dispCmdNext', 'nextStation', '一駅先まで運転再開');
+    const dispCmdTrouble = document.getElementById('dispCmdTrouble');
+    const dispTroubleSelect = document.getElementById('dispTroubleSelect');
+    if (dispCmdTrouble && dispTroubleSelect) {
+      dispCmdTrouble.addEventListener('click', () => {
+        if (!dispSelectedId) { toast('先に対象の運転士を選択してください', 'warn'); return; }
+        const reason = dispTroubleSelect.value;
+        const p = ONLINE_PLAYERS[dispSelectedId];
+        appendDispatchLog('📡 指令メモ', (p ? p.name : '') + ' の路線でトラブルを発生させました: ' + reason, 'sys');
+        publishDispatchMsg({ from: 'dispatch', targetId: dispSelectedId, cmd: 'trouble', reason });
+      });
+    }
     const dispForm = document.getElementById('dispForm');
     const dispInput = document.getElementById('dispInput');
     if (dispForm && dispInput) {
