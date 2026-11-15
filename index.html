@@ -372,7 +372,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.14)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.15)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -400,7 +400,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.14 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.15 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -527,7 +527,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.14)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.15)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -573,6 +573,16 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.15 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗客モード中のプレイヤーが運転士側に電車として表示される不具合を修正</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>乗客モード判定のスコープを修正</b>：乗客モードで歩いている人の情報が誤って「運転中」として送信され、他の運転士の画面に幽霊電車が出現していた不具合を解消しました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.14</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.14 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">他プレイヤーの乗降促進・警笛・ドア音の立体音響が鳴らない不具合を修正</div>
@@ -2039,7 +2049,7 @@ let _lastPresPub = 0;
 function publishPresence(force) {
   if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
   const curG = (typeof G !== 'undefined' ? G : (window.G || (window.__T ? window.__T.G : null)));
-  const isPax = (typeof PAX !== 'undefined' && PAX);
+  const isPax = !!(typeof PAX !== 'undefined' ? PAX : window.__PAX);
   const isDriving = curG && curG.phase === 'play' && !isPax;
   const now = Date.now();
   const minGap = (isDriving || isPax) ? 380 : 2800;
@@ -2205,6 +2215,7 @@ function sendPlayNotification(lineId, svcKey, startI, stName) {
 /* =====================================================================
    boot: builds the chosen line (loop or branch) and starts the game
    ===================================================================== */
+window.__PAX = false;
 function boot(LINE_ID,SVC,START_I){
 if (LINE_ID !== 'loop' && typeof isVeteranDriver === 'function' && !isVeteranDriver()) {
   alert('🔒 支線は「🏅 ベテラン運転士」（累計100km以上）限定です。環状線で経験を積んでください！');
@@ -6150,7 +6161,7 @@ function paxPlace(st,pi,atStair){PX.plats=platformsOf(st);if(!PX.plats.length)PX
   /* カメラを即反映 */
   try{camera.position.copy(offs(W.s,W.o,PH+1.55));camera.rotation.set(W.pitch,W.yaw,0);}catch(e){}}
 function paxClearPeople(){for(const p of active.slice())freePerson(p);for(const s2 of STATIONS){s2.sp={};s2.staff=null;for(const k in s2.wait)s2.wait[k].length=0;}}
-function startPassenger(si){PAX=true;for(const id of ['paxView','paxPhone','paxTab'])document.getElementById(id).classList.remove('hide');setTimeout(()=>{try{buildAvatar();}catch(e){console.error(e);}},0);const st=STATIONS[si];G.phase='play';G.key='A';G.dir=1;G.list=null;G.cyc=STATIONS.map(s=>s.i);G.cpos=si;G.nv=0;G.atStation=null;G.depCheck=null;
+function startPassenger(si){PAX=true;window.__PAX=true;for(const id of ['paxView','paxPhone','paxTab'])document.getElementById(id).classList.remove('hide');setTimeout(()=>{try{buildAvatar();}catch(e){console.error(e);}},0);const st=STATIONS[si];G.phase='play';G.key='A';G.dir=1;G.list=null;G.cyc=STATIONS.map(s=>s.i);G.cpos=si;G.nv=0;G.atStation=null;G.depCheck=null;
   G.door={state:'closed',frac:0,side:-1,local:-1};ownTrain.grp.visible=false;G.s=st.s-62;paxClearPeople();
   G.walkOn=true;rig.remove(camera);scene.add(camera);camera.layers.enable(1);camera.layers.disable(2);
   document.getElementById('walkUI').classList.remove('hide');document.getElementById('holdBack').classList.add('hide');document.getElementById('paxBtns').classList.remove('hide');
@@ -7581,7 +7592,7 @@ window.__reloadOtherTrains=()=>{
   if (IS_ONLINE && window.ONLINE_PLAYERS) {
     for (const pid in ONLINE_PLAYERS) {
       const p = ONLINE_PLAYERS[pid];
-      if (!p) continue;
+      if (!p || p.isPax || p.state === 'passenger' || p.s == null) continue;
       if (p.tr) {
         if (p.tr.grp) p.tr.grp.visible = true;
         if (p.tr.cars) for (const c of p.tr.cars) c.visible = true;
