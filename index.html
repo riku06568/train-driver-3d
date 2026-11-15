@@ -372,7 +372,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.9)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.10)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -400,7 +400,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.9 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.10 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -527,7 +527,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.9)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.10)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -573,6 +573,17 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.10 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">オンライン受信抜け・サーバー制限による接続不良を根本修正</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>オンライン通信の過剰送信を抑制</b>：タイトル画面での不要な高頻度送信や重複接続をなくし、サーバー側で受信がブロックされて他のプレイヤーが「1名」しか見えなくなる現象を解消しました</li>
+            <li><b>QoS・購読処理を軽量化</b>：スマホ・タブレットでも安定して他の全プレイヤーを受信できるよう最適化しました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.9</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.9 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">スマホ・タブレット同士のオンライン接続安定化</div>
@@ -1197,7 +1208,7 @@ function syncDriverToMQTT() {
     ts: Date.now()
   };
   try {
-    ONLINE_CLIENT.publish('shiomi3d/v1/accounts/' + encodeURIComponent(CURRENT_DRIVER.name), JSON.stringify(payload), { qos: 1, retain: true });
+    ONLINE_CLIENT.publish('shiomi3d/v1/accounts/' + encodeURIComponent(CURRENT_DRIVER.name), JSON.stringify(payload), { qos: 0, retain: false });
   } catch(e) {}
 }
 
@@ -1306,6 +1317,7 @@ let isConnectingOnline = false;
 function initOnlineClient() {
   if (ONLINE_CLIENT && ONLINE_CLIENT.connected) return;
   if (isConnectingOnline) return;
+  if (ONLINE_CLIENT && ONLINE_CLIENT.reconnecting) return;
   if (typeof mqtt === 'undefined') {
     const s = document.createElement('script');
     s.src = 'assets/js/mqtt.min.js';
@@ -1361,11 +1373,11 @@ function initOnlineClient() {
       isConnectingOnline = false;
       if (onlineConnectTimer) { clearTimeout(onlineConnectTimer); onlineConnectTimer = null; }
       ONLINE_CLIENT.subscribe('shiomi3d/v1/players/#', { qos: 0 });
-      ONLINE_CLIENT.subscribe('shiomi3d/v1/accounts/#', { qos: 1 });
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/accounts/#', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/events', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/chat', { qos: 0 });
       startOnlinePublishLoop();
-      publishPresence();
+      publishPresence(true);
       syncDriverToMQTT();
       updateOnlineHud();
       updateDriverCardUI();
@@ -1976,11 +1988,16 @@ function updateStationSelectButtons() {
   });
 }
 
-function publishPresence() {
+let _lastPresPub = 0;
+function publishPresence(force) {
   if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
   const curG = (typeof G !== 'undefined' ? G : (window.G || (window.__T ? window.__T.G : null)));
   const isPax = (typeof PAX !== 'undefined' && PAX);
   const isDriving = curG && curG.phase === 'play' && !isPax;
+  const now = Date.now();
+  const minGap = (isDriving || isPax) ? 380 : 2800;
+  if (!force && now - _lastPresPub < minGap) return;
+  _lastPresPub = now;
   const curCfg = typeof CFG !== 'undefined' ? CFG : (window.CFG || (window.__T ? window.__T.CFG : null));
   const curLine = curCfg && curCfg.id ? curCfg.id : 'loop';
   if (isDriving && curLine === 'branch4') return; // 港見支線は短距離のためオンライン配信を行わない
@@ -2025,7 +2042,7 @@ function publishPresence() {
 
 function startOnlinePublishLoop() {
   if (onlinePubInterval) clearInterval(onlinePubInterval);
-  onlinePubInterval = setInterval(publishPresence, 250);
+  onlinePubInterval = setInterval(() => publishPresence(false), 400);
 }
 
 document.addEventListener('visibilitychange', () => {
