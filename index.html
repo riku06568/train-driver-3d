@@ -385,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.22)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.8.23)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -413,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.8.22 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.8.23 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -589,7 +589,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.22)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.8.23)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -635,6 +635,16 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.23 (2026.11.15)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">トラブル内容に応じた3D現象の再現を追加</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li>信号機トラブル時の信号機表示乱れ、踏切支障・沿線火災の煙・線路内人立ち入り・先行列車停止・強風など、発生したトラブルに応じた現象が3D画面上に実際に出現するようになりました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.22</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.22 (2026.11.15)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">トラブル発生時の運転士タブレット通知バナーを強化</div>
@@ -7450,7 +7460,7 @@ function update(dt,now){
     const mb=document.getElementById('meloBtn');if(mb){const on=nearMeloBox()&&(G.door.state==='open'||G.door.state==='opening');mb.classList.toggle('hide',!on);mb.textContent=G.promoOn?'再生中…':'発車メロディ';}}
   updButtons(now);
   if(typeof updateTutorialHUD==='function')updateTutorialHUD();
-  updAudio();if(typeof updRemotePassengers==='function')updRemotePassengers(dt);audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
+  updAudio();if(typeof updRemotePassengers==='function')updRemotePassengers(dt);if(typeof updTroubleVisual==='function')updTroubleVisual(dt);audT+=dt;if(audT>0.1){updOTAudio();audT=0;}
 }
 
 function updateTutorialHUD() {
@@ -7967,6 +7977,108 @@ if (IS_ONLINE) {
 }
 const btr = document.getElementById('btnTitleReturn');
 if (btr) btr.classList.remove('hide');
+let troubleVisGrp=null,troubleVisKind=null,troubleVisT=0;
+function clearTroubleVisual(){
+  if(troubleVisGrp){try{scene.remove(troubleVisGrp);}catch(e){}troubleVisGrp=null;}
+  troubleVisKind=null;
+  if(G)G.sigBug=false;
+  if(typeof rig!=='undefined')rig.rotation.z=0;
+}
+function spawnTroubleVisual(reason){
+  clearTroubleVisual();
+  if(!G||PAX)return;
+  const r=String(reason||'');
+  troubleVisT=0;
+  if(r.includes('信号')){
+    troubleVisKind='signal';
+    G.sigBug=true;
+    return;
+  }
+  const grp=new THREE.Group();
+  const fwdS=G.s+G.dir*80;
+  const trkO=TK[G.key]?TK[G.key].o:0;
+  if(r.includes('踏切')){
+    troubleVisKind='crossing';
+    const base=offs(fwdS,trkO,0);
+    grp.position.copy(base);
+    const obs=new THREE.Mesh(boxGeo(2.2,1.1,1.6),lam(0xd97706));obs.position.set(0,0.55,0);grp.add(obs);
+    const pole=new THREE.Mesh(boxGeo(0.14,3.4,0.14),lam(0xeab308));pole.position.set(2.2,1.7,0);grp.add(pole);
+    const l1=new THREE.Mesh(new THREE.SphereGeometry(0.24,10,10),new THREE.MeshBasicMaterial({color:0xff2222}));l1.position.set(2.2,3.1,0);grp.add(l1);
+    grp.userData.flash=l1;
+  }else if(r.includes('火災')||r.includes('発煙')){
+    troubleVisKind='fire';
+    const base=offs(fwdS+G.dir*15,trkO+6.5,0);
+    grp.position.copy(base);
+    const glow=new THREE.Mesh(new THREE.SphereGeometry(1.4,12,12),new THREE.MeshBasicMaterial({color:0xff5500}));glow.position.set(0,1.2,0);grp.add(glow);
+    const smokes=[];
+    for(let i=0;i<8;i++){
+      const sm=new THREE.Mesh(new THREE.SphereGeometry(0.9+i*0.25,10,10),new THREE.MeshBasicMaterial({color:0x64748b,transparent:true,opacity:0.55}));
+      sm.position.set((Math.random()-0.5)*1.8,2+i*1.6,(Math.random()-0.5)*1.8);
+      grp.add(sm);smokes.push(sm);
+    }
+    grp.userData.glow=glow;grp.userData.smokes=smokes;
+  }else if(r.includes('人立ち入り')){
+    troubleVisKind='person';
+    const base=offs(fwdS-G.dir*15,trkO,0);
+    grp.position.copy(base);
+    const p=makePerson('adult');p.position.set(0,0,0);grp.add(p);
+  }else if(r.includes('先行列車')||r.includes('車両点検')){
+    troubleVisKind='train';
+    const base=offs(fwdS+G.dir*35,trkO,0);
+    grp.position.copy(base);
+    const body=new THREE.Mesh(boxGeo(2.8,3.2,18),lam(0x94a3b8));body.position.set(0,2.2,0);grp.add(body);
+    const tail=new THREE.Mesh(new THREE.SphereGeometry(0.22,8,8),new THREE.MeshBasicMaterial({color:0xff1111}));tail.position.set(0.9,1.8,-9.05);grp.add(tail);
+    const tail2=tail.clone();tail2.position.x=-0.9;grp.add(tail2);
+    grp.userData.flash=tail;grp.userData.flash2=tail2;
+  }else if(r.includes('強風')){
+    troubleVisKind='wind';
+    const base=offs(fwdS,trkO,2.2);
+    grp.position.copy(base);
+    const streaks=[];
+    for(let i=0;i<14;i++){
+      const st=new THREE.Mesh(boxGeo(3.5,0.06,0.06),new THREE.MeshBasicMaterial({color:0xe2e8f0,transparent:true,opacity:0.5}));
+      st.position.set((Math.random()-0.5)*14,(Math.random()-0.5)*4,(Math.random()-0.5)*20);
+      grp.add(st);streaks.push(st);
+    }
+    grp.userData.streaks=streaks;
+  }
+  scene.add(grp);troubleVisGrp=grp;
+}
+function updTroubleVisual(dt){
+  if(!troubleVisKind)return;
+  troubleVisT+=dt;
+  if(troubleVisKind==='signal'&&G&&G.sigBug){
+    if(Math.floor(troubleVisT*7)!==Math.floor((troubleVisT-dt)*7)){
+      const opts=['R','YY','Y','YG','G'];
+      G.sig=opts[Math.floor(Math.random()*opts.length)];
+      if(typeof drawPanel==='function')drawPanel();
+    }
+    return;
+  }
+  if(!troubleVisGrp)return;
+  if(troubleVisKind==='crossing'&&troubleVisGrp.userData.flash){
+    troubleVisGrp.userData.flash.visible=Math.sin(troubleVisT*14)>0;
+  }else if(troubleVisKind==='fire'&&troubleVisGrp.userData.smokes){
+    const s=1+0.25*Math.sin(troubleVisT*10);
+    if(troubleVisGrp.userData.glow)troubleVisGrp.userData.glow.scale.set(s,s,s);
+    troubleVisGrp.userData.smokes.forEach((m,i)=>{
+      m.position.y+=dt*(1.8+i*0.15);
+      if(m.position.y>16)m.position.y=2;
+    });
+  }else if(troubleVisKind==='train'&&troubleVisGrp.userData.flash){
+    const on=Math.sin(troubleVisT*8)>0;
+    troubleVisGrp.userData.flash.visible=on;
+    if(troubleVisGrp.userData.flash2)troubleVisGrp.userData.flash2.visible=!on;
+  }else if(troubleVisKind==='wind'&&troubleVisGrp.userData.streaks){
+    troubleVisGrp.userData.streaks.forEach(m=>{
+      m.position.x+=dt*26;
+      if(m.position.x>9)m.position.x=-9;
+    });
+    if(typeof rig!=='undefined')rig.rotation.z=Math.sin(troubleVisT*9)*0.012;
+  }
+}
+window.__spawnTroubleVisual=spawnTroubleVisual;
+window.__clearTroubleVisual=clearTroubleVisual;
 window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,playGuide,playStationAnnounce,ltdSong,SONG_A,SONG_B,listenerSealed,clamp};
 window.__T={AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
@@ -8841,6 +8953,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         g.ato = false;
         g.auto = false;
         if (typeof T.drawPanel === 'function') T.drawPanel();
+        if (typeof window.__spawnTroubleVisual === 'function') window.__spawnTroubleVisual(reason);
         playDispatchChime();
         toast('🚨 ' + reason, 'warn');
         appendDispatchLog('🚨 異常検知', reason + '（指令の許可があるまで運転再開できません）', 'sys');
@@ -8875,6 +8988,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       } else if (cmd === 'resume') {
         g.troubleActive = false;
         g.troubleReason = null;
+        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         const tb = document.getElementById('dtTroubleBanner');
         if (tb) tb.classList.add('hide');
         g.dispatchHold = false;
@@ -8888,6 +9002,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       } else if (cmd === 'prevStation') {
         g.troubleActive = false;
         g.troubleReason = null;
+        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         const tb = document.getElementById('dtTroubleBanner');
         if (tb) tb.classList.add('hide');
         g.dispatchHold = false;
@@ -8909,6 +9024,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       } else if (cmd === 'nextStation') {
         g.troubleActive = false;
         g.troubleReason = null;
+        if (typeof window.__clearTroubleVisual === 'function') window.__clearTroubleVisual();
         const tb = document.getElementById('dtTroubleBanner');
         if (tb) tb.classList.add('hide');
         g.dispatchHold = false;
