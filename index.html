@@ -4976,6 +4976,7 @@ function nextShiomiDepMs(k,fromMs){
 }
 function aiRun(a,dt){
   const T=TK[a.key];
+  if(a._syncErr){const step=a._syncErr*clamp(dt*2.4,0,0.2);a.s=mod(a.s+step,L);a._syncErr-=step;if(Math.abs(a._syncErr)<0.1)a._syncErr=0;}
   if(a.dispHold||a.troubleActive){a.v=Math.max(0,a.v-1.8*dt);a.s+=a.dir*a.v*dt;a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);}return;}
   if(a.state==='run'){const nx=aiStop(a);let vt=a.slowMode==='next'?Math.min(a.vmax,25/3.6):a.slowMode==='prev'?Math.min(a.vmax,20/3.6):a.vmax;
     if(nx)vt=Math.min(vt,Math.sqrt(2*0.7*Math.max(nx.D,0))+0.05);
@@ -5135,11 +5136,18 @@ window.handleAiPacket=(topic,ap)=>{
   }
   if(topic==='shiomi3d/v1/ai/state'&&ap.leader&&ap.leader!==ONLINE_CLIENT_ID&&Array.isArray(ap.trains)){
     _aiLastRx=Date.now();_aiLeaderId=ap.leader;
+    const latSec=clamp((Date.now()-(ap.ts||Date.now()))/1000,0,1.2);
     for(const t of ap.trains){
       const a=OT.find(x=>x&&x.name===t.n);if(!a)continue;
-      if(a.state==='off'){a.key=t.k;aiSpawn(a,t.s);}
-      if(Math.abs(sdiff(a.s,t.s))>25)a.s=t.s;else a.s=mod(a.s+sdiff(a.s,t.s)*0.35,L);
-      a.v=t.v;a.state=t.st;a.dir=t.d;a.side=t.sd;a.frac=t.f;a.dispHold=!!t.dh;a.slowMode=t.sm||null;a.troubleActive=!!t.tb;a.t=t.t;
+      const predS=mod(t.s+(t.st==='run'?t.d*t.v*latSec:0),L);
+      if(a.state==='off'){a.key=t.k;aiSpawn(a,predS,t.v);}
+      const err=sdiff(a.s,predS);
+      if(Math.abs(err)>60){a.s=predS;a._syncErr=0;a.v=t.v;}
+      else if(Math.abs(err)>1.8){a._syncErr=err;}
+      else{a._syncErr=0;}
+      if(t.st!==a.state){a.state=t.st;a.v=t.v;}
+      else if(Math.abs(a.v-t.v)>2.5){a.v+=(t.v-a.v)*0.35;}
+      a.dir=t.d;a.side=t.sd;a.frac=t.f;a.dispHold=!!t.dh;a.slowMode=t.sm||null;a.troubleActive=!!t.tb;a.t=t.t;
     }
   }
 };
