@@ -387,7 +387,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.9.4)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.9.5)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -415,7 +415,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.9.4 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.9.5 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -602,7 +602,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.9.4)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.9.5)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -647,7 +647,18 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
       <div class="credits-box" style="text-align:left;line-height:1.7;">
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.4</span>
+            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.5</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.5 (2026.11.16)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">全音声の録音化・開発者表示・AI閉塞/衝突対策・地下区間演出強化</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>全音声を録音音声へ統一</b>：緊急停車放送・駅接近放送・広告放送を含むすべての案内音声を高品質な録音音声に統一しました</li>
+            <li><b>開発者バッジ表示</b>：総合指令所の認証を行うと、3Dネームタグ・チャット・乗務中一覧に「開発者」バッジが表示されます</li>
+            <li><b>AI列車の閉塞・衝突防止を強化</b>：先行列車の車両長とオンライン他プレイヤーの閉塞判定を正確に反映し、追突しないよう根本修正しました</li>
+            <li><b>地下区間の演出強化</b>：トンネル内の壁面・天井を重厚な暗色コンクリートに変更し、連続照明と壁面支柱でより地下らしい雰囲気に刷新しました</li>
+          </ul>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.4</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.4 (2026.11.16)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">手動運転(↑↓)・ATO解除・オーバーラン防止・編成両数統一・各種不具合修正</div>
@@ -1222,7 +1233,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.4)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.5)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1611,30 +1622,31 @@ const ONLINE_PLAYERS = {}; // pid -> player state
 window.ONLINE_PLAYERS = ONLINE_PLAYERS;
 let onlinePubInterval = null;
 
-function makeNameplateSprite(name, svcName) {
+window.IS_DEV = (function(){ try{ return sessionStorage.getItem('shiomi_dispatch_unlocked') === '1'; }catch(e){ return false; } })();
+function makeNameplateSprite(name, svcName, isDev) {
   const c = document.createElement('canvas');
   c.width = 512;
-  c.height = 140;
+  c.height = 148;
   const ctx = c.getContext('2d');
-  ctx.fillStyle = 'rgba(11, 19, 34, 0.9)';
-  ctx.strokeStyle = '#38bdf8';
+  ctx.fillStyle = isDev ? 'rgba(30, 20, 6, 0.94)' : 'rgba(11, 19, 34, 0.9)';
+  ctx.strokeStyle = isDev ? '#fbbf24' : '#38bdf8';
   ctx.lineWidth = 6;
   ctx.beginPath();
   if (ctx.roundRect) {
-    ctx.roundRect(8, 8, 496, 124, 28);
+    ctx.roundRect(8, 8, 496, 132, 28);
   } else {
-    ctx.rect(8, 8, 496, 124);
+    ctx.rect(8, 8, 496, 132);
   }
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 44px sans-serif';
+  ctx.fillStyle = isDev ? '#fde68a' : '#ffffff';
+  ctx.font = 'bold 40px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('👤 ' + name, 256, 48);
-  ctx.fillStyle = '#38bdf8';
+  ctx.fillText((isDev ? '🛠️ [開発者] ' : '👤 ') + name, 256, 52);
+  ctx.fillStyle = isDev ? '#fbbf24' : '#38bdf8';
   ctx.font = 'bold 26px sans-serif';
-  ctx.fillText(svcName || '汐見環状線', 256, 96);
+  ctx.fillText(svcName || '汐見環状線', 256, 102);
   
   const tex = new THREE.CanvasTexture(c);
   tex.needsUpdate = true;
@@ -2112,7 +2124,7 @@ function makeSpeechBubbleSprite(text) {
 }
 
 let _lastChatAt = 0;
-function appendChatLog(name, text, isMe) {
+function appendChatLog(name, text, isMe, isDev) {
   const log = document.getElementById('chatLog');
   if (!log) return;
   const empty = log.querySelector('.chat-log-empty');
@@ -2127,7 +2139,13 @@ function appendChatLog(name, text, isMe) {
   tSpan.textContent = hh + ':' + mm;
   const nSpan = document.createElement('span');
   nSpan.className = 'cn';
-  nSpan.textContent = (isMe ? 'あなた' : name) + ':';
+  if (isDev) {
+    const devBadge = document.createElement('span');
+    devBadge.textContent = '🛠️開発者';
+    devBadge.style.cssText = 'background:#d97706;color:#fff;font-size:10px;font-weight:800;padding:1px 5px;border-radius:4px;margin-right:4px;';
+    nSpan.appendChild(devBadge);
+  }
+  nSpan.appendChild(document.createTextNode((isMe ? 'あなた' : name) + ':'));
   const mSpan = document.createElement('span');
   mSpan.textContent = text;
   item.appendChild(tSpan);
@@ -2146,9 +2164,11 @@ function sendQuickChat(text) {
   const curG = (typeof G !== 'undefined' ? G : (window.G || null));
   const stFn = typeof stOf === 'function' ? stOf : null;
   const stObj = (curG && stFn) ? (curG.atStation !== null ? stFn(curG.atStation) : (curG.nv != null ? stFn(curG.nv) : null)) : null;
+  const isDev = !!window.IS_DEV;
   const payload = {
     id: ONLINE_CLIENT_ID,
     name: MY_PLAYER_NAME,
+    isDev: isDev,
     text: clean,
     s: curG ? curG.s : null,
     stName: stObj ? stObj.name : '',
@@ -2159,19 +2179,20 @@ function sendQuickChat(text) {
       ONLINE_CLIENT.publish('shiomi3d/v1/chat', JSON.stringify(payload), { qos: 0 });
     } catch(e) {}
   }
-  appendChatLog(MY_PLAYER_NAME, clean, true);
+  appendChatLog(MY_PLAYER_NAME, clean, true, isDev);
   displayChatBubble(ONLINE_CLIENT_ID, MY_PLAYER_NAME, clean, true);
-  showChatHudMsg(MY_PLAYER_NAME, clean, true);
+  showChatHudMsg(MY_PLAYER_NAME, clean, true, isDev);
   toast('💬 ' + clean, 'info');
 }
 
 function handleIncomingChat(chat) {
   const name = chat.name || '運転士';
+  const isDev = !!chat.isDev;
   const text = String(chat.text || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 60);
   if (!text) return;
   chatChime();
-  appendChatLog(name, text, false);
-  showChatHudMsg(name, text, false);
+  appendChatLog(name, text, false, isDev);
+  showChatHudMsg(name, text, false, isDev);
   displayChatBubble(chat.id, name, text, false);
 }
 
@@ -2193,11 +2214,12 @@ function handleIncomingEvent(ev) {
 }
 
 let chatHudTimer = null;
-function showChatHudMsg(name, text, isMe) {
+function showChatHudMsg(name, text, isMe, isDev) {
   const el = document.getElementById('chatHudBanner');
   const txtEl = document.getElementById('chatHudText');
   if (!el || !txtEl) return;
-  txtEl.textContent = (isMe ? 'あなた: ' : (name + ': ')) + text;
+  const devTag = isDev ? '🛠️[開発者] ' : '';
+  txtEl.textContent = devTag + (isMe ? 'あなた: ' : (name + ': ')) + text;
   el.classList.remove('hide');
   if (chatHudTimer) clearTimeout(chatHudTimer);
   chatHudTimer = setTimeout(() => {
@@ -2281,7 +2303,7 @@ function updateOnlineHud(force) {
         html += `
           <div class="op-item is-me">
             <div class="op-item-top">
-              <span class="op-item-name">👤 ${MY_PLAYER_NAME} <span style="font-size:11px;color:#38bdf8;font-weight:700;">(あなた)</span></span>
+              <span class="op-item-name">👤 ${MY_PLAYER_NAME} <span style="font-size:11px;color:#38bdf8;font-weight:700;">(あなた)</span>${window.IS_DEV ? ' <span style="background:#d97706;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;margin-left:4px;">🛠️ 開発者</span>' : ''}</span>
               <span class="op-item-svc" style="color:#38bdf8;">${svcName}</span>
             </div>
             <div class="op-item-info">
@@ -2310,7 +2332,7 @@ function updateOnlineHud(force) {
         html += `
           <div class="op-item">
             <div class="op-item-top">
-              <span class="op-item-name">👤 ${p.name}</span>
+              <span class="op-item-name">👤 ${p.name}${p.isDev ? ' <span style="background:#d97706;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;margin-left:4px;">🛠️ 開発者</span>' : ''}</span>
               <span class="op-item-svc">${svcLook}</span>
             </div>
             <div class="op-item-info">
@@ -2413,6 +2435,7 @@ function publishPresence(force) {
   const payload = {
     id: ONLINE_CLIENT_ID,
     name: MY_PLAYER_NAME,
+    isDev: !!window.IS_DEV,
     state: isDisp ? 'dispatch' : (isDriving ? 'driving' : (isPax ? 'passenger' : 'title')),
     isPax: isPax,
     line: curLine,
@@ -2499,6 +2522,7 @@ function stopOnlinePublishLoop() {
    Play Notification: 誰かが乗務開始したらGmailへ通知 (FormSubmit経由)
    ===================================================================== */
 function sendPlayNotification(lineId, svcKey, startI, stName) {
+  return;
   try {
     const now = Date.now();
     const last = parseInt(sessionStorage.getItem('td_last_play_notify') || '0', 10);
@@ -2813,7 +2837,7 @@ const MATS={
   ground:new THREE.MeshLambertMaterial({color:0x56603f}),
   conc:new THREE.MeshLambertMaterial({color:0x9b9a94,side:DS}),
   concD:new THREE.MeshLambertMaterial({color:0x6e6d69,side:DS}),
-  tunnel:new THREE.MeshLambertMaterial({color:0x77766f,emissive:0x2a2926,side:DS}),
+  tunnel:new THREE.MeshLambertMaterial({color:0x383a40,emissive:0x0a0b0e,side:DS}),
   water:new THREE.MeshPhongMaterial({color:0x2f5f7a,specular:0x99bbcc,shininess:60,side:DS}),
   sand:new THREE.MeshLambertMaterial({color:0x9c8f6e,side:DS}),
   sea:new THREE.MeshPhongMaterial({color:0x2a6a9a,specular:0x88aacc,shininess:60,side:DS}),sand:new THREE.MeshLambertMaterial({color:0xd8c9a0,side:DS}),
@@ -2824,7 +2848,7 @@ const MATS={
 const fenceTex=canvasTex(128,128,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#c9ced4';x.fillRect(0,0,w,12);x.fillRect(0,h-10,w,10);x.fillRect(0,0,8,h);x.fillRect(w-8,0,8,h);
   for(let i=16;i<w-8;i+=14)x.fillRect(i,10,4,h-18);x.fillRect(0,h*0.52,w,5);});
 const IMATS={sleeper:lam(0x4a3b30),pole:lam(0x7a7f86),pillar:lam(0xe2ded2),stair:lam(0xc3c8bf),tree:lam(0x3f5a34),conc:lam(0x9b9a94),
-  tlamp:new THREE.MeshBasicMaterial({color:0xfff2d6}),hdp:new THREE.MeshLambertMaterial({color:0xdfe7ee,transparent:true,opacity:0.55}),hdpost:lam(0xf2f2ee),
+  tlamp:new THREE.MeshBasicMaterial({color:0xe8f6ff}),hdp:new THREE.MeshLambertMaterial({color:0xdfe7ee,transparent:true,opacity:0.55}),hdpost:lam(0xf2f2ee),
   fence:new THREE.MeshLambertMaterial({map:fenceTex,alphaTest:0.4,side:DS}),fpost:lam(0xb9bec4),melo:lam(0xe0a21a),bumper:lam(0xc8322b),
   bldA:new THREE.MeshLambertMaterial({map:winTexA,emissive:0xffaa55,emissiveMap:winTexA,emissiveIntensity:0.1}),
   bldB:new THREE.MeshLambertMaterial({map:winTexB,emissive:0xffcc77,emissiveMap:winTexB,emissiveIntensity:0.1})};
@@ -3239,7 +3263,11 @@ function buildChunk(c){const ch=CHUNKS[c];if(ch.built)return;ch.g=new THREE.Grou
   for(const [a,b] of tr){const lo=s2=>spanLo(s2)-0.9,hi=s2=>spanHi(s2)+0.9;const wallTop=s2=>inTunnel(s2)?7.2:Math.max(0.9-Yat(s2),0.5);
     strip(c,a,b,4,[[lo,0.01],[hi,0.01]],'concD');strip(c,a,b,4,[[lo,0],[lo,wallTop]],'tunnel');strip(c,a,b,4,[[hi,0],[hi,wallTop]],'tunnel');
     let ts=null;for(let s2=a;s2<=b;s2+=4){const tin=inTunnel(s2)&&s2<b;if(tin&&ts===null)ts=s2;if((!tin||s2>=b)&&ts!==null){strip(c,ts,Math.min(s2,b),4,[[lo,7.2],[hi,7.2]],'tunnel');ts=null;}}
-    for(let s2=Math.ceil(a/20)*20;s2<b;s2+=20)if(inTunnel(s2)){inst(c,'tlamp',s2,lo(s2)+0.15,5.2);inst(c,'tlamp',s2,hi(s2)-0.15,5.2);}}
+    for(let s2=Math.ceil(a/14)*14;s2<b;s2+=14)if(inTunnel(s2)){
+      inst(c,'tlamp',s2,lo(s2)+0.18,5.1,1.0,1.0,2.2);inst(c,'tlamp',s2,hi(s2)-0.18,5.1,1.0,1.0,2.2);
+      inst(c,'tlamp',s2,(lo(s2)+hi(s2))/2,7.05,0.45,0.6,2.8);
+      inst(c,'pillar',s2,lo(s2)+0.25,3.5,0.35,7.0,0.45);inst(c,'pillar',s2,hi(s2)-0.25,3.5,0.35,7.0,0.45);
+    }}
   for(const ps of PORTALS){if(chunkOf(ps)!==c)continue;const lo=spanLo(ps)-0.9,hi=spanHi(ps)+0.9;strip(c,ps-0.3,ps+0.3,0.6,[[lo-3,7.2],[hi+3,7.2]],'conc');
     const p=offs(ps,(lo+hi)/2,0),y0=Yat(ps)+7.2,hgt=1.2-y0;const m=new THREE.Mesh(boxGeo(1,1,1),MATS.conc);m.scale.set(hi-lo+6,Math.max(0.3,hgt),0.8);m.position.set(p.x,y0+hgt/2,p.z);m.rotation.y=-P(ps)[2];addTo(c,m);}
   for(const z of RIVERS){if(chunkOf(z.m)!==c)continue;const m=z.m;strip(c,m-48,m+48,96,[[-2600,0.06],[2600,0.06]],'water',true);
@@ -3963,7 +3991,7 @@ function buildRemotePassengerAvatar(p){
   g.userData={legs:[],mesh,vi,child:D.child,staff:false,mode:'stand'};
   geo.computeBoundingBox();const mh=Math.max(0.5,geo.boundingBox.max.y);const h=(A.height||170)/100;const sc=h/mh;g.scale.set(sc,sc,sc);
   if(typeof makeNameplateSprite==='function'){
-    const plate=makeNameplateSprite(p.name||'乗客','#34d399');
+    const plate=makeNameplateSprite(p.name||'乗客','#34d399',!!p.isDev);
     plate.position.set(0,mh+0.42,0);plate.scale.set(2.4,0.68,1);g.add(plate);g.userData.plate=plate;
   }
   g.traverse(o=>o.layers.enableAll());
@@ -4953,10 +4981,19 @@ function aiRun(a,dt){
     if(nx)vt=Math.min(vt,Math.sqrt(2*0.7*Math.max(nx.D,0))+0.05);
     if(B3&&KIND[a.key]==='rapid')vt=Math.min(vt,rapidPace(a));
     const behindUs=a.follower&&G.dir*sdiff(G.s,a.s)<0;vt=Math.min(vt,behindUs?99:sigLimit(a.key,a.s,a.dir,a.v),(limitFor(a.key,a.s))/3.6);
-    { // 同じ線路の前の電車（AI・自列車・他プレイヤー）に追突しないよう間隔を空ける
-      const len=carsFor(a.key)*CARL;let gap=Infinity;
-      for(const o of OT){if(o===a||o.state==='off'||!o.dir||!sameTrack(a,o.key,o.s,o.dir))continue;const dd=a.dir*sdiff(a.s,o.s);if(dd>0&&dd<gap)gap=dd;}
-      if(!PAX&&G.dir===a.dir&&sameTrack(a,G.key,G.s,G.dir)&&!(!BRANCH&&Math.abs(sdiff(G.s,STATIONS[0].s))<160&&G.atStation!==null)){const dd=a.dir*sdiff(a.s,G.s);if(dd>0&&dd<gap)gap=dd;}
+    { // 同じ線路の前の電車（AI・自列車・他プレイヤー）に追突しないよう先行列車の全長と閉塞で制御
+      let clearGap=Infinity;
+      for(const o of OT){
+        if(o===a||o.state==='off'||!o.dir||!sameTrack(a,o.key,o.s,o.dir))continue;
+        const dd=a.dir*sdiff(a.s,o.s);
+        const prevLen=(o.tr&&o.tr.cars?o.tr.cars.length:carsFor(o.key))*CARL;
+        if(dd>0){const cg=dd-prevLen;if(cg<clearGap)clearGap=cg;}
+      }
+      if(!PAX&&G.dir===a.dir&&sameTrack(a,G.key,G.s,G.dir)&&!(!BRANCH&&Math.abs(sdiff(G.s,STATIONS[0].s))<160&&G.atStation!==null)){
+        const dd=a.dir*sdiff(a.s,G.s);
+        const prevLen=(typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars?ownTrain.cars.length:carsFor(G.key))*CARL;
+        if(dd>0){const cg=dd-prevLen;if(cg<clearGap)clearGap=cg;}
+      }
       if(IS_ONLINE&&window.ONLINE_PLAYERS){
         const curLine=(typeof CFG!=='undefined'&&CFG)?CFG.id:'loop';
         for(const pid in ONLINE_PLAYERS){
@@ -4966,16 +5003,17 @@ function aiRun(a,dt){
           const od=TK[op.key]?TK[op.key].dir:1;
           if(od!==a.dir||!sameTrack(a,op.key,op.s,od))continue;
           if(!BRANCH&&Math.abs(sdiff(op.s,STATIONS[0].s))<160&&(op.v||0)<0.5)continue;
-          const dd=a.dir*sdiff(a.s,op.s);if(dd>0&&dd<gap)gap=dd;
+          const dd=a.dir*sdiff(a.s,op.s);
+          const prevLen=(op.nCar||carsFor(op.key))*CARL;
+          if(dd>0){const cg=dd-prevLen;if(cg<clearGap)clearGap=cg;}
         }
       }
-      if(gap<Infinity){
-        const safeGap=gap-len-90;
-        vt=Math.min(vt,Math.sqrt(2*0.42*Math.max(safeGap,0)));
-        if(gap<=len+55)vt=0;
+      if(clearGap<Infinity){
+        vt=Math.min(vt,Math.sqrt(2*0.40*Math.max(clearGap-75,0)));
+        if(clearGap<=45)vt=0;
       }
-      a._emerGap=(gap<=len+55);
-      a._hardStop=(gap<=len+28);
+      a._emerGap=(clearGap<=45);
+      a._hardStop=(clearGap<=22);
     }
     if(nx&&nx.D<0.2&&a.v<0.6){a.state='dwell';a.v=0;a.t=a.doors?26:22;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;
       if(!BRANCH&&nx.st.i===0&&SHIOMI_TT[a.key]){const depMs=nextShiomiDepMs(a.key,nowMs()+12000);a.shiomiDepMs=depMs;a.t=clamp((depMs-nowMs())/1000,14,180);}}
@@ -5197,6 +5235,10 @@ function updShin(dt){const sh=SHIN.find(x=>Math.abs(sdiff(G.s,x.st.s))<3200);for
     c.g.position.copy(F.cen).addScaledVector(F.dir,cu).addScaledVector(lat,x);c.g.position.y=sh.H+0.35;c.g.rotation.y=Math.atan2(-F.dir.x,-F.dir.z)+(T.dir>0?Math.PI:0);u-=T.dir*(c.len+0.8);}}}
 function updSignals(){for(const k in OCC)OCC[k].clear();
   if(!PAX)markTrain(G.key,G.s,G.dir);for(const a of OT)if(a.key&&OCC[sigKey(a.key)]&&a.state!=='off')markTrain(a.key,a.s,a.dir);
+  if(IS_ONLINE&&window.ONLINE_PLAYERS){
+    const curLine=(typeof CFG!=='undefined'&&CFG)?CFG.id:'loop';
+    for(const pid in ONLINE_PLAYERS){const op=ONLINE_PLAYERS[pid];if(!op||op.isPax||op.state!=='driving'||op.s==null||!op.key||(op.line||'loop')!==curLine)continue;if(OCC[sigKey(op.key)])markTrain(op.key,op.s,op.dir||1);}
+  }
   const ps=G.s,dc=PAX?'l':trCls(G.key);for(const sg of SIGNALS){if(Math.abs(sdiff(ps,sg.x))<1700)setAspect(sg,aspectOf(sg,dc));}}
 function updCrossings(dt){
   const trains=PAX?[]:[{s:G.s,dir:G.dir,len:carsFor(G.key)*CARL}];for(const a of OT)if(a.vis&&a.state!=='off'&&a.dir&&a.key)trains.push({s:a.s,dir:a.dir,len:a.tr.cars.length*CARL});
@@ -5917,12 +5959,14 @@ function updEnv(){
   const {e,h}=sunState(nowMs());const dayF=smooth(-0.04,0.3,e),twF=clamp(1-Math.abs(e-0.02)/0.2,0,1),nightF=1-smooth(-0.25,0.02,e);
   const top=tA.copy(PAL.topN).lerp(PAL.topD,dayF).lerp(PAL.topT,twF*0.6),hor=tB.copy(PAL.horN).lerp(PAL.horD,dayF).lerp(PAL.horT,twF);
   const fog=tC.copy(PAL.fogN).lerp(PAL.fogD,dayF).lerp(PAL.fogT,twF*0.8),mid=tD.copy(hor).lerp(top,0.55);
+  const inTun=inTunnel(G.s);
+  if(inTun){fog.setHex(0x05060a);}
   for(let i=0;i<skyH.length;i++){const y=skyH[i];
     if(y<=0)tE.copy(fog);else if(y<0.07)tE.copy(fog).lerp(hor,y/0.07);else if(y<0.3)tE.copy(hor).lerp(mid,(y-0.07)/0.23);else tE.copy(mid).lerp(top,Math.min(1,(y-0.3)/0.4));
     skyCol[i*3]=tE.r;skyCol[i*3+1]=tE.g;skyCol[i*3+2]=tE.b;}
   skyGeo.attributes.color.needsUpdate=true;
-  scene.fog.color.copy(fog);scene.background.copy(fog);scene.fog.near=lerp(60,200,dayF);scene.fog.far=lerp(700,1400,dayF);
-  hemi.intensity=0.2+0.72*dayF+0.1*twF;hemi.color.copy(C(0x3c4a80)).lerp(C(0xb9c8e8),dayF);
+  scene.fog.color.copy(fog);scene.background.copy(fog);scene.fog.near=inTun?18:lerp(60,200,dayF);scene.fog.far=inTun?240:lerp(700,1400,dayF);
+  hemi.intensity=inTun?0.08:(0.2+0.72*dayF+0.1*twF);hemi.color.copy(C(0x3c4a80)).lerp(C(0xb9c8e8),dayF);
   const az=(h-12)/12*Math.PI*0.95,el=Math.max(-0.3,e)*1.1;
   const sd=new THREE.Vector3(Math.sin(az)*Math.cos(el),Math.sin(el),-Math.cos(az)*Math.cos(el)).normalize();
   sunMesh.position.copy(sd).multiplyScalar(2600);sunMesh.lookAt(0,0,0);sunMesh.visible=e>-0.06;sunMesh.material.color.copy(C(0xff9a50)).lerp(C(0xfff6e0),smooth(0,0.4,e));
@@ -6060,6 +6104,19 @@ function updDoor(dt){const D=G.door;
 /* platform doors follow whichever train is standing there */
 const hdPrev=new Map();
 let _ebAnnSent=false;
+function playRecordedAnn(file,gainVal){
+  if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
+  const playFallback=()=>{try{const au=new Audio(file);au.volume=Math.min(1,(gainVal||1)*0.8);au.play().catch(()=>{});}catch(_){}};
+  if(typeof loadAnnBuffer==='function'&&AC){
+    loadAnnBuffer(file).then(buf=>{
+      if(!buf){playFallback();return;}
+      const src=AC.createBufferSource(),g=AC.createGain();
+      src.buffer=buf;g.gain.value=gainVal||1.0;
+      src.connect(g);g.connect(master||AC.destination);
+      src.start();
+    }).catch(playFallback);
+  }else{playFallback();}
+}
 function playEmergencyStopAnn(){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
   if(_ebAnnSent)return;_ebAnnSent=true;
@@ -6076,12 +6133,7 @@ function playEmergencyStopAnn(){
         o.start(t0+dt0);o.stop(t0+dt0+dur+0.02);
       });
     }
-    if(typeof speechSynthesis!=='undefined'){
-      try{speechSynthesis.cancel();}catch(_){}
-      const u=new SpeechSynthesisUtterance('緊急停車します！お立ちのお客様は、つり革、手すりにしっかりおつかまりください！');
-      u.lang='ja-JP';u.rate=1.08;u.volume=0.85;
-      speechSynthesis.speak(u);
-    }
+    setTimeout(()=>playRecordedAnn('assets/audio/ann/emergency_stop.mp3',1.1),520);
   }catch(e){}
 }
 const _apCool=new Map();
@@ -6103,12 +6155,8 @@ function playApproachAnn(st,k){
         o.start(t0+dt0);o.stop(t0+dt0+dur+0.02);
       });
     }
-    if(typeof speechSynthesis!=='undefined'&&!speechSynthesis.speaking){
-      const dirJa=TK[k]&&TK[k].dir>0?'外回り':'内回り';
-      const u=new SpeechSynthesisUtterance('まもなく、'+dirJa+'、電車がまいります。黄色い点字ブロックの内側でお待ちください。');
-      u.lang='ja-JP';u.rate=1.02;u.volume=0.55;
-      speechSynthesis.speak(u);
-    }
+    const isOuter=!(TK[k]&&TK[k].dir<0);
+    setTimeout(()=>playRecordedAnn(isOuter?'assets/audio/ann/approach_outer.mp3':'assets/audio/ann/approach_inner.mp3',0.75),450);
   }catch(e){}
 }
 function updHomeDoors(dt){
@@ -6411,8 +6459,8 @@ function preloadStationAnnounce(st){
     }
   }
 }
-const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v194.mp3';
-const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。今回のアップデートでは、キーボードでの手動運転やオーバーラン防止の自動ブレーキ、自列車とAI列車の両数統一に加え、各種カメラや音声の不具合を修正しました。';
+const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v195.mp3';
+const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。今回のアップデートでは、急停車や駅接近放送を含めた全音声の録音化、開発者バッジ表示、エーアイ列車の閉塞と衝突防止の強化、および地下区間の演出強化を行いました。';
 let _adQueueTimer=null,_adWebSrc=null,_adAudio=null;
 function stopAdBroadcast(){
   if(_adQueueTimer){clearTimeout(_adQueueTimer);_adQueueTimer=null;}
@@ -8309,7 +8357,7 @@ function frameBody(now){
               if (tr.old) drawDestRoll(tr.dk, p.dest);
               else drawDest(tr.dk, p.dest);
             }
-            const plate = makeNameplateSprite(p.name, svcLabel);
+            const plate = makeNameplateSprite(p.name, svcLabel, !!p.isDev);
             plate.position.set(0, 4.6, -CARHALF + 2.5);
             tr.cars[0].add(plate);
             tr.nameplate = plate;
@@ -8642,7 +8690,7 @@ window.__reloadOtherTrains=()=>{
 requestAnimationFrame(frame);
 startRoute(SVC,START_I);
 if (IS_ONLINE) {
-  const myPlate = makeNameplateSprite(MY_PLAYER_NAME, SVCLOOK[G.key][1]);
+  const myPlate = makeNameplateSprite(MY_PLAYER_NAME, SVCLOOK[G.key][1], !!window.IS_DEV);
   myPlate.position.set(0, 4.6, -CARHALF + 2.5);
   ownTrain.cars[0].add(myPlate);
   ownTrain.nameplate = myPlate;
@@ -8766,8 +8814,7 @@ window.__T={AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concou
 /* ================= home screen (before the world is built) ================= */
 // audio must be started inside the user's tap (iOS / Chrome autoplay rules)
 function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext||window.webkitAudioContext)();window.__AC=A;}if(window.__AC.state==='suspended')window.__AC.resume();try{preloadGuides();}catch(e){}
-    const o=window.__AC.createOscillator(),g=window.__AC.createGain();g.gain.value=0.0001;o.connect(g);g.connect(window.__AC.destination);o.start();o.stop(window.__AC.currentTime+0.05);}catch(e){}
-  try{const ss=window.speechSynthesis;if(ss){ss.cancel();ss.resume();const u=new SpeechSynthesisUtterance(' ');u.lang='ja-JP';ss.speak(u);window.__speechOK=true;}}catch(e){}}
+    const o=window.__AC.createOscillator(),g=window.__AC.createGain();g.gain.value=0.0001;o.connect(g);g.connect(window.__AC.destination);o.start();o.stop(window.__AC.currentTime+0.05);}catch(e){}}
 (function home(){
   setTimeout(() => initOnlineClient(), 200);
   const cfg=lineConfig('loop'),sts=layoutStations(cfg);const LN={};for(const id of ['branch','branch2','branch3','branch4']){const c=lineConfig(id);LN[id]={cfg:c,sts:layoutStations(c)};}const bcfg=LN.branch.cfg,bsts=LN.branch.sts;
@@ -8996,6 +9043,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
   const unlockDispatchMode = (fromSubmit) => {
     try { sessionStorage.setItem('shiomi_dispatch_unlocked', '1'); } catch(e) {}
+    window.IS_DEV = true;
+    if (typeof publishPresence === 'function') publishPresence(true);
     const btnDisp = document.getElementById('btnSelectDispatch');
     if (btnDisp) btnDisp.classList.remove('hide');
     if (fromSubmit) {
