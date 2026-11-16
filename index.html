@@ -4375,6 +4375,8 @@ function drawIndicatorLamps() {
 
   const closed = (G.door && G.door.state === 'closed');
   const isEB = (G.manual ? G.mnotch === -8 : G.notch === -8);
+  if (G.phase === 'play' && !PAX && G.v > 2.0 && (isEB || G.dispHold || G.troubleActive)) playEmergencyStopAnn();
+  else if (G.v < 0.2 || (!isEB && !G.dispHold && !G.troubleActive)) _ebAnnSent = false;
   const isATO = !!G.ato;
   const isAuto = !!G.auto;
   const lim = (typeof limitFor === 'function' ? limitFor(G.key, G.s) : 99) || 99;
@@ -5998,6 +6000,31 @@ function updDoor(dt){const D=G.door;
   setDoors(ownTrain,D.side,D.frac);}
 /* platform doors follow whichever train is standing there */
 const hdPrev=new Map();
+let _ebAnnSent=false;
+function playEmergencyStopAnn(){
+  if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
+  if(_ebAnnSent)return;_ebAnnSent=true;
+  try{
+    if(AC){
+      const t0=AC.currentTime;
+      [[1046.5,0,0.14],[880,0.16,0.14],[1046.5,0.32,0.24]].forEach(([f,dt0,dur])=>{
+        const o=AC.createOscillator(),g=AC.createGain();
+        o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(0.001,t0+dt0);
+        g.gain.exponentialRampToValueAtTime(0.11,t0+dt0+0.02);
+        g.gain.exponentialRampToValueAtTime(0.001,t0+dt0+dur);
+        o.connect(g);g.connect(master||AC.destination);
+        o.start(t0+dt0);o.stop(t0+dt0+dur+0.02);
+      });
+    }
+    if(typeof speechSynthesis!=='undefined'){
+      try{speechSynthesis.cancel();}catch(_){}
+      const u=new SpeechSynthesisUtterance('緊急停車します！お立ちのお客様は、つり革、手すりにしっかりおつかまりください！');
+      u.lang='ja-JP';u.rate=1.08;u.volume=0.85;
+      speechSynthesis.speak(u);
+    }
+  }catch(e){}
+}
 const _apCool=new Map();
 function playApproachAnn(st,k){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
@@ -8014,38 +8041,52 @@ function dispCamPickAnchor(ts,dir){ const idx=Math.round((ts+(dir||1)*80)/DISPCA
   return DISPCAM.anchor; }
 function dispCamFrame(now){ const D=window.__DISP; if(!D||!D.on||D.camOn===false) return false;
   const cv=dispCamCanvas(); if(!cv) return false;
-  const pid=D.sel; let p=pid?ONLINE_PLAYERS[pid]:null;
-  if(!p&&pid&&pid.startsWith('ai:')){const ai=OT.find(x=>x&&x.state!=='off'&&('ai:'+x.name)===pid);if(ai)p={s:ai.s,smoothS:ai.s,dir:ai.dir,tr:ai.tr,name:'AI '+((SVCLOOK[ai.key]&&SVCLOOK[ai.key][1])||ai.key)+'('+ai.name+')'};}
+  const pid=D.sel; let p=pid?ONLINE_PLAYERS[pid]:null; let aiObj=null;
+  if(!p&&pid&&pid.startsWith('ai:')){aiObj=OT.find(x=>x&&x.state!=='off'&&('ai:'+x.name)===pid);if(aiObj)p={s:aiObj.s,smoothS:aiObj.s,dir:aiObj.dir,tr:aiObj.tr,name:'AI '+((SVCLOOK[aiObj.key]&&SVCLOOK[aiObj.key][1])||aiObj.key)+'('+aiObj.name+')'};}
   const ts=(p&&isFinite(p.smoothS))?p.smoothS:((p&&isFinite(p.s))?p.s:null);
   if(!p||ts==null||!p.tr||!p.tr.cars||!p.tr.cars.length){ D.focusS=null; if(cv.style.display!=='none') cv.style.display='none'; return false; }
-  if(!DISPCAM.cam){ DISPCAM.cam=new THREE.PerspectiveCamera(52,innerWidth/Math.max(1,innerHeight),0.25,1500); }
+  if(!DISPCAM.cam){ DISPCAM.cam=new THREE.PerspectiveCamera(64,16/9,0.12,450); }
   const cam=DISPCAM.cam;
-  const a=dispCamPickAnchor(ts,p.dir||1);
-  const cars=p.tr.cars; const mid=cars[Math.floor((cars.length-1)/2)];
-  try{ mid.getWorldPosition(DISPCAM.target); }catch(e){ DISPCAM.target.copy(offs(ts,0,2)); }
-  if(!DISPCAM.ready||DISPCAM.lastAnchor!==a){
-    const y=Yat(a); const off=(y<-4)?4.8:(y>4)?8.5:12.5, h=(y<-4)?2.8:(y>4)?4.0:6.0;
-    const th=P(ts)[2], nx=Math.cos(th), nz=-Math.sin(th), fx=Math.sin(th)*(p.dir||1), fz=Math.cos(th)*(p.dir||1);
-    DISPCAM.pos.set(DISPCAM.target.x + DISPCAM.side*off*nx + fx*16, DISPCAM.target.y + h, DISPCAM.target.z + DISPCAM.side*off*nz + fz*16);
-    DISPCAM.aim.copy(DISPCAM.target); DISPCAM.ready=true; DISPCAM.lastAnchor=a;
-  } else { DISPCAM.aim.lerp(DISPCAM.target,0.28); }
-  cam.position.copy(DISPCAM.pos);
-  const asp=innerWidth/Math.max(1,innerHeight);
-  if(DISPCAM.asp!==asp){ DISPCAM.asp=asp; cam.aspect=asp; cam.updateProjectionMatrix(); }
-  cam.lookAt(DISPCAM.aim);
-  D.focusS=ts; D.pos=cam.position;
-  let near=null,best=1e9; for(const st of STATIONS){ const dd=Math.abs(sdiff(st.s,ts)); if(dd<best){ best=dd; near=st; } }
-  const lbl='📹 定点カメラ：'+(near?(near.name+'駅'+(best<420?'（ホーム脇）':' 付近')):'沿線')+'・'+(DISPCAM.side>0?'下り側':'上り側')+'　／　'+p.name+' を追跡中';
+  const cars=p.tr.cars;
+  const slots=[{idx:0,lbl:'CAM 01 · 1号車'},{idx:1,lbl:'CAM 02 · 2号車'},{idx:3,lbl:'CAM 03 · 4号車'},{idx:5,lbl:'CAM 04 · 6号車'}];
+  if(aiObj&&typeof populateCars==='function'){
+    const need=slots.map(sl=>Math.min(sl.idx,cars.length-1)).filter(ci=>!isPop(aiObj,ci));
+    if(need.length)try{populateCars(aiObj,need);}catch(e){}
+  }
+  const c0=cars[0];
+  try{ c0.getWorldPosition(DISPCAM.target); }catch(e){ DISPCAM.target.copy(offs(ts,0,2)); }
+  D.focusS=ts; D.pos=DISPCAM.target;
+  const lbl='📹 車内防犯カメラ4分割（1・2・4・6号車）　／　'+p.name+' をリアルタイム監視中';
   if(lbl!==DISPCAM.lastLbl){ DISPCAM.lastLbl=lbl; const el=document.getElementById('dispCamLabel'); if(el) el.textContent=lbl; }
-  if(now-DISPCAM.last<33) return true;
+  if(now-DISPCAM.last<50) return true;
   DISPCAM.last=now;
   try{
-    cullFor(cam); renderer.setRenderTarget(null); renderer.render(scene,cam);
     const vw=Math.max(1,innerWidth), vh=Math.max(1,innerHeight), sc=Math.min(1,1024/vw);
-    const cw=Math.max(160,Math.round(vw*sc)), ch=Math.max(90,Math.round(vh*sc));
+    const cw=Math.max(320,Math.round(vw*sc)), ch=Math.max(180,Math.round(vh*sc));
     if(cv.width!==cw||cv.height!==ch){ cv.width=cw; cv.height=ch; }
+    const hw=Math.floor(cw/2), hh=Math.floor(ch/2);
+    const asp=hw/Math.max(1,hh);
+    if(Math.abs(DISPCAM.asp-asp)>0.01){ DISPCAM.asp=asp; cam.aspect=asp; cam.updateProjectionMatrix(); }
     const ctx=cv.getContext('2d');
-    if(ctx){ ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cw,ch); ctx.drawImage(renderer.domElement,0,0,cw,ch); }
+    if(ctx){
+      ctx.setTransform(1,0,0,1,0,0);
+      const qPos=[[0,0],[hw,0],[0,hh],[hw,hh]];
+      slots.forEach((sl,qi)=>{
+        const ci=Math.min(sl.idx,cars.length-1), car=cars[ci];
+        if(!car)return;
+        const cp=car.localToWorld(new THREE.Vector3(-0.92,2.22,7.6));
+        const lk=car.localToWorld(new THREE.Vector3(0.15,1.32,-7.2));
+        cam.position.copy(cp); cam.lookAt(lk);
+        cullFor(cam); renderer.setRenderTarget(null); renderer.render(scene,cam);
+        const [qx,qy]=qPos[qi];
+        ctx.drawImage(renderer.domElement,qx,qy,hw,hh);
+        ctx.fillStyle='rgba(8,14,26,0.72)'; ctx.fillRect(qx+8,qy+8,118,20);
+        ctx.fillStyle='#38bdf8'; ctx.font='bold 11px sans-serif'; ctx.fillText(sl.lbl,qx+14,qy+22);
+      });
+      ctx.strokeStyle='rgba(56,189,248,0.65)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(hw,0); ctx.lineTo(hw,ch); ctx.moveTo(0,hh); ctx.lineTo(cw,hh); ctx.stroke();
+    }
+    cam.position.copy(DISPCAM.target);
     if(cv.style.display!=='block') cv.style.display='block';
   }catch(e){}
   return true;
@@ -9732,7 +9773,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       const ctx = dispMapCanvas.getContext('2d');
       const W = dispMapCanvas.width, H = dispMapCanvas.height;
       ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,W,H);
       ctx.fillStyle = 'rgba(6,11,20,0.52)';
+      ctx.fillRect(0,0,W,H);
       const cfg = lineConfig('loop'), sts = layoutStations(cfg), path = genPath(cfg.L, 0);
       let mnx=1e9, mxx=-1e9, mnz=1e9, mxz=-1e9;
       for (let i=0; i<cfg.L; i+=200) { mnx=Math.min(mnx,path.px[i]); mxx=Math.max(mxx,path.px[i]); mnz=Math.min(mnz,path.pz[i]); mxz=Math.max(mxz,path.pz[i]); }
