@@ -3234,7 +3234,7 @@ function buildChunk(c){const ch=CHUNKS[c];if(ch.built)return;ch.g=new THREE.Grou
    街区には道路に面して建物を並べる（駅の近く・大きな駅のまわりほど高い建物、外側ほど住宅）。公園・駐車場・駅前広場もある ===== */
 const CITY={BL:120,BAND:66,RW:9,NB:3,PH0:37};
 function cityRng(seed){let r=(seed*2654435761)>>>0||1;return ()=>{r=(Math.imul(r,1664525)+1013904223)>>>0;return r/4294967296;};}
-function railEdge(s,side){let e=side<0?-3.2:sepB(s)+3.2;for(const ss of [s-45,s,s+45]){for(const v of occAt(ss)){if(side<0&&v[0]>-230)e=Math.min(e,v[0]);if(side>0&&v[1]<230)e=Math.max(e,v[1]);}}return e;}
+function railEdge(s,side){const w0=shiomiBump(s)*8.6;let e=side<0?(-3.2-w0):(sepB(s)+3.2+w0);for(const ss of [s-45,s,s+45]){for(const v of occAt(ss)){if(side<0&&v[0]>-230)e=Math.min(e,v[0]);if(side>0&&v[1]<230)e=Math.max(e,v[1]);}}return e;}
 function nearRiver(s,m){for(const z of RIVERS)if(Math.abs(sdiff(z.m,s))<m)return true;return false;}
 function nearCross(s,m){for(const cr of CROSS)if(Math.abs(sdiff(cr.s,s))<m)return true;return false;}
 function planCity(c,c0,cityF){const B=CITY,c1=c0+CH,samp={};
