@@ -39,7 +39,7 @@
 
   var root = document.createElement('div');
   root.id = 'mode3dsRoot';
-  root.style.cssText = 'display:none;background:#080c16;color:#eef2f8;padding:8px;font-family:sans-serif;max-width:420px;margin:0 auto;';
+  root.style.cssText = 'display:none;background:#080c16;color:#eef2f8;padding:4px;font-family:sans-serif;max-width:400px;margin:0 auto;';
   document.body.insertBefore(root, document.body.firstChild);
 
   var homeEl = document.getElementById('home');
@@ -49,14 +49,14 @@
     mode: 'local',
     dir: 1,
     s: 0,
-    v: 0, // m/s
-    notch: 0, // -9(EB), -8..-1(B), 0(N), 1..5(P)
+    v: 0,
+    notch: 0,
     doorOpen: true,
     atStIdx: 0,
     nextStIdx: 1,
     distKm: 0,
     hornT: 0,
-    aiS: 420,
+    aiS: 380,
     msg: '扉を閉めて発車してください',
     msgT: 0
   };
@@ -100,18 +100,17 @@
     root.style.display = 'block';
     try { window.scrollTo(0, 0); } catch(e) {}
     root.innerHTML =
-      '<div style="background:#0f172a;border:1px solid #38bdf8;border-radius:10px;padding:12px;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-      '<strong style="font-size:16px;color:#38bdf8;">🚃 汐見環状線（軽量2.5Dモード）</strong>' +
-      '<button id="m3BackHome" style="background:#1e293b;color:#fff;border:1px solid #475569;border-radius:6px;padding:4px 10px;font-size:12px;">戻る</button>' +
-      '</div>' +
-      '<div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;">3DSなどのブラウザ向けに超軽量Canvasエンジンで起動します。路線・種別を選んでね！</div>' +
-      '<button data-m="local" data-d="1" style="display:block;width:100%;text-align:left;background:#14935f;color:#fff;border:none;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:14px;font-weight:bold;">各駅停車 外回り（全85駅）</button>' +
-      '<button data-m="local" data-d="-1" style="display:block;width:100%;text-align:left;background:#0f764b;color:#fff;border:none;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:14px;font-weight:bold;">各駅停車 内回り（全85駅）</button>' +
-      '<button data-m="rapid" data-d="1" style="display:block;width:100%;text-align:left;background:#e8731e;color:#fff;border:none;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:14px;font-weight:bold;">快速 外回り（50駅停車）</button>' +
-      '<button data-m="rapid" data-d="-1" style="display:block;width:100%;text-align:left;background:#c25912;color:#fff;border:none;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:14px;font-weight:bold;">快速 内回り（50駅停車）</button>' +
-      '<button data-m="exp" data-d="1" style="display:block;width:100%;text-align:left;background:#c8322b;color:#fff;border:none;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:14px;font-weight:bold;">快速特急 外回り（16駅停車）</button>' +
-      '<button data-m="exp" data-d="-1" style="display:block;width:100%;text-align:left;background:#991b1b;color:#fff;border:none;border-radius:8px;padding:10px 12px;font-size:14px;font-weight:bold;">快速特急 内回り（16駅停車）</button>' +
+      '<div style="background:#0f172a;border:1px solid #38bdf8;border-radius:8px;padding:10px;">' +
+      '<table style="width:100%;margin-bottom:8px;"><tr>' +
+      '<td><strong style="font-size:15px;color:#38bdf8;">汐見環状線（軽量モード）</strong></td>' +
+      '<td style="text-align:right;"><button id="m3BackHome" style="background:#1e293b;color:#fff;border:1px solid #475569;border-radius:6px;padding:4px 10px;font-size:12px;">戻る</button></td>' +
+      '</tr></table>' +
+      '<button data-m="local" data-d="1" style="display:block;width:100%;text-align:left;background:#14935f;color:#fff;border:none;border-radius:6px;padding:9px 10px;margin-bottom:6px;font-size:13px;font-weight:bold;">各駅停車 外回り（全85駅）</button>' +
+      '<button data-m="local" data-d="-1" style="display:block;width:100%;text-align:left;background:#0f764b;color:#fff;border:none;border-radius:6px;padding:9px 10px;margin-bottom:6px;font-size:13px;font-weight:bold;">各駅停車 内回り（全85駅）</button>' +
+      '<button data-m="rapid" data-d="1" style="display:block;width:100%;text-align:left;background:#e8731e;color:#fff;border:none;border-radius:6px;padding:9px 10px;margin-bottom:6px;font-size:13px;font-weight:bold;">快速 外回り（50駅停車）</button>' +
+      '<button data-m="rapid" data-d="-1" style="display:block;width:100%;text-align:left;background:#c25912;color:#fff;border:none;border-radius:6px;padding:9px 10px;margin-bottom:6px;font-size:13px;font-weight:bold;">快速 内回り（50駅停車）</button>' +
+      '<button data-m="exp" data-d="1" style="display:block;width:100%;text-align:left;background:#c8322b;color:#fff;border:none;border-radius:6px;padding:9px 10px;margin-bottom:6px;font-size:13px;font-weight:bold;">快速特急 外回り（16駅停車）</button>' +
+      '<button data-m="exp" data-d="-1" style="display:block;width:100%;text-align:left;background:#991b1b;color:#fff;border:none;border-radius:6px;padding:9px 10px;margin-bottom:4px;font-size:13px;font-weight:bold;">快速特急 内回り（16駅停車）</button>' +
       '</div>';
 
     document.getElementById('m3BackHome').onclick = function() {
@@ -143,31 +142,31 @@
     st.msgT = 3;
 
     root.innerHTML =
-      '<div style="background:#0b1322;border:1px solid #334155;border-radius:8px;overflow:hidden;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:#0f172a;font-size:12px;">' +
-      '<span><span style="background:' + modeColor(mode) + ';color:#fff;padding:1px 6px;border-radius:4px;font-weight:bold;">' + modeLabel(mode) + '</span> ' + (dir > 0 ? '外回り' : '内回り') + '</span>' +
-      '<span id="m3Info" style="color:#fbbf24;font-weight:bold;">汐見 停車中</span>' +
-      '<button id="m3Quit" style="background:#334155;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;">終了</button>' +
-      '</div>' +
-      '<canvas id="m3Cv" width="320" height="180" style="display:block;width:100%;height:auto;background:#000;"></canvas>' +
-      '<div style="padding:8px;background:#111827;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;background:#020617;padding:6px 8px;border-radius:6px;">' +
-      '<div><div style="font-size:10px;color:#94a3b8;">速度</div><div id="m3Spd" style="font-size:20px;font-weight:bold;color:#38bdf8;">0 km/h</div></div>' +
-      '<div><div style="font-size:10px;color:#94a3b8;">マスコン</div><div id="m3Nch" style="font-size:20px;font-weight:bold;color:#fbbf24;">B3</div></div>' +
-      '<div><div style="font-size:10px;color:#94a3b8;">次駅まで</div><div id="m3Dst" style="font-size:16px;font-weight:bold;color:#34d399;">0 m</div></div>' +
-      '<div><div style="font-size:10px;color:#94a3b8;">戸閉</div><div id="m3Dor" style="font-size:14px;font-weight:bold;color:#f87171;">開</div></div>' +
-      '</div>' +
-      '<div id="m3Msg" style="font-size:11px;color:#fef08a;text-align:center;min-height:16px;margin-bottom:6px;"></div>' +
+      '<div style="background:#0b1322;border:1px solid #334155;border-radius:6px;overflow:hidden;">' +
+      '<table style="width:100%;background:#0f172a;font-size:11px;padding:3px 6px;"><tr>' +
+      '<td><span style="background:' + modeColor(mode) + ';color:#fff;padding:1px 5px;border-radius:3px;font-weight:bold;">' + modeLabel(mode) + '</span> ' + (dir > 0 ? '外回り' : '内回り') + '</td>' +
+      '<td id="m3Info" style="color:#fbbf24;font-weight:bold;text-align:center;">次: 朝霧橋</td>' +
+      '<td style="text-align:right;"><button id="m3Quit" style="background:#334155;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;">終了</button></td>' +
+      '</tr></table>' +
+      '<canvas id="m3Cv" width="320" height="170" style="display:block;width:100%;height:auto;background:#000;"></canvas>' +
+      '<div style="padding:6px;background:#111827;">' +
+      '<table style="width:100%;background:#020617;border-radius:6px;margin-bottom:5px;text-align:center;"><tr>' +
+      '<td style="width:26%;padding:4px 2px;"><div style="font-size:9px;color:#94a3b8;">速度</div><div id="m3Spd" style="font-size:17px;font-weight:bold;color:#38bdf8;">0 km/h</div></td>' +
+      '<td style="width:22%;padding:4px 2px;"><div style="font-size:9px;color:#94a3b8;">マスコン</div><div id="m3Nch" style="font-size:17px;font-weight:bold;color:#fbbf24;">B3</div></td>' +
+      '<td style="width:32%;padding:4px 2px;"><div style="font-size:9px;color:#94a3b8;">次駅まで</div><div id="m3Dst" style="font-size:15px;font-weight:bold;color:#34d399;">0 m</div></td>' +
+      '<td style="width:20%;padding:4px 2px;"><div style="font-size:9px;color:#94a3b8;">戸閉</div><div id="m3Dor" style="font-size:15px;font-weight:bold;color:#f87171;">開</div></td>' +
+      '</tr></table>' +
+      '<div id="m3Msg" style="font-size:11px;color:#fef08a;text-align:center;min-height:15px;margin-bottom:4px;"></div>' +
       '<table style="width:100%;border-collapse:separate;border-spacing:4px;">' +
       '<tr>' +
-      '<td style="width:25%;"><button id="bUp" style="width:100%;height:42px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;">▲ 力行</button></td>' +
-      '<td style="width:25%;"><button id="bNeu" style="width:100%;height:42px;background:#475569;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;">N 惰行</button></td>' +
-      '<td style="width:25%;"><button id="bDn" style="width:100%;height:42px;background:#b45309;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;">▼ 制動</button></td>' +
-      '<td style="width:25%;"><button id="bEb" style="width:100%;height:42px;background:#b91c1c;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;">EB 非常</button></td>' +
+      '<td style="width:25%;"><button id="bUp" style="width:100%;height:40px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">力行 +</button></td>' +
+      '<td style="width:25%;"><button id="bNeu" style="width:100%;height:40px;background:#475569;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">N 惰行</button></td>' +
+      '<td style="width:25%;"><button id="bDn" style="width:100%;height:40px;background:#b45309;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">制動 -</button></td>' +
+      '<td style="width:25%;"><button id="bEb" style="width:100%;height:40px;background:#b91c1c;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">非常 EB</button></td>' +
       '</tr>' +
       '<tr>' +
-      '<td colspan="2"><button id="bDoor" style="width:100%;height:38px;background:#0f766e;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">🚪 ドア開閉</button></td>' +
-      '<td colspan="2"><button id="bHorn" style="width:100%;height:38px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">📣 警笛</button></td>' +
+      '<td colspan="2"><button id="bDoor" style="width:100%;height:36px;background:#0f766e;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">ドア開閉</button></td>' +
+      '<td colspan="2"><button id="bHorn" style="width:100%;height:36px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;">警笛</button></td>' +
       '</tr>' +
       '</table>' +
       '</div></div>';
@@ -186,7 +185,7 @@
     document.getElementById('bEb').onclick = function() { st.notch = -9; };
     document.getElementById('bHorn').onclick = function() {
       st.hornT = 1.0;
-      st.msg = '📣 プァーン！！';
+      st.msg = 'プァーン！！';
       st.msgT = 1.5;
     };
     document.getElementById('bDoor').onclick = function() {
@@ -216,7 +215,7 @@
         }
       } else {
         st.doorOpen = false;
-        st.msg = '戸閉完了！発車できます（▲で力行）';
+        st.msg = '戸閉完了！発車できます（力行+で発車）';
         st.msgT = 2.5;
       }
     };
@@ -224,11 +223,11 @@
     window.onkeydown = function(e) {
       if (root.style.display !== 'block') return;
       var k = e.keyCode;
-      if (k === 38) { // Up
+      if (k === 38) {
         if (st.notch < 5) st.notch++;
         if (st.doorOpen && st.notch > 0) st.notch = 0;
         if (e.preventDefault) e.preventDefault();
-      } else if (k === 40) { // Down
+      } else if (k === 40) {
         if (st.notch > -9) st.notch--;
         if (e.preventDefault) e.preventDefault();
       } else if (k === 13 || k === 32) {
@@ -244,7 +243,6 @@
       var dt = Math.min(0.1, (now - lastT) / 1000);
       lastT = now;
 
-      // Physics
       var acc = 0;
       if (st.doorOpen && st.notch > 0) st.notch = 0;
       if (st.notch > 0) acc = st.notch * 0.24;
@@ -269,90 +267,166 @@
       if (dNext > TOTAL_L - 40) dNext = dNext - TOTAL_L;
 
       // Render pseudo-3D Canvas
-      var W = cv.width, H = cv.height, HY = 78;
+      var W = cv.width, H = cv.height, HY = 74;
       var curNear = STATIONS[st.atStIdx];
       var inTunnel = (curNear && curNear.tunnel) || nxSt.tunnel;
 
-      // Sky
-      ctx.fillStyle = inTunnel ? '#06080f' : '#3876b8';
-      ctx.fillRect(0, 0, W, HY);
-      // Ground
-      ctx.fillStyle = inTunnel ? '#11131a' : '#2d4a2f';
-      ctx.fillRect(0, HY, W, H - HY);
+      // Sky gradient
+      if (inTunnel) {
+        ctx.fillStyle = '#05070e';
+        ctx.fillRect(0, 0, W, HY);
+        ctx.fillStyle = '#0d1018';
+        ctx.fillRect(0, HY, W, H - HY);
+      } else {
+        var skyG = ctx.createLinearGradient(0, 0, 0, HY);
+        skyG.addColorStop(0, '#1e5799');
+        skyG.addColorStop(1, '#7db9e8');
+        ctx.fillStyle = skyG;
+        ctx.fillRect(0, 0, W, HY);
+        // Distant city skyline
+        ctx.fillStyle = '#53687e';
+        var blds = [14,22,10,28,16,20,12,26,18,14,24,12,20];
+        for (var bi = 0; bi < blds.length; bi++) {
+          ctx.fillRect(bi * 25, HY - blds[bi], 22, blds[bi]);
+        }
+        // Ground
+        ctx.fillStyle = '#2d4f32';
+        ctx.fillRect(0, HY, W, H - HY);
+      }
 
-      // Perspective Rails (Main + Opposite + Side)
       var vx = W * 0.5;
-      function projX(worldX, z) { return vx + (worldX * 140) / z; }
-      function projY(z) { return HY + 140 / z; }
+      function projX(worldX, z) { return vx + (worldX * 135) / z; }
+      function projY(z) { return HY + 135 / z; }
 
-      // Ballast bed
-      ctx.fillStyle = '#3b3d42';
+      // Ballast bed (3 tracks wide)
+      ctx.fillStyle = '#383a40';
       ctx.beginPath();
-      ctx.moveTo(vx - 16, HY);
-      ctx.lineTo(vx + 16, HY);
-      ctx.lineTo(W, H);
-      ctx.lineTo(0, H);
+      ctx.moveTo(vx - 26, HY);
+      ctx.lineTo(vx + 26, HY);
+      ctx.lineTo(W + 30, H);
+      ctx.lineTo(-30, H);
       ctx.closePath();
       ctx.fill();
 
-      // Ties & Poles
-      var phase = mod(st.s, 4) / 4;
-      for (var k = 0; k < 14; k++) {
-        var z1 = 1.4 + (k + (1 - phase)) * 2.2;
+      // Ties, Poles, Roadside Buildings & Trees
+      var segLen = 5;
+      var phase = mod(st.s, segLen) / segLen;
+      var baseIdx = Math.floor(st.s / segLen);
+      for (var k = 11; k >= 0; k--) {
+        var z1 = 1.4 + (k + (1 - phase)) * 2.1;
         var y1 = projY(z1);
         if (y1 >= H) continue;
-        var wTie = 100 / z1;
-        ctx.fillStyle = '#5c4b3b';
-        ctx.fillRect(vx - wTie, y1, wTie * 2, Math.max(1, 3 / z1));
+        var idxObj = baseIdx + k;
 
-        if (k % 4 === 0) {
+        // Roadside buildings / trees
+        if (!inTunnel) {
+          var sideL = projX(-6.5, z1);
+          var sideR = projX(8.5, z1);
+          var bh = ((idxObj * 17) % 3 + 2) * (28 / z1);
+          var bw = 55 / z1;
+          ctx.fillStyle = (idxObj % 2 === 0) ? '#475569' : '#64748b';
+          ctx.fillRect(sideL - bw, y1 - bh, bw, bh);
+          ctx.fillStyle = (idxObj % 3 === 0) ? '#334155' : '#4b5563';
+          ctx.fillRect(sideR, y1 - bh * 0.85, bw, bh * 0.85);
+          // Windows
+          ctx.fillStyle = '#fde68a';
+          if (z1 < 10) {
+            ctx.fillRect(sideL - bw * 0.7, y1 - bh * 0.7, bw * 0.2, bh * 0.15);
+            ctx.fillRect(sideR + bw * 0.3, y1 - bh * 0.6, bw * 0.2, bh * 0.15);
+          }
+        }
+
+        // Ties (own track + opposite)
+        var wTie = 88 / z1;
+        ctx.fillStyle = '#524436';
+        ctx.fillRect(vx - wTie * 0.55, y1, wTie, Math.max(1, 3 / z1));
+        ctx.fillRect(projX(3.0, z1) - wTie * 0.45, y1, wTie * 0.9, Math.max(1, 3 / z1));
+
+        // Overhead catenary poles every 3 segments
+        if (mod(idxObj, 3) === 0) {
           var pxL = projX(-2.2, z1);
-          var pxR = projX(2.2, z1);
-          var topY = HY - 90 / z1;
-          ctx.fillStyle = '#64748b';
+          var pxR = projX(5.2, z1);
+          var topY = HY - 88 / z1;
+          ctx.fillStyle = '#71717a';
           ctx.fillRect(pxL - 1, topY, 2, y1 - topY);
           ctx.fillRect(pxR - 1, topY, 2, y1 - topY);
-          ctx.fillRect(pxL, topY, pxR - pxL, 2);
+          ctx.fillRect(pxL, topY + 2, pxR - pxL, 2);
+          ctx.fillRect(pxL, topY + 12 / z1, pxR - pxL, 1.5);
+        }
+
+        // Signal post every 9 segments
+        if (mod(idxObj, 9) === 2) {
+          var sx = projX(-1.7, z1);
+          var sy = y1 - 52 / z1;
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(sx - 3 / z1, sy, 6 / z1, 14 / z1);
+          ctx.fillStyle = (dNext < 90) ? '#facc15' : '#22c55e';
+          ctx.fillRect(sx - 1.5 / z1, sy + 2 / z1, 3 / z1, 3 / z1);
         }
       }
 
-      // 2 Rails
+      // 3 Tracks (Own, Opposite, Express)
       ctx.strokeStyle = '#cbd5e1';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(vx - 3, HY); ctx.lineTo(vx - 52, H);
-      ctx.moveTo(vx + 3, HY); ctx.lineTo(vx + 52, H);
+      ctx.moveTo(vx - 3, HY); ctx.lineTo(vx - 46, H);
+      ctx.moveTo(vx + 3, HY); ctx.lineTo(vx + 46, H);
       ctx.stroke();
 
-      // Opposite track
       ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(vx + 8, HY); ctx.lineTo(vx + 115, H);
+      ctx.moveTo(vx + 13, HY); ctx.lineTo(vx + 155, H);
+      ctx.moveTo(vx - 9, HY); ctx.lineTo(vx - 115, H);
+      ctx.stroke();
+
+      // Overhead contact wires
+      ctx.strokeStyle = '#475569';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(vx + 9, HY); ctx.lineTo(vx + 135, H);
-      ctx.moveTo(vx + 14, HY); ctx.lineTo(vx + 175, H);
+      ctx.moveTo(vx, HY - 2); ctx.lineTo(vx, 0);
+      ctx.moveTo(vx + 10, HY - 2); ctx.lineTo(vx + 95, 0);
       ctx.stroke();
 
-      // Approaching Station Platform
+      // Approaching Station Platform + Roof + Pillars + Stop Mark
       if (dNext < 220 && dNext > -20) {
-        var zSt = Math.max(1.6, dNext * 0.14);
+        var zSt = Math.max(1.5, dNext * 0.13);
         var ySt = projY(zSt);
-        var pw = 110 / zSt;
-        var ph = 42 / zSt;
+        var pw = 135 / zSt;
+        var ph = 38 / zSt;
+        var edgeX = projX(-1.25, zSt);
+        // Platform body
         ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(projX(-1.3, zSt) - pw, ySt - ph, pw, ph);
-        // Yellow tactile line
+        ctx.fillRect(edgeX - pw, ySt - ph, pw, ph);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(edgeX - pw, ySt - ph * 0.25, pw, ph * 0.25);
+        // Yellow tactile paving
         ctx.fillStyle = '#facc15';
-        ctx.fillRect(projX(-1.3, zSt) - 4, ySt - ph, 4, ph);
+        ctx.fillRect(edgeX - 4, ySt - ph, 4, ph * 0.35);
+        // Platform roof
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(edgeX - pw, ySt - ph - 68 / zSt, pw + 10 / zSt, 8 / zSt);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(edgeX - pw * 0.5, ySt - ph - 60 / zSt, 5 / zSt, 60 / zSt);
+        // Stop Target (X)
+        if (dNext < 80) {
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(edgeX - 2, ySt - ph - 32 / zSt, 10 / zSt, 10 / zSt);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(edgeX, ySt - ph - 30 / zSt, 6 / zSt, 6 / zSt);
+        }
         // Station Signboard
-        if (dNext < 120) {
+        if (dNext < 140) {
           ctx.fillStyle = '#0f172a';
-          ctx.fillRect(vx - 46, 12, 92, 22);
+          ctx.fillRect(vx - 54, 14, 108, 22);
           ctx.strokeStyle = modeColor(st.mode);
-          ctx.strokeRect(vx - 46, 12, 92, 22);
+          ctx.lineWidth = 2;
+          ctx.strokeRect(vx - 54, 14, 108, 22);
           ctx.fillStyle = '#fff';
           ctx.font = 'bold 12px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(nxSt.name, vx, 27);
+          ctx.fillText(nxSt.name + ' (' + Math.max(0, Math.round(dNext)) + 'm)', vx, 29);
         }
       }
 
@@ -360,24 +434,35 @@
       var dAi = mod(st.aiS - st.s, TOTAL_L);
       if (dAi > TOTAL_L / 2) dAi -= TOTAL_L;
       if (dAi > 2 && dAi < 180) {
-        var zAi = Math.max(1.8, dAi * 0.14);
-        var xAi = projX(3.2, zAi);
+        var zAi = Math.max(1.7, dAi * 0.13);
+        var xAi = projX(3.0, zAi);
         var yAi = projY(zAi);
-        var tw = 95 / zAi, th = 120 / zAi;
+        var tw = 90 / zAi, th = 115 / zAi;
         ctx.fillStyle = '#e2e8f0';
         ctx.fillRect(xAi - tw / 2, yAi - th, tw, th);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(xAi - tw * 0.4, yAi - th * 0.78, tw * 0.8, th * 0.25);
         ctx.fillStyle = '#14935f';
-        ctx.fillRect(xAi - tw / 2, yAi - th * 0.45, tw, th * 0.15);
+        ctx.fillRect(xAi - tw / 2, yAi - th * 0.45, tw, th * 0.14);
         ctx.fillStyle = '#fef08a';
-        ctx.fillRect(xAi - tw * 0.3, yAi - th * 0.2, tw * 0.15, th * 0.08);
-        ctx.fillRect(xAi + tw * 0.15, yAi - th * 0.2, tw * 0.15, th * 0.08);
+        ctx.fillRect(xAi - tw * 0.34, yAi - th * 0.2, tw * 0.16, th * 0.08);
+        ctx.fillRect(xAi + tw * 0.18, yAi - th * 0.2, tw * 0.16, th * 0.08);
       }
 
-      // Cab frame overlay
+      // Cab frame & Desk silhouette (3D Train Driver style)
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(0, 0, 14, H);
+      ctx.fillRect(W - 14, 0, 14, H);
+      ctx.fillRect(0, 0, W, 10);
+      // Center pillar
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(vx + 48, 10, 8, H - 24);
+      // Cab desk bottom
       ctx.fillStyle = '#1e293b';
-      ctx.fillRect(0, 0, 12, H);
-      ctx.fillRect(W - 12, 0, 12, H);
-      ctx.fillRect(0, 0, W, 6);
+      ctx.fillRect(0, H - 16, W, 16);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(14, H - 16, W - 28, 3);
+
       if (st.hornT > 0) {
         ctx.fillStyle = '#fde047';
         ctx.font = 'bold 14px sans-serif';
