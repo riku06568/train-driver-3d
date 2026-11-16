@@ -316,7 +316,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
   </div>
 </div>
 <div id="chatHudBanner" class="hide"><span style="font-size:16px;">💬</span><span id="chatHudText"></span></div>
-<div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・設定</div><div class="qbtns"><button data-q="ultralight">超軽量</button><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div>
+<div id="qualSheet" class="hide"><div class="qbox"><div class="qt">画質・設定</div><div class="qbtns"><button data-q="extreme">最軽量</button><button data-q="ultralight">超軽量</button><button data-q="light">軽い</button><button data-q="normal">普通</button><button data-q="heavy">重い</button></div><div class="qd2" id="qualDesc2"></div>
 <div style="margin:10px 0 4px;">
   <button id="btnReloadOtherTrainsSheet" type="button" class="q-reload-btn">🔄 他人が表示されない時にタップ（他列車再読み込み）</button>
 </div>
@@ -561,6 +561,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
       </div>
       <div id="qualRow">
         <span class="ql">画質・動作</span>
+        <button data-q="extreme">最軽量</button>
         <button data-q="ultralight">超軽量</button>
         <button data-q="light">軽い</button>
         <button data-q="normal">普通</button>
@@ -920,6 +921,17 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
         </div>
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.3</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.3 (2026.11.16)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">追突防止・ホームドア＆乗客修正・最軽量モード＆車内広告放送</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>後続AI列車の追突防止強化</b>：先行列車（AI・自列車・他プレイヤー）への車間距離制御と非常ブレーキ判定を強化し、追突バグを解消</li>
+            <li><b>ホームドア・乗客挙動の修正</b>：実際に列車が駅へ停車している時だけホームドアが開き、列車がいない時は乗客が消えず待機列へ戻るよう修正</li>
+            <li><b>「最軽量」画質モードを追加</b>：超軽量よりさらに描画負荷を抑えた最軽量モードを画質設定に追加</li>
+            <li><b>車内の広告放送を搭載</b>：駅発車後の次駅放送に続いて、ご意見箱案内・アップデート案内・最新アプデ情報の広告放送が流れるように</li>
+          </ul>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.8.2</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.8.2 (2026.11.14)</h3>
           </div>
@@ -1199,7 +1211,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.2)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.3)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1256,11 +1268,11 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
 <script>
 (function(){
 'use strict';
-/* 画質・動作の設定：ultralight=超軽量（低スペック向け） light=軽い normal=普通 heavy=重い（最高画質） */
+/* 画質・動作の設定：extreme=最軽量 ultralight=超軽量（低スペック向け） light=軽い normal=普通 heavy=重い（最高画質） */
 const AV_DEF={female:false,height:170,skin:0,hair:0,hairLong:false,tails:false,topStyle:'shirt',top:0x2f3b52,sleeve:'long',bottom:'long',bottomC:0x2b2d33,skirtType:1,skirtLen:0.36,sock:0,sockC:0xf4f2ec,shoeC:0x2a2a2a,bag:0,glasses:false};
 let AVATAR=(()=>{try{return Object.assign({},AV_DEF,JSON.parse(localStorage.getItem('td_avatar')||'{}'));}catch(e){return Object.assign({},AV_DEF);}})(); /* 乗客モードの自分の見た目 */
 let CREWSEL=(()=>{try{const v=localStorage.getItem('td_crew');return v==='twoD'||v==='twoC'?v:'one';}catch(e){return 'one';}})(); /* 快速特急の乗務：one=ワンマン twoD=ツーマン（運転士） twoC=ツーマン（車掌） */
-let QMODE=(()=>{try{const v=localStorage.getItem('td_quality');return (v==='ultralight'||v==='normal'||v==='heavy')?v:'light';}catch(e){return 'light';}})();
+let QMODE=(()=>{try{const v=localStorage.getItem('td_quality');return (v==='extreme'||v==='ultralight'||v==='normal'||v==='heavy')?v:'light';}catch(e){return 'light';}})();
 const rand=(a,b)=>a+Math.random()*(b-a);
 const irand=(a,b)=>Math.floor(rand(a,b+1));
 const pick=a=>a[(Math.random()*a.length)|0];
@@ -4759,7 +4771,7 @@ function updPeople(dt){sweepStranded();
   for(let i=JOBS.length-1;i>=0;i--){JOBS[i].t-=dt;if(JOBS[i].t<=0){const f=JOBS[i].fn;JOBS.splice(i,1);f();}}
   cpBuild();
   for(const p of active.slice()){
-    if(p.kind==='board'&&p.train&&p.end==='board'&&!(p.delay>0)&&!boardOpen(p)){if(Math.abs(p.o-p.trackO)<1.55)absorbAsBoarded(p);else requeue(p);continue;}
+    if(p.kind==='board'&&p.train&&p.end==='board'&&!(p.delay>0)&&!boardOpen(p)){requeue(p);continue;}
     if(p.delay>0){p.delay-=dt;if(p.delay>0){if(p.kind==='alight'||p.hidden)p.g.visible=false;posePerson(p,false);continue;}p.g.visible=true;p.hidden=false;}
     let moving=false;
     if(p.path.length){const ts=p.path[0][0],to=p.path[0][1],ds=ts-p.s,dO=to-p.o,dist=Math.hypot(ds,dO),step=p.speed*dt;
@@ -4930,14 +4942,33 @@ function aiRun(a,dt){
     if(nx)vt=Math.min(vt,Math.sqrt(2*0.7*Math.max(nx.D,0))+0.05);
     if(B3&&KIND[a.key]==='rapid')vt=Math.min(vt,rapidPace(a));
     const behindUs=a.follower&&G.dir*sdiff(G.s,a.s)<0;vt=Math.min(vt,behindUs?99:sigLimit(a.key,a.s,a.dir,a.v),(limitFor(a.key,a.s))/3.6);
-    { // 同じ線路の前の電車に追突しないよう間隔を空ける
+    { // 同じ線路の前の電車（AI・自列車・他プレイヤー）に追突しないよう間隔を空ける
       const len=carsFor(a.key)*CARL;let gap=Infinity;
       for(const o of OT){if(o===a||o.state==='off'||!o.dir||!sameTrack(a,o.key,o.s,o.dir))continue;const dd=a.dir*sdiff(a.s,o.s);if(dd>0&&dd<gap)gap=dd;}
-      if(!PAX&&G.dir===a.dir&&sameTrack(a,G.key,G.s,G.dir)&&!(!BRANCH&&Math.abs(sdiff(G.s,STATIONS[0].s))<220)){const dd=a.dir*sdiff(a.s,G.s);if(dd>0&&dd<gap)gap=dd;}
-      if(gap<Infinity)vt=Math.min(vt,Math.sqrt(2*0.55*Math.max(gap-len-60,0)));}
+      if(!PAX&&G.dir===a.dir&&sameTrack(a,G.key,G.s,G.dir)&&!(!BRANCH&&Math.abs(sdiff(G.s,STATIONS[0].s))<160&&G.atStation!==null)){const dd=a.dir*sdiff(a.s,G.s);if(dd>0&&dd<gap)gap=dd;}
+      if(IS_ONLINE&&window.ONLINE_PLAYERS){
+        const curLine=(typeof CFG!=='undefined'&&CFG)?CFG.id:'loop';
+        for(const pid in ONLINE_PLAYERS){
+          const op=ONLINE_PLAYERS[pid];
+          if(!op||op.isPax||op.state!=='driving'||op.s==null||!op.key)continue;
+          if((op.line||'loop')!==curLine)continue;
+          const od=TK[op.key]?TK[op.key].dir:1;
+          if(od!==a.dir||!sameTrack(a,op.key,op.s,od))continue;
+          if(!BRANCH&&Math.abs(sdiff(op.s,STATIONS[0].s))<160&&(op.v||0)<0.5)continue;
+          const dd=a.dir*sdiff(a.s,op.s);if(dd>0&&dd<gap)gap=dd;
+        }
+      }
+      if(gap<Infinity){
+        const safeGap=gap-len-90;
+        vt=Math.min(vt,Math.sqrt(2*0.42*Math.max(safeGap,0)));
+        if(gap<=len+55)vt=0;
+      }
+      a._emerGap=(gap<=len+55);
+      a._hardStop=(gap<=len+28);
+    }
     if(nx&&nx.D<0.2&&a.v<0.6){a.state='dwell';a.v=0;a.t=a.doors?26:22;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;
       if(!BRANCH&&nx.st.i===0&&SHIOMI_TT[a.key]){const depMs=nextShiomiDepMs(a.key,nowMs()+12000);a.shiomiDepMs=depMs;a.t=clamp((depMs-nowMs())/1000,14,180);}}
-    else{a.v+=clamp((vt-a.v)*2,-1.1,0.8)*dt;a.v=Math.max(0,a.v);a.s+=a.dir*a.v*dt;}}
+    else{const maxDec=a._emerGap?-4.5:-2.4;a.v+=clamp((vt-a.v)*2,maxDec,0.8)*dt;a.v=a._hardStop?0:Math.max(0,a.v);a.s+=a.dir*a.v*dt;}}
   else if(a.state==='dwell'){a.t-=dt;
     if(!BRANCH&&a.stSt&&a.stSt.i===0&&a.shiomiDepMs&&!a.forceDep){const rem=(a.shiomiDepMs-nowMs())/1000;if(rem>0&&rem<300)a.t=Math.max(a.t,rem);}
     if(!BRANCH&&a.stSt&&a.stSt.i===0&&a.yieldToPlayer){if(!PAX&&G.phase==='play'&&G.key===a.key&&Math.abs(sdiff(G.s,STATIONS[0].s))<180)a.t=Math.max(a.t,6);else a.yieldToPlayer=false;}
@@ -5969,7 +6000,17 @@ function pushInAllJams(){const fi=flowSt(),fk=fkey();for(const p of active)if(p.
 function startClosing(){const D=G.door;G.closeWait=null;promoAbort();abandonPending();D.state='closing';doorCloseSnd();if(typeof broadcastEvent==='function')broadcastEvent('doorClose');}
 function promoAbort(){if(!G.promoOn)return;clearTimeout(promoVoiceT);promoCut();G.promoOn=false;}
 /* 乗りに向かっている電車のドアがもう閉まった／発車した → ドアのすぐ前なら乗る、そうでなければ列に戻って次を待つ */
-function boardOpen(p){if(p.train==='OWN')return !PAX&&(G.door.state==='open'||G.door.state==='opening');const a=p.train;return !!(a&&a.state==='dwell'&&a.frac>0.3&&a.t>2.8);}
+function boardOpen(p){
+  if(p.train==='OWN')return !PAX&&G.atStation!==null&&(G.door.state==='open'||G.door.state==='opening');
+  const a=p.train;if(!a)return false;
+  if(a.stSt!==undefined)return a.state==='dwell'&&a.frac>0.3&&a.t>2.8;
+  if(a.s!=null&&a.key&&STATIONS[p.st]){
+    const st=STATIONS[p.st];
+    const d=Math.abs(sdiff(a.smoothS!=null?a.smoothS:a.s,st.s+(TK[a.key]?TK[a.key].so:0)));
+    return !a.isPax&&a.state==='driving'&&d<25&&(a.v||0)<0.5&&(a.door==='open'||a.door==='opening')&&(a.doorFrac||0)>0.3;
+  }
+  return false;
+}
 function requeue(p){const st=STATIONS[p.st],k=p.flow;if(!st||!TK[k]||!serves(st,k)){freePerson(p);return;}
   const T=TK[k],doors=doorList(st.s+T.so,T.dir<0,greenCarsFor(k),carsFor(k)),list=st.wait[k]||(st.wait[k]=[]),s0=p.s,o0=p.o;
   spawnOneWait(st,k,doors,list,{},false,p);p.s=s0;p.o=o0;p.delay=0;p.hidden=false;p.g.visible=true;p.train=null;p.forceIn=false;}
@@ -5980,11 +6021,12 @@ function absorbAsBoarded(p){ /* ドア付近まですでに乗り込んでいた
   if((p.train==='OWN'||p.train==null)&&p.kind!=='jam'&&!p.forceIn&&!PAX)G.load=Math.min(maxLoadFor(G.key),(G.load||0)+1);
   freePerson(p);
 }
-function clearDoorPeople(){ /* 戸閉時：ドア・線路側の人は電車と一緒に出発 */
+function clearDoorPeople(){ /* 戸閉時：実際に停車中の自列車ドア付近の人だけ乗車扱い */
+  if(PAX||G.atStation===null)return;
   const fi=flowSt(),fk=fkey();if(fi<0)return;const st=STATIONS[fi];if(!st)return;
   for(const p of active.slice()){if(p.st!==fi)continue;
     const nearDoor=p.trackO!==-99&&Math.abs(p.o-p.trackO)<2.4;
-    if(p.kind==='jam'||p.kind==='board'||p.kind==='runner'){absorbAsBoarded(p);continue;}
+    if(p.kind==='jam'||p.kind==='board'||p.kind==='runner'){if(p.train==='OWN')absorbAsBoarded(p);else requeue(p);continue;}
     if(nearDoor&&(p.kind==='alight'||(p.path&&p.path.length))){ /* 線路側にいた人も乗車扱い */
       absorbAsBoarded(p);continue;}
   }
@@ -5993,7 +6035,7 @@ function onClosed(){G.autoMel=null;say('戸閉め、よし。','drv');G.noBoard=
   /* 列に並んだまま乗らなかった人だけホームに残す（線路側は既に回収済み） */
   abandonPending();
   /* 以前はここで車内の人を全員片付けて並べ直していたため、ドアを閉めた瞬間に人が消えて戻っていた。乗り降りは個別に反映済みなので何もしない */
-  if(G.atStation!==null){const v=G.atStation;G.depCheck=v;G.nv=v+1;G.atStation=null;planFrom(nowMs()+15000);}
+  if(G.atStation!==null){const v=G.atStation;G.lastDepSt=v;G.depCheck=v;G.nv=v+1;G.atStation=null;planFrom(nowMs()+15000);}
   G.flowV=-1;}
 function updDoor(dt){const D=G.door;
   if(G.closeWait){if(D.state==='closed'||D.state==='closing'||G.phase!=='play')G.closeWait=null;
@@ -6067,18 +6109,19 @@ function updHomeDoors(dt){
     }
     if(!st.hd)continue;if(Math.abs(sdiff(obsS,st.s))>850)continue;
     for(const k in st.hd){const hd=st.hd[k];let f=0;
-      if(!PAX && physKey(G.key,st.s)===k&&(G.atStation!==null&&stOf(G.atStation)===st))f=G.door.frac;
-      for(const a of OT)if(a.key&&a.state==='dwell'&&physKey(a.key,st.s)===k&&a.stSt===st)f=Math.max(f,a.frac);
+      if(!PAX && physKey(G.key,st.s)===k&&(G.atStation!==null&&stOf(G.atStation)===st)&&G.v<0.3&&Math.abs(sdiff(G.s,st.s+TK[G.key].so))<25)f=G.door.frac;
+      for(const a of OT)if(a.key&&a.state==='dwell'&&physKey(a.key,st.s)===k&&a.stSt===st&&a.v<0.3&&Math.abs(sdiff(a.s,st.s+TK[a.key].so))<25)f=Math.max(f,a.frac);
       if(IS_ONLINE && window.ONLINE_PLAYERS){
         const curLine = (typeof CFG !== 'undefined' && CFG) ? CFG.id : 'loop';
         for(const pid in ONLINE_PLAYERS){
           const p = ONLINE_PLAYERS[pid];
-          if(!p || p.isPax || p.s == null || (p.v || 0) > 0.8) continue;
+          if(!p || p.isPax || p.state !== 'driving' || p.s == null || (p.v || 0) > 0.3) continue;
+          if(p.lastSeen && (nowMs() - p.lastSeen > 12000)) continue;
           if((p.line || 'loop') !== curLine) continue;
           if(!p.key || physKey(p.key, st.s) !== k) continue;
           const pPos = p.smoothS != null ? p.smoothS : p.s;
           const d = Math.abs(sdiff(pPos, st.s + TK[k].so));
-          const isAtThisSt = (d < 25 && (p.v || 0) < 0.5 && p.state !== 'title');
+          const isAtThisSt = (d < 25 && (p.v || 0) < 0.3);
           if(isAtThisSt && (p.door === 'open' || p.door === 'opening' || (p.doorFrac || 0) > 0.05)){
             const pf = p.doorFrac != null ? p.doorFrac : (p.door === 'open' ? 1.0 : 0.6);
             f = Math.max(f, pf);
@@ -6281,7 +6324,7 @@ function playStationAnnounce(st, mode){
         stopStationAnnounce();
         const s = AC.createBufferSource();
         const g = AC.createGain();
-        g.gain.value = 0.95;
+        g.gain.value = 0.85;
         s.buffer = buf;
         s.connect(g);
         g.connect(AC.destination);
@@ -6344,10 +6387,48 @@ function preloadStationAnnounce(st){
     }
   }
 }
+const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。今回のアップデートでは、後続のAI列車の追突防止や、ホームドアと乗客の動きの修正に加え、さらに軽い最軽量画質モードと、車内の広告放送を追加しました。';
+let _adQueueTimer=null;
+function stopAdBroadcast(){if(_adQueueTimer){clearTimeout(_adQueueTimer);_adQueueTimer=null;}try{if(typeof speechSynthesis!=='undefined')speechSynthesis.cancel();}catch(_){}if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.15);}catch(_){}}
+function playAdBroadcastForDep(depSt){
+  if(PAX||G.phase!=='play'||!depSt)return;
+  if(typeof speechSynthesis==='undefined')return;
+  const msgs=[];
+  if(isMajorStation(depSt)){
+    msgs.push('このゲームの開発者よりお願いです。ゲームのバグを見つけた場合はどんなに小さなバグでも構いませんのでホーム画面のご意見箱より報告して下さい。ゲーム改善にご協力をお願いします。');
+  }
+  if(!BRANCH&&(serves(depSt,'E')||serves(depSt,'F'))){
+    msgs.push('ゲームの最新版はホーム画面の最新版を強制再読み込みからアップデートできます。適度にアップデートをお願いします。');
+  }
+  msgs.push(LATEST_UPDATE_AD_TEXT);
+  const runQueue=()=>{
+    if(G.phase!=='play'||G.atStation!==null){stopAdBroadcast();return;}
+    if(!msgs.length){if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.2);}catch(_){}return;}
+    const txt=msgs.shift();
+    try{
+      if(master&&AC)master.gain.setTargetAtTime(0.35,AC.currentTime,0.08);
+      chime();
+      toast('📢 広告放送：'+txt,'info');
+      const u=new SpeechSynthesisUtterance(txt);
+      u.lang='ja-JP';u.rate=1.0;u.pitch=1.0;u.volume=1.0;
+      u.onend=()=>{_adQueueTimer=setTimeout(runQueue,450);};
+      u.onerror=()=>{_adQueueTimer=setTimeout(runQueue,450);};
+      speechSynthesis.speak(u);
+    }catch(_){if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.2);}catch(_){}}
+  };
+  const waitAnn=()=>{
+    if(G.phase!=='play'||G.atStation!==null)return;
+    if(annWebSrc||(annAudio&&!annAudio.paused&&!annAudio.ended)){_adQueueTimer=setTimeout(waitAnn,300);return;}
+    _adQueueTimer=setTimeout(runQueue,600);
+  };
+  clearTimeout(_adQueueTimer);
+  _adQueueTimer=setTimeout(waitAnn,1200);
+}
 function triggerNextStationAnnounce(mode){
   if(G.phase!=='play')return;
   const nst=stOf(G.nv);
   if(!nst)return;
+  if(mode==='soon')stopAdBroadcast();
   chime();
   const isSoon=mode==='soon';
   const prefix=isSoon?'まもなく、':'次は、';
@@ -6355,6 +6436,7 @@ function triggerNextStationAnnounce(mode){
   toast((isSoon?'📢 まもなく放送：':'📢 次駅放送：')+ja,'info');
   setTimeout(()=>{
     playStationAnnounce(nst, isSoon ? 'soon' : 'next');
+    if(!isSoon&&G.lastDepSt!=null){const dst=stOf(G.lastDepSt);G.lastDepSt=null;playAdBroadcastForDep(dst);}
   },600);
 }
 
@@ -8017,7 +8099,7 @@ function updateTutorialHUD() {
 window.updateTutorialHUD = updateTutorialHUD;
 /* 自動画質：フレームが遅いときは描画解像度を少しずつ下げ、速くなったら戻す（ゲームの中身は変わらない） */
 const QUAL={max:Math.min(window.devicePixelRatio||1,1.1),min:0.5,pr:0,ema:16,t:0,lock:0,pend:null};QUAL.pr=QUAL.max;
-function updQuality(ms){if(QMODE!=='light'&&QMODE!=='ultralight')return;ms=Math.min(ms,100);QUAL.ema+=(ms-QUAL.ema)*0.06;QUAL.t+=ms;if(QUAL.lock>0){QUAL.lock-=ms;return;}if(QUAL.t<1200)return;QUAL.t=0;
+function updQuality(ms){if(QMODE!=='light'&&QMODE!=='ultralight'&&QMODE!=='extreme')return;ms=Math.min(ms,100);QUAL.ema+=(ms-QUAL.ema)*0.06;QUAL.t+=ms;if(QUAL.lock>0){QUAL.lock-=ms;return;}if(QUAL.t<1200)return;QUAL.t=0;
   if(QUAL.ema>24){if(QUAL.pend){if(QUAL.ema>QUAL.pend.ema*0.93){QUAL.pr=QUAL.pend.pr;renderer.setPixelRatio(QUAL.pr);QUAL.pend=null;QUAL.lock=60000;return;}QUAL.pend=null;} // 下げても効かない（画面の更新上限）→戻す
     if(QUAL.pr>QUAL.min+0.01){QUAL.pend={ema:QUAL.ema,pr:QUAL.pr};QUAL.pr=Math.max(QUAL.min,QUAL.pr*0.85);renderer.setPixelRatio(QUAL.pr);}}
   else{QUAL.pend=null;if(QUAL.ema<16.8&&QUAL.pr<QUAL.max-0.01){QUAL.pr=Math.min(QUAL.max,QUAL.pr*1.07);renderer.setPixelRatio(QUAL.pr);QUAL.t=-2500;}}}
@@ -8029,7 +8111,7 @@ function chunkSphere(ch){if(ch.sph!==undefined&&ch.sphN===ch.g.children.length)r
   ch.sph=box.isEmpty()?null:box.getBoundingSphere(new THREE.Sphere());ch.sphN=ch.g.children.length;return ch.sph;}
 const _trsList = [];
 function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,false);_pm4.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);_frus.setFromProjectionMatrix(_pm4);
-  const cp=cam.getWorldPosition(_cwp),far=(scene.fog?scene.fog.far:3600)+60;
+  const cp=cam.getWorldPosition(_cwp),far=QMODE==='extreme'?Math.min((scene.fog?scene.fog.far:3600)+60,1350):((scene.fog?scene.fog.far:3600)+60);
   for(const ch of CHUNKS){if(!ch.built||!ch.g)continue;const sp=chunkSphere(ch);if(!sp){ch.g.visible=true;continue;}
     ch.g.visible=_frus.intersectsSphere(sp)&&(cp.distanceTo(sp.center)-sp.radius)<far;}
   _trsList.length = 0;
@@ -8421,7 +8503,10 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
 /* 画質・動作の設定を反映（ゲーム中に変えても、その場で切り替わる） */
 window.__applyQ=()=>{const dpr=window.devicePixelRatio||1;
   const isMob = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (QMODE==='ultralight') {
+  if (QMODE==='extreme') {
+    QUAL.max = isMob ? 0.45 : 0.55;
+    QUAL.min = 0.35;
+  } else if (QMODE==='ultralight') {
     QUAL.max = isMob ? 0.6 : 0.72;
     QUAL.min = 0.42;
   } else if (QMODE==='heavy') {
@@ -8433,13 +8518,14 @@ window.__applyQ=()=>{const dpr=window.devicePixelRatio||1;
   }
   QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;QUAL.ema=16;renderer.setPixelRatio(QUAL.pr);
   for(const k in RT) {
-    if (QMODE==='ultralight') RT[k].setSize(240, 180);
+    if (QMODE==='extreme') RT[k].setSize(160, 120);
+    else if (QMODE==='ultralight') RT[k].setSize(240, 180);
     else if (QMODE==='heavy') isMob ? RT[k].setSize(384, 288) : RT[k].setSize(640, 480);
     else RT[k].setSize(320, 240);
   }
   if(QMODE==='normal'){for(const ch of CHUNKS)if(ch&&ch.g)ch.g.visible=true;const trs=[ownTrain];for(const a of OT)trs.push(a.tr);for(const t of cityTrains)trs.push(t);for(const t of depotTrains)trs.push(t);for(const tr of trs)if(tr&&tr.cars)for(const c of tr.cars)c.visible=true;}
   if(TRAF.ready){for(const k of ['body','cab','whl','hl','tl','pb','ph','pl'])if(TRAF[k]){scene.remove(TRAF[k]);TRAF[k].geometry.dispose();TRAF[k].dispose&&TRAF[k].dispose();}TRAF.ready=false;}
-  try{toast('画質：'+({ultralight:'超軽量',light:'軽い',normal:'普通',heavy:'重い'})[QMODE],'info');}catch(e){}};
+  try{toast('画質：'+({extreme:'最軽量',ultralight:'超軽量',light:'軽い',normal:'普通',heavy:'重い'})[QMODE],'info');}catch(e){}};
 window.__reloadOtherTrains=()=>{
   let reloadedCount = 0;
   if (IS_ONLINE && window.ONLINE_PLAYERS) {
@@ -8462,7 +8548,10 @@ window.__reloadOtherTrains=()=>{
 };
 (function applyQMode(){const dpr=window.devicePixelRatio||1;
   const isMob = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (QMODE==='ultralight') {
+  if (QMODE==='extreme') {
+    QUAL.max = isMob ? 0.45 : 0.55;
+    QUAL.min = 0.35;
+  } else if (QMODE==='ultralight') {
     QUAL.max = isMob ? 0.6 : 0.72;
     QUAL.min = 0.42;
   } else if (QMODE==='heavy') {
@@ -8474,6 +8563,7 @@ window.__reloadOtherTrains=()=>{
   }
   QUAL.pr=QUAL.max;QUAL.pend=null;QUAL.lock=0;renderer.setPixelRatio(QUAL.pr);
   if(QMODE==='heavy')for(const k in RT)OLDMON?RT[k].setSize(768,288):(isMob?RT[k].setSize(384,288):RT[k].setSize(640,480)); // ホームカメラ映像を高精細に
+  else if(QMODE==='extreme')for(const k in RT)RT[k].setSize(160,120);
   else if(QMODE==='ultralight')for(const k in RT)RT[k].setSize(240,180);
 })();
 requestAnimationFrame(frame);
@@ -9367,6 +9457,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     }
   }
   {const QD={
+      extreme:'最軽量：さらに負荷を抑えた極限モード。解像度・ホームカメラ・遠景描画を最小限に絞り、古い端末でも最大限軽く動かします。',
       ultralight:'超軽量：低スペック端末向け。描画解像度と遠景負荷を極限まで抑えてサクサク動かします。機能や音、演出は一切削りません。',
       light:'軽い：重いときは自動で描く細かさを下げ、見えない物（カメラの後ろ・霧の向こう）を描かずにさくさく動かします。低スペックのパソコンやスマホ向け。',
       normal:'普通：描く細かさを固定して、すべてを毎回描きます（前のバージョンと同じ）。',
