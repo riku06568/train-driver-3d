@@ -4872,12 +4872,13 @@ function resolveOBB2D(ax,az,aAx,aEx,bx,bz,bAx,bEx){
   }
   return [nx*minOv,nz*minOv,minOv];
 }
-function crowdPush(p,dt){ /* 乗客同士の当たり判定：実際の体格・向き(OBB)で重なりを押し戻す */
+function crowdPush(p,dt){ /* 乗客同士の当たり判定：実際の体格・向き(OBB)で重なりを押し戻す（ドア口乗降中は詰まらないよう横避け・道譲り） */
   const here=PAX?W.s:G.s;if(Math.abs(sdiff(p.s,here))>220)return;
   const si=Math.floor(p.s/_CP_CELL),oi=Math.floor(p.o/_CP_CELL);
   const tP=P(p.s)[2],pAx=obbAxesSO(tP,p.yaw||0),pEx=personHalfExtents(p.g);
   const st=STATIONS[p.st],pr=st&&p.flow?platRange(st,p.flow):null;
   const oMin=pr?Math.min(pr[0],pr[1])+0.35:-1e9,oMax=pr?Math.max(pr[0],pr[1])-0.35:1e9;
+  const pMovingDoor=(p.kind==='board'||p.kind==='alight'||p.kind==='runner')&&p.trackO!==-99&&Math.abs(p.o-p.trackO)<1.9;
   for(let pass=0;pass<2;pass++){
     let moved=false;
     for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){
@@ -4885,12 +4886,19 @@ function crowdPush(p,dt){ /* 乗客同士の当たり判定：実際の体格・
       for(const q of cell){
         if(q===p||!q.g.visible||q.st!==p.st)continue;
         if(Math.abs(p.s-q.s)>0.9||Math.abs(p.o-q.o)>0.9)continue;
+        /* 待機中の人は乗降中の人に押されて道を開けるが、乗降中の人は待機中の人に押し返されない */
+        if(pMovingDoor&&q.kind==='wait')continue;
         const qAx=obbAxesSO(tP,q.yaw||0),qEx=personHalfExtents(q.g);
         const res=resolveOBB2D(p.s,p.o,pAx,pEx,q.s,q.o,qAx,qEx);
         if(!res)continue;
-        const k=q.kind==='wait'?0.72:0.55;
-        p.s+=res[0]*k;p.o+=res[1]*k;
-        if(pr&&p.trackO!==-99&&Math.abs(p.o-p.trackO)>1.6)p.o=clamp(p.o,oMin,oMax);
+        if(pMovingDoor){
+          /* ドア付近の乗降中は線路(o)方向へ押し戻さず、横(s)にだけ軽く避ける */
+          p.s+=res[0]*0.32;
+        }else{
+          const k=q.kind==='wait'?0.72:0.55;
+          p.s+=res[0]*k;p.o+=res[1]*k;
+          if(pr&&p.trackO!==-99&&Math.abs(p.o-p.trackO)>1.6)p.o=clamp(p.o,oMin,oMax);
+        }
         moved=true;
       }
     }
@@ -7703,18 +7711,20 @@ function alightInside(a,k,dz,ls,done){if(a.tr&&a.tr.rev)dz=-dz; /* 折り返し�
   pbRemove(p);const g=p.g;personPose(g,'walk');const x0=g.position.x;g.position.y=1.16;g.position.x=x0*0.8;
   p.path=[[x0*0.4,g.position.z],[ls*0.45,dz],[ls*1.3,dz]];p.sit=null;p.onDone=()=>{releaseOne(a,p);done();};if(!INTW.includes(p))INTW.push(p);}
 function updIntWalkers(dt){
+  const walkSet=new Set();
+  for(const p of INTW)if(p&&p.g)walkSet.add(p.g);
   const carsToResolve=new Set();
   for(let i=INTW.length-1;i>=0;i--){const p=INTW[i];if(!p.used||!p.path||!p.path.length){INTW.splice(i,1);continue;}
   const t=p.path[0],g=p.g,dx=t[0]-g.position.x,dz=t[1]-g.position.z,d=Math.hypot(dx,dz),st=1.1*dt;
   if(d>0.01)g.rotation.y=Math.atan2(dx,dz);personPose(g,'walk');p.walk=(p.walk||0)+dt*6;const sw=Math.sin(p.walk)*0.5;g.userData.legs[0].rotation.x=sw;g.userData.legs[1].rotation.x=-sw;
-  if(d<=st){g.position.x=t[0];g.position.z=t[1];p.path.shift();if(!p.path.length){INTW.splice(i,1);
-      if(p.sit)sitPose(p,p.sit);else if(p.strapYaw!=null){g.rotation.y=p.strapYaw;personPose(g,'strap');}else{if(p.standYaw!=null)g.rotation.y=p.standYaw;personPose(g,'stand');}p.tgt=null;p.standYaw=null;if(p.onDone){const f=p.onDone;p.onDone=null;f();}else pbAdd(p);}}
-  else{g.position.x+=dx/d*st;g.position.z+=dz/d*st;}
-  if(g.parent&&g.parent.userData&&g.parent.userData.cabF!==undefined)carsToResolve.add(g.parent);}
-  if(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars&&RIDE.a.tr.cars[RIDE.k])carsToResolve.add(RIDE.a.tr.cars[RIDE.k]);
+  if(d<=st){g.position.x=t[0];g.position.z=t[1];p.path.shift();if(!p.path.length){INTW.splice(i,1);walkSet.delete(g);
+      if(p.sit)sitPose(p,p.sit);else if(p.strapYaw!=null){g.rotation.y=p.strapYaw;personPose(g,'strap');}else{if(p.standYaw!=null)g.rotation.y=p.standYaw;personPose(g,'stand');}
+      if(!p.sit&&g.parent&&g.parent.userData&&g.parent.userData.cabF!==undefined)carsToResolve.add(g.parent);
+      p.tgt=null;p.standYaw=null;if(p.onDone){const f=p.onDone;p.onDone=null;f();}else pbAdd(p);}}
+  else{g.position.x+=dx/d*st;g.position.z+=dz/d*st;}}
   for(const car of carsToResolve){
     const ppl=[];
-    for(const ch of car.children){if(ch.visible&&ch.userData&&ch.userData.mesh&&ch.userData.mode!=='sit'&&Math.abs(ch.position.y-1.16)<0.2)ppl.push(ch);}
+    for(const ch of car.children){if(ch.visible&&!walkSet.has(ch)&&ch.userData&&ch.userData.mesh&&ch.userData.mode!=='sit'&&Math.abs(ch.position.y-1.16)<0.2)ppl.push(ch);}
     if(ppl.length<2)continue;
     for(let i=0;i<ppl.length;i++){
       const a=ppl[i],aAx=obbAxesXZ(a.rotation.y||0),aEx=personHalfExtents(a);
