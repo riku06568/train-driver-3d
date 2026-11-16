@@ -4095,7 +4095,7 @@ for(const [k,x,ry] of [['L',-1.335,Math.PI/2],['R',1.335,-Math.PI/2]]){const kc=
   const p=cplane(0.28,0.175,mat,0,0,0.001,g);p.userData.act='exit'+k;INTER.push(p);EXITB[k]={kc,mat,last:-1};}
 /* ===== 新形車両（v1.9.0）：側面のデジタル表示パネル（左＝駅・時刻案内／右＝車両情報TIMS） ===== */
 const CANV2={WL:mkCanvas(640,384),WR:mkCanvas(640,384)};
-if(!OWNOLD)for(const [k,sx] of [['WL',-1],['WR',1]]){const g=new THREE.Group();g.position.set(sx*1.321,2.50,1.02);g.rotation.y=sx>0?-Math.PI/2:Math.PI/2;cab.add(g);
+if(!OWNOLD)for(const [k,sx] of [['WL',-1],['WR',1]]){const g=new THREE.Group();g.position.set(sx*1.30,2.50,0.62);g.rotation.y=(sx>0?-1:1)*(Math.PI/2-0.28);cab.add(g);
   cbox(0.375,0.235,0.022,CM.frame,0,0,-0.014,g);cbox(0.375,0.016,0.03,CM.accentDim,0,-0.128,-0.006,g);
   const p=cplane(0.34,0.20,basic(CANV2[k].tex),0,0,0.001,g);p.userData.act='mon'+k;INTER.push(p);MON[k]={g,w:0.34,h:0.20,screens:[{p}]};}
 const LEANB={};
@@ -6407,6 +6407,12 @@ function drawInfo(){
     const closed=G.door.state==='closed';x.fillStyle=closed?'#ffae3a':'#c23a2a';x.fillRect(16,262,120,44);x.fillStyle=closed?'#1a1006':'#fff';
     x.font='700 26px '+FONT;x.textAlign='center';x.fillText(closed?'戸閉':({open:'戸開',opening:'開扉中',closing:'閉扉中'})[G.door.state],76,294);
     x.fillStyle=G.ato?'#1f9a5a':'#1e2a3d';x.fillRect(150,262,120,44);x.fillStyle=G.ato?'#fff':'#5d6f8c';x.fillText('ATO',210,294);
+    /* 車両状態（TIMS）のミニ表示：側面パネルを見なくても状態がわかる */
+    {const nn=G.manual?(G.mnotch||0):(G.notch||0);x.fillStyle='#0a1c2b';x.fillRect(286,262,212,44);
+      x.fillStyle='#5f89a8';x.font='600 12px '+FONT;x.textAlign='left';x.fillText('TIMS',294,277);
+      x.fillStyle=G.troubleActive?'#ffb03a':'#7cf0b0';x.font='600 13px '+FONT;x.fillText(G.troubleActive?'要注意':'異常なし',336,277);
+      x.fillStyle='#9fd8ff';x.font='600 13px '+FONT;x.fillText('BC '+Math.round(G.bc)+'　MR '+Math.round(G.mr),294,296);
+      x.fillStyle=nn>0?'#7cf0b0':nn===0?'#cfe0f0':'#ffb03a';x.font='700 13px '+FONT;x.fillText(nn>0?'力行P'+nn:nn===0?'惰行':(nn<=-8?'非常':'制動B'+(-nn)),420,296);}
   }
   if(G.msg&&now-G.msg.t<5000&&G.phase==='play'){x.fillStyle='rgba(0,0,0,.8)';x.fillRect(0,316,512,68);x.fillStyle=CLS[G.msg.cls]||'#fff';x.fillRect(0,316,8,68);
     x.font='700 24px '+FONT;x.textAlign='left';x.fillStyle='#fff';wrap(x,G.msg.text,18,346,484,28,1);}
