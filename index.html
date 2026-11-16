@@ -2637,14 +2637,15 @@ const GAP=[0,1,2,3,4].map(()=>new Float32Array(L+1));
 // the widened part of the alignment has to cover the whole platform, which is longer where long trains stop
 const platMid=st=>st.s+(PF-PBof(st))/2,platHalf=st=>(PBof(st)+PF)/2;
 const bump=(st,i)=>{const a=Math.abs(sdiff(platMid(st),i)),h=platHalf(st);return 1-smooth(h+6,h+135,a);};
+const bumpWide=(st,i)=>{const a=Math.abs(sdiff(platMid(st),i)),h=platHalf(st);return 1-smooth(h+12,h+460,a);};
 for(let i=0;i<=L;i++){let wR=0,wX=0,wJ=0,wM=0;
   for(const st of STATIONS){if(st.cls==='L')continue;const w=bump(st,i);if(w<=0)continue;
     if(st.cls==='R')wR=Math.max(wR,w);else if(st.cls==='J'||st.cls==='I')wJ=Math.max(wJ,w);else if(st.cls==='M')wM=Math.max(wM,w);else wX=Math.max(wX,w);}
   const isl=Math.max(wR,wX);
   if(BRANCH){GAP[0][i]=0;GAP[1][i]=0;GAP[2][i]=0;GAP[3][i]=0;GAP[4][i]=MINI?11*wJ:4.2+6.8*wJ;continue;} /* 港見支線は単線（行き違いの駅だけ2線） */
-  const w0b=bump(STATIONS[0],i); /* 汐見駅は6面12線化（各線路間隔20m＝AI線＋5.16mホーム＋プレイヤー退避線） */
+  const w0b=bumpWide(STATIONS[0],i); /* 汐見駅は6面12線化（450mかけて緩やかに分岐） */
   GAP[0][i]=Math.max(4.2+6.8*isl,20*w0b);GAP[1][i]=Math.max(4.2+6.8*wM,20*w0b);GAP[2][i]=Math.max(4.6+6.4*wX,20*w0b);GAP[3][i]=Math.max(4.2+6.8*wM,20*w0b);GAP[4][i]=Math.max(4.2+6.8*isl,20*w0b);}
-const shiomiBump=s=>BRANCH?0:bump(STATIONS[0],s);
+const shiomiBump=s=>BRANCH?0:bumpWide(STATIONS[0],s);
 const ownTrackOff=(k,s)=>{const T=TK[k];if(!T)return 0;if(BRANCH)return T.off(s);return T.off(s)-T.dir*8.6*shiomiBump(s);};
 const look=(arr,s)=>{s=mod(s,L);const i=Math.floor(s);return arr[i]+(arr[i+1]-arr[i])*(s-i);};
 const offCv=s=>look(GAP[0],s),offE=s=>offCv(s)+look(GAP[1],s),offF=s=>offE(s)+look(GAP[2],s),offD=s=>offF(s)+look(GAP[3],s);
@@ -2674,7 +2675,7 @@ for(const ci of BIG){const st=STATIONS[ci];let n=0;const sides=BRANCH?[1]:[-1,1]
 const KEYS=BRANCH?(B3?['A','B','C','D']:['A','B']):['A','B','C','D','E','F'];
 const TRACKS=[];
 for(const k of (MINI?['A']:BRANCH?['A','B']:KEYS))TRACKS.push({k,off:{A:()=>0,B:sepB,C:offC,D:offD,E:offE,F:offF}[k],a:BRANCH?TRK0:null,b:TRK1});
-if(!BRANCH){const s0=STATIONS[0],sa=s0.s-PBof(s0)-140,sb=s0.s+PF+140;for(const k of KEYS)TRACKS.push({k:'S'+k,off:s=>TK[k].off(s)-TK[k].dir*8.6*shiomiBump(s),a:sa,b:sb});} /* 汐見駅：各線路にプレイヤー退避線（左側）を追加し12線化 */
+if(!BRANCH){const s0=STATIONS[0],sa=s0.s-PBof(s0)-460,sb=s0.s+PF+460;for(const k of KEYS)TRACKS.push({k:'S'+k,off:s=>TK[k].off(s)-TK[k].dir*8.6*shiomiBump(s),a:sa,b:sb});} /* 汐見駅：各線路にプレイヤー退避線（左側）を追加し12線化 */
 if(MINI){const st=STATIONS[CFG.mini.loop];TRACKS.push({k:'B',off:sepB,a:st.s-PBof(st)-170,b:st.s+PF+170});} /* 行き違い用の線路 */
 if(B3)for(const st of STATIONS){if(st.cls!=='Q'&&st.cls!=='T')continue;const a=platMid(st)-platHalf(st)-150,b=platMid(st)+platHalf(st)+150; /* 副本線（分岐して戻る） */
   TRACKS.push({k:'SA',off:s=>-sidDev(s),a,b});TRACKS.push({k:'SB',off:s=>sepB(s)+sidDev(s),a,b});}
