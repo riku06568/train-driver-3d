@@ -385,7 +385,7 @@ html,body{overscroll-behavior:none}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.9.0)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.9.1)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -413,7 +413,7 @@ html,body{overscroll-behavior:none}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.9.0 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.9.1 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -477,14 +477,21 @@ html,body{overscroll-behavior:none}
 
     <!-- View 2B: Independent Dispatch Console (総合指令所) -->
     <div id="viewDispatch" class="home-view hide">
+      <!-- 選択列車の近くの定点カメラ映像（3D）を全画面の背景として敷く -->
+      <canvas id="dispCamCanvas" style="position:fixed;left:0;top:0;width:100%;height:100%;z-index:-2;display:none;pointer-events:none;"></canvas>
+      <div id="dispCamShade" style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(5,9,18,0.72) 0%,rgba(5,9,18,0.34) 34%,rgba(5,9,18,0.52) 70%,rgba(5,9,18,0.82) 100%);"></div>
       <div class="view-header">
         <button id="btnBackFromDispatch" class="backbtn">← 路線選択に戻る</button>
         <h2>📡 総合指令所（製作者手動対応モード）</h2>
       </div>
       <div class="sub" style="color:#86efac;">🟢 接続中の全運転士のタブレットに「製作者が手動対応中」と表示しています</div>
-      <canvas id="dispMapCanvas" width="900" height="420" style="display:block;width:100%;height:auto;border-radius:14px;border:1px solid rgba(251,191,36,0.45);background:#070d18;margin-bottom:14px;cursor:pointer;"></canvas>
+      <div id="dispCamBar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:8px 12px;background:rgba(8,14,26,0.66);border:1px solid rgba(56,189,248,0.35);border-radius:12px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
+        <span id="dispCamLabel" style="font-size:12.5px;font-weight:800;color:#7dd3fc;">📹 背景カメラ：列車を選ぶと、その列車の近くの定点カメラ映像がリアルタイムで出ます</span>
+        <button id="dispCamToggle" type="button" style="margin-left:auto;background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;white-space:nowrap;">背景カメラ ON</button>
+      </div>
+      <canvas id="dispMapCanvas" width="900" height="420" style="display:block;width:100%;height:auto;border-radius:14px;border:1px solid rgba(251,191,36,0.45);background:rgba(7,13,24,0.5);margin-bottom:14px;cursor:pointer;"></canvas>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;text-align:left;">
-        <div style="background:#0b1322;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="background:rgba(9,15,27,0.74);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);">
           <div style="font-size:13px;font-weight:800;color:#fbbf24;">🚆 運行中列車・在線モニター（タップで選択）</div>
           <div id="dispDriversList" style="max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
           <div id="dispTargetLabel" style="font-size:12.5px;color:#fbbf24;font-weight:700;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);">対象列車: 未選択（マップまたは一覧から選択）</div>
@@ -506,7 +513,7 @@ html,body{overscroll-behavior:none}
             <button id="dispCmdTrouble" class="dt-btn danger" style="padding:7px 10px;font-size:12px;white-space:nowrap;">⚡ トラブル発生</button>
           </div>
         </div>
-        <div style="background:#0b1322;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="background:rgba(9,15,27,0.74);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);">
           <div style="font-size:13px;font-weight:800;color:#38bdf8;">💬 指令チャット（運転士との連絡）</div>
           <div id="dispLog" class="dt-log" style="height:210px;"></div>
           <form id="dispForm" style="display:flex;gap:6px;">
@@ -589,7 +596,7 @@ html,body{overscroll-behavior:none}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.9.0)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.9.1)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -635,6 +642,19 @@ html,body{overscroll-behavior:none}
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">最新版</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.1 (2026.11.16)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">総合指令所で選択列車の「定点カメラ映像」と車内の音がリアルタイムに見聞きできるようになりました</div>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>指令所の背景に定点カメラ映像</b>：運行中列車を選ぶと、その列車の走っている線路脇の固定カメラ映像が背景にリアルタイムで映ります。列車が近づいて通り過ぎると、次のカメラに自動で切り替わります（地上・高架・地下のトンネル内にも設置）</li>
+            <li><b>指令所でも列車の音が聞こえる</b>：選んだ列車の乗降促進メロディ、警笛、ミュージックホーン、ドア開閉音、次駅・まもなくの車内放送が指令所にもそのまま届きます</li>
+            <li><b>背景カメラのON/OFFと表示</b>：指令所に「背景カメラ ON/OFF」ボタンを追加。いま映っているカメラの場所（最寄り駅・側面）と追跡中の列車名を表示します。列車を選んでいないときは従来の背景に戻ります</li>
+            <li><b>指令画面の視認性</b>：路線図・パネルを半透明にし、映像が透けて見えるようにしました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.0</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.0 (2026.11.16)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">新型車両・グラスコックピット・高架／地下区間とホームドアを大幅拡充</div>
@@ -1174,7 +1194,7 @@ html,body{overscroll-behavior:none}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.0)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.1)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1915,7 +1935,12 @@ function playRemoteTrainSound(p, type, opt) {
     }
     if (!pos || !_camera) return;
     const cw = _camera.getWorldPosition(new THREE.Vector3());
-    const d = pos.distanceTo(cw);
+    /* 総合指令所：選択列車の近くの定点カメラ位置を基準に鳴らす（距離減衰なしのモニター音量） */
+    const _D = window.__DISP;
+    const dispOn = !!(_D && _D.on && _D.pos);
+    const isSelTrain = !!(dispOn && _D.sel && p.id === _D.sel);
+    let d = pos.distanceTo(dispOn ? _D.pos : cw);
+    if (isSelTrain) d = Math.min(d, 26);
     if (!isFinite(d)) return;
 
     const isHorn = (type === 'horn' || type === 'mhorn');
@@ -1923,13 +1948,13 @@ function playRemoteTrainSound(p, type, opt) {
     if (d > maxD) return;
 
     // 運転室内・客室内にいる場合の音響減衰（窓ガラス越しにリアルに響かせる）
-    const inCab = (typeof A.listenerSealed === 'function') ? A.listenerSealed() : false;
+    const inCab = dispOn ? false : ((typeof A.listenerSealed === 'function') ? A.listenerSealed() : false);
     const cabFilter = inCab ? 3400 : 18000;
     const cabVolMult = inCab ? (isHorn ? 0.65 : 0.48) : 1.0;
 
     const refD = isHorn ? 110 : 55;
     const distGain = Math.min(3.8, 5.0 / (1 + Math.pow(d / refD, 1.35)));
-    const totalGain = distGain * cabVolMult;
+    const totalGain = distGain * cabVolMult * (dispOn ? (isSelTrain ? 1.35 : 1.1) : 1.0);
 
     const g = _AC.createGain();
     g.gain.value = totalGain;
@@ -2124,6 +2149,9 @@ function handleIncomingEvent(ev) {
   } else if (ev.type === 'promo') {
     if (p) p.lastPromoT = ev.t || Date.now();
     playRemoteTrainSound(p, 'promo', { promoN: ev.promoN, stName: ev.stName });
+  } else if (ev.type === 'ann') {
+    const _D = window.__DISP;
+    if (_D && _D.on && _D.sel && ev.id === _D.sel) playDispatchAnn(ev.annFile);
   }
 }
 
@@ -6014,6 +6042,18 @@ function loadAnnBuffer(url){
     return buf;
   });
 }
+function playDispatchAnn(file){
+  try{
+    if(!file||!AC) return;
+    loadAnnBuffer(file).then(buf=>{
+      if(!window.__DISPANN) window.__DISPANN={src:null};
+      const s=AC.createBufferSource(), g=AC.createGain();
+      g.gain.value=0.9; s.buffer=buf; s.connect(g); g.connect(AC.destination);
+      if(window.__DISPANN.src){ try{window.__DISPANN.src.stop();}catch(e){} }
+      window.__DISPANN.src=s; s.onended=()=>{ if(window.__DISPANN.src===s) window.__DISPANN.src=null; }; s.start(0);
+    }).catch(()=>{});
+  }catch(e){}
+}
 function playStationAnnounce(st, mode){
   if(!st) return;
   const linePrefix = BRANCH ? (LINE_ID === 'branch2' ? 'branch2' : LINE_ID === 'branch3' ? 'branch3' : LINE_ID === 'branch4' ? 'branch4' : 'branch') : 'loop';
@@ -6031,6 +6071,9 @@ function playStationAnnounce(st, mode){
       fname = 'assets/audio/ann/loop_' + st.i + '_' + m + '_major.mp3';
     }
   }
+
+  /* 指令所モニター：次駅・まもなく放送を指令所にも配信（指令所側だけ再生） */
+  if(typeof broadcastEvent==='function'){ try{ broadcastEvent('ann', { annFile: fname }); }catch(e){} }
 
   stopStationAnnounce();
   try {
@@ -7572,7 +7615,7 @@ function update(dt,now){
       recordDrivingProgress((curSpd / 3600) * dt, dt);
     }
   }else setDoors(ownTrain,G.door.side,G.door.frac);
-  updChunks(G.walkOn?W.s:G.s);spT+=dt;if(spT>0.5){spT=0;updSpawns();}
+  updChunks((window.__DISP&&window.__DISP.on&&window.__DISP.focusS!=null)?window.__DISP.focusS:(G.walkOn?W.s:G.s));spT+=dt;if(spT>0.5){spT=0;updSpawns();}
   updPeople(dt);updPools(dt);updFT(dt);updShin(dt);updCity(dt);updCrossings(dt);updHomeDoors(dt);
   sigT+=dt;if(sigT>0.2){sigT=0;updSignals();const dv=Math.abs(sdiff(G.s,(DEPOT.a+DEPOT.b)/2))<2200;depotTrains.forEach(t=>t.grp.visible=dv);}
   ledT+=dt;if(ledT>0.25){ledT=0;updLEDs();drawInfoPanel();if(typeof drawWidePanel==='function')drawWidePanel();}
@@ -7788,6 +7831,55 @@ function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,fals
   for(const t of depotTrains) if (t) _trsList.push(t);
   if(IS_ONLINE && window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){if(ONLINE_PLAYERS[pid].tr)_trsList.push(ONLINE_PLAYERS[pid].tr);}}
   for(const tr of _trsList){if(!tr||!tr.cars)continue;for(const car of tr.cars)car.visible=tr.isRemotePlayer?(car.position.distanceTo(cp)<3200):(car.position.distanceTo(cp)<far+14);}}
+/* ===== 総合指令所：選択列車の近くの「定点カメラ」リアルタイム背景映像 ===== */
+window.__DISP = window.__DISP || { on:false, sel:null, camOn:true, pos:null, focusS:null };
+const DISPCAM = {cam:null,cv:null,last:0,anchor:null,side:1,ready:false,lastAnchor:null,lastLbl:'',aim:new THREE.Vector3(),target:new THREE.Vector3(),asp:0,STEP:260};
+function dispCamCanvas(){ if(!DISPCAM.cv) DISPCAM.cv = document.getElementById('dispCamCanvas'); return DISPCAM.cv; }
+function dispCamReset(){ DISPCAM.anchor=null; DISPCAM.ready=false; DISPCAM.lastAnchor=null; }
+window.__DISP.resetCam = dispCamReset;
+/* 線路に沿って約340mごとに置いた固定カメラ。列車がカメラから離れたら次のカメラへ切り替える */
+function dispCamPickAnchor(ts,dir){ const idx=Math.round((ts+(dir||1)*80)/DISPCAM.ST);
+  if(DISPCAM.anchor==null||Math.abs(sdiff(DISPCAM.anchor,ts))>DISPCAM.ST*0.98){ DISPCAM.anchor=mod(idx*DISPCAM.ST,L); DISPCAM.side=(mod(idx,2)===0)?1:-1; }
+  return DISPCAM.anchor; }
+function dispCamFrame(now){ const D=window.__DISP; if(!D||!D.on||D.camOn===false) return false;
+  const cv=dispCamCanvas(); if(!cv) return false;
+  const pid=D.sel; const p=pid?ONLINE_PLAYERS[pid]:null;
+  const ts=(p&&isFinite(p.smoothS))?p.smoothS:((p&&isFinite(p.s))?p.s:null);
+  if(!p||ts==null||!p.tr||!p.tr.cars||!p.tr.cars.length){ D.focusS=null; if(cv.style.display!=='none') cv.style.display='none'; return false; }
+  if(!DISPCAM.cam){ DISPCAM.cam=new THREE.PerspectiveCamera(52,innerWidth/Math.max(1,innerHeight),0.25,1500); }
+  const cam=DISPCAM.cam;
+  const a=dispCamPickAnchor(ts,p.dir||1);
+  const y=Yat(a); let off,h;
+  if(y<-4){ off=5.2; h=3.0; }            /* 地下：トンネル内の壁面カメラ */
+  else if(y>4){ off=9.0; h=4.2; }        /* 高架：高架下から見上げる */
+  else { off=15.0; h=6.8; }              /* 地上：軌道脇のポールカメラ */
+  cam.position.copy(offs(a,DISPCAM.side*off,h));
+  const cars=p.tr.cars; const mid=cars[Math.floor((cars.length-1)/2)];
+  try{ mid.getWorldPosition(DISPCAM.target); }catch(e){ DISPCAM.target.copy(offs(ts,0,2)); }
+  if(!DISPCAM.ready||DISPCAM.lastAnchor!==a){ DISPCAM.aim.copy(DISPCAM.target); DISPCAM.ready=true; DISPCAM.lastAnchor=a; }
+  else DISPCAM.aim.lerp(DISPCAM.target,0.28);
+  const asp=innerWidth/Math.max(1,innerHeight);
+  if(DISPCAM.asp!==asp){ DISPCAM.asp=asp; cam.aspect=asp; cam.updateProjectionMatrix(); }
+  cam.lookAt(DISPCAM.aim);
+  D.focusS=ts; D.pos=cam.position;
+  /* ラベル（最寄り駅・側面） */
+  let near=null,best=1e9; for(const st of STATIONS){ const dd=Math.abs(sdiff(st.s,ts)); if(dd<best){ best=dd; near=st; } }
+  const lbl='📹 定点カメラ：'+(near?(near.name+'駅'+(best<420?'（ホーム脇）':' 付近')):'沿線')+'・'+(DISPCAM.side>0?'下り側':'上り側')+'　／　'+p.name+' を追跡中';  
+  if(lbl!==DISPCAM.lastLbl){ DISPCAM.lastLbl=lbl; const el=document.getElementById('dispCamLabel'); if(el) el.textContent=lbl; }
+  /* 描画は約25fpsに間引く（指令画面の背景なので十分） */
+  if(now-DISPCAM.last<40) return true;
+  DISPCAM.last=now;
+  try{
+    cullFor(cam); renderer.setRenderTarget(null); renderer.render(scene,cam);
+    const vw=Math.max(1,innerWidth), vh=Math.max(1,innerHeight), sc=Math.min(1,1024/vw);
+    const cw=Math.max(160,Math.round(vw*sc)), ch=Math.max(90,Math.round(vh*sc));
+    if(cv.width!==cw||cv.height!==ch){ cv.width=cw; cv.height=ch; }
+    const ctx=cv.getContext('2d');
+    if(ctx){ ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cw,ch); ctx.drawImage(renderer.domElement,0,0,cw,ch); }
+    if(cv.style.display!=='block') cv.style.display='block';
+  }catch(e){}
+  return true;
+}
 function frameBody(now){
   updQuality(now-last);
   const dt=Math.min(0.05,(now-last)/1000);last=now;frameN++;
@@ -7923,7 +8015,10 @@ function frameBody(now){
           // 乗客モード対応：カメラの実際の位置（W.s / RIDE.a.s / G.s）からの距離で正しく判定
           const camS = (typeof PAX !== 'undefined' && PAX) ? ((typeof RIDE !== 'undefined' && RIDE && RIDE.a) ? RIDE.a.s : (typeof W !== 'undefined' ? W.s : 0)) : ((typeof G !== 'undefined' && G && G.s != null) ? G.s : 0);
           const camDist = Math.abs(sdiff(p.smoothS, camS));
-          if (camDist < 2600) {
+          /* 指令所の定点カメラ：選択列車の周辺は指令カメラの位置で描画判定する */
+          const camDist2 = (window.__DISP&&window.__DISP.on&&window.__DISP.focusS!=null)?Math.abs(sdiff(p.smoothS,window.__DISP.focusS)):camDist;
+          const camDistEff = Math.min(camDist, camDist2);
+          if (camDistEff < 2600) {
             if (p.tr && p.tr.grp) p.tr.grp.visible = true;
             placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
             if (p.tr) {
@@ -7937,13 +8032,14 @@ function frameBody(now){
       }
     } catch(e) {}
   }
-  const ms=monStation(),side=ms?localSide(ms):0;
+const ms=monStation(),side=ms?localSide(ms):0;
   const MQ=monQuads();
   for(const k of ['L','R']){if(!MON[k])continue;const sd=(k==='L'?-1:1)*SIDEINV;MON[k].screens.forEach((sc,h)=>{const want=side===sd&&MQ[h]?RT[k+h].texture:CANV.NS.tex;if(sc.mat.map!==want){sc.mat.map=want;sc.mat.needsUpdate=true;}});}
   if(ms&&!G.walkOn&&!PAX&&!OWNOLD){const k=side*SIDEINV<0?'L':'R',zoomed=G.zoom==='L'||G.zoom==='R';let n=0;
     const stride=QMODE==='heavy'?1:QMODE==='normal'?2:(QUAL.pr<QUAL.max*0.8?4:2); /* 軽い：重いときはカメラ映像を1枚ずつ順番に更新／重い：毎フレーム全部 */
     for(let q=0;q<4;q++){if(!MQ[q]||(!zoomed&&q%stride!==frameN%stride))continue;aimCamQ(ms,MQ[q]);cullFor(monCam);renderer.setRenderTarget(RT[k+q]);renderer.render(scene,monCam);n++;}
     if(n)renderer.setRenderTarget(null);}
+  if(window.__DISP&&window.__DISP.on&&window.__DISP.camOn!==false&&dispCamFrame(now)) return; /* 指令所：定点カメラ映像を描いたフレームは通常描画を省く */
   pbFlush();cullFor(camera);renderer.render(scene,camera);
   if(PHOTO_REQ){PHOTO_REQ=false;try{PHOTOS.unshift(renderer.domElement.toDataURL('image/jpeg',0.82));if(PHOTOS.length>40)PHOTOS.pop();}catch(e){}}}
 /* 毎フレーム：先に次のフレームを予約してから処理する。途中でエラーが起きてもゲームは止まらずに続く */
@@ -9402,8 +9498,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       const ctx = dispMapCanvas.getContext('2d');
       const W = dispMapCanvas.width, H = dispMapCanvas.height;
       ctx.setTransform(1,0,0,1,0,0);
-      ctx.fillStyle = '#070d18';
-      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = 'rgba(6,11,20,0.52)';
       const cfg = lineConfig('loop'), sts = layoutStations(cfg), path = genPath(cfg.L, 0);
       let mnx=1e9, mxx=-1e9, mnz=1e9, mxz=-1e9;
       for (let i=0; i<cfg.L; i+=200) { mnx=Math.min(mnx,path.px[i]); mxx=Math.max(mxx,path.px[i]); mnz=Math.min(mnz,path.pz[i]); mxz=Math.max(mxz,path.pz[i]); }
@@ -9500,6 +9595,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         for (const hb of dispHitBoxes) {
           if (Math.hypot(cx-hb.x, cy-hb.y) < 22 || (cx>=hb.rx && cx<=hb.rx+hb.rw && cy>=hb.ry && cy<=hb.ry+hb.rh)) {
             dispSelectedId = hb.pid;
+            if (window.__DISP) { window.__DISP.sel = dispSelectedId; if (typeof window.__DISP.resetCam === 'function') window.__DISP.resetCam(); }
             const p = ONLINE_PLAYERS[dispSelectedId];
             if (dispTargetLabel) dispTargetLabel.textContent = '対象列車: ' + (p ? p.name : dispSelectedId);
             refreshDispatchDrivers();
@@ -9529,6 +9625,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       dispDriversList.querySelectorAll('.disp-drv-row').forEach(btn => {
         btn.addEventListener('click', () => {
           dispSelectedId = btn.dataset.pid;
+          if (window.__DISP) { window.__DISP.sel = dispSelectedId; if (typeof window.__DISP.resetCam === 'function') window.__DISP.resetCam(); }
           const p = ONLINE_PLAYERS[dispSelectedId];
           if (dispTargetLabel) dispTargetLabel.textContent = '対象列車: ' + (p ? p.name : dispSelectedId);
           refreshDispatchDrivers();
@@ -9536,11 +9633,30 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       });
     };
     setInterval(refreshDispatchDrivers, 500);
+    const dispCamToggleBtn = document.getElementById('dispCamToggle');
+    if (dispCamToggleBtn) dispCamToggleBtn.addEventListener('click', () => {
+      const D = window.__DISP; if (!D) return;
+      D.camOn = !D.camOn;
+      dispCamToggleBtn.textContent = '背景カメラ ' + (D.camOn ? 'ON' : 'OFF');
+      dispCamToggleBtn.style.opacity = D.camOn ? '1' : '0.6';
+      const cv = document.getElementById('dispCamCanvas');
+      if (cv && !D.camOn) cv.style.display = 'none';
+      try { initAudio(); } catch(e) {}
+    });
     window.__openDispatchConsole = () => {
       if (!viewDispatch) return;
       document.querySelectorAll('.home-view').forEach(v => v.classList.add('hide'));
       viewDispatch.classList.remove('hide');
       if (typeof initOnlineClient === 'function') initOnlineClient();
+      /* 指令モニター：選択列車の定点カメラ映像と音声を有効にする（クリック操作で AudioContext も起こす） */
+      try { initAudio(); } catch(e) {}
+      if (window.__DISP) {
+        window.__DISP.on = true;
+        window.__DISP.sel = dispSelectedId || null;
+        window.__DISP.focusS = null;
+        if (typeof window.__DISP.resetCam === 'function') window.__DISP.resetCam();
+      }
+      const _cv = document.getElementById('dispCamCanvas'); if (_cv) _cv.style.display = 'none';
       const sendHB = () => {
         dispatchManualUntil = Date.now() + 10000;
         if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
@@ -9556,6 +9672,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     if (btnBackFromDispatch && viewDispatch) {
       btnBackFromDispatch.addEventListener('click', () => {
         viewDispatch.classList.add('hide');
+        if (window.__DISP) { window.__DISP.on = false; window.__DISP.sel = null; window.__DISP.focusS = null; }
+        const _cv2 = document.getElementById('dispCamCanvas'); if (_cv2) _cv2.style.display = 'none';
+        if (window.__DISPANN && window.__DISPANN.src) { try { window.__DISPANN.src.stop(); } catch(e) {} window.__DISPANN.src = null; }
         const vd = document.getElementById('viewDutySelect');
         if (vd) vd.classList.remove('hide');
         if (dispatchHB) { clearInterval(dispatchHB); dispatchHB = null; }
