@@ -3396,8 +3396,8 @@ function updChunks(s,force){const pc=chunkOf(s);const want=[];for(let d=0;d<=3;d
 const doorTex=canvasTex(64,128,(x,w,h)=>{x.fillStyle='#b9bec4';x.fillRect(0,0,w,h);x.clearRect(12,10,40,50);x.strokeStyle='#8d9298';x.lineWidth=3;x.strokeRect(1,1,w-2,h-2);});
 const TM={
   body:new THREE.MeshPhongMaterial({color:0xc9cdd3,specular:0x777777,shininess:35}),
-  glass:new THREE.MeshPhongMaterial({color:0x2a3a48,emissive:0x000000,specular:0xcfd8e0,shininess:95,transparent:true,opacity:0.18,depthWrite:false,side:DS}),
-  glassF:new THREE.MeshPhongMaterial({color:0x9fb8cc,specular:0xffffff,shininess:100,transparent:true,opacity:0.12,depthWrite:false,side:DS}),
+  glass:new THREE.MeshPhongMaterial({color:0x2a3a48,emissive:0x000000,specular:0xcfd8e0,shininess:80,transparent:true,opacity:0.14,depthWrite:false,side:DS}),
+  glassF:new THREE.MeshBasicMaterial({color:0x9fb8cc,transparent:true,opacity:0.08,depthWrite:false,side:DS}),
   doorway:new THREE.MeshLambertMaterial({color:0x6b645a,emissive:0xfff1d6,emissiveIntensity:0.25,side:DS}),
   dark:lam(0x26282b),mid:lam(0x4a4e54),
   face:new THREE.MeshPhongMaterial({color:0xe6e8ea,shininess:40,side:DS}),
@@ -3570,9 +3570,9 @@ function carTemplate(front,rear,panto,staticDoors,green,old){
       for(const face of [0,Math.PI]){pl('iledF',0.42,0.26,0,DK+1.95,z+(face?0.02:-0.02),face);}}
     for(const z of [-3.0,3.0])for(const y of [FU+1.5,FD+1.62]){
       for(const face of [0,Math.PI]){pl('iledF',0.40,0.24,0,y,z+(face?0.02:-0.02),face);}}}
-  if(!staticDoors&&!green){put('ifloor',UNIT_PLANE,0,1.16,0,-Math.PI/2,0,0,2.72,19.4,1);put('iwall',UNIT_PLANE,0,3.41,0,Math.PI/2,0,0,2.72,19.4,1);
-    const LY=salLayout(front,rear);
-    for(const x of [-0.5,0.5])put('ilight',UNIT_PLANE,x,3.40,(LY.z0+LY.z1)/2,Math.PI/2,0,0,0.12,LY.z1-LY.z0-0.9,1);
+  if(!green){put('ifloor',UNIT_PLANE,0,1.16,0,-Math.PI/2,0,0,2.72,19.4,1);if(!staticDoors)put('iwall',UNIT_PLANE,0,3.41,0,Math.PI/2,0,0,2.72,19.4,1);
+  const LY=salLayout(front,rear);
+    if(!staticDoors){for(const x of [-0.5,0.5])put('ilight',UNIT_PLANE,x,3.40,(LY.z0+LY.z1)/2,Math.PI/2,0,0,0.12,LY.z1-LY.z0-0.9,1);}
     for(const z of [-9.68,9.68]){const cabSide=(z<0&&front)||(z>0&&rear);
       if(cabSide)put('iwall',UNIT_PLANE,0,(1.15+2.37)/2,z,0,z<0?0:Math.PI,0,2.72,1.22,1); /* 運転台の前は窓の下だけ壁（前面ガラスから外が見える＝前面展望） */
       else put('iwall',UNIT_PLANE,0,2.28,z,0,z<0?0:Math.PI,0,2.72,2.26,1);}
@@ -8009,7 +8009,7 @@ function frameBody(now){
             p.currentFlip = flip;
             p.currentLiv = liv;
             p.smoothS = (typeof p.s === 'number' && isFinite(p.s)) ? p.s : 0;
-            placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+            placeTrain(p.tr, p.smoothS, s=>ownTrackOff(k, s), TK[k].y);
 
             p.ai = {
               name: 'P_' + (p.id || 'rem').slice(0, 6),
@@ -8082,7 +8082,7 @@ function frameBody(now){
           const camDistEff = Math.min(camDist, camDist2);
           if (camDistEff < 2600) {
             if (p.tr && p.tr.grp) p.tr.grp.visible = true;
-            placeTrain(p.tr, p.smoothS, TK[k].off, TK[k].y);
+            placeTrain(p.tr, p.smoothS, s=>ownTrackOff(k, s), TK[k].y);
             if (p.tr) {
               const dFrac = p.doorFrac != null ? p.doorFrac : (p.door === 'open' ? 1.0 : (p.door === 'closed' ? 0.0 : 0.5));
               setDoors(p.tr, p.doorSide || 1, dFrac);
