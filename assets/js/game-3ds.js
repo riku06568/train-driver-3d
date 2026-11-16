@@ -40,7 +40,7 @@
   var root = document.createElement('div');
   root.id = 'mode3dsRoot';
   root.style.cssText = 'display:none;background:#080c16;color:#eef2f8;padding:8px;font-family:sans-serif;max-width:420px;margin:0 auto;';
-  document.body.appendChild(root);
+  document.body.insertBefore(root, document.body.firstChild);
 
   var homeEl = document.getElementById('home');
   var timerId = null;
@@ -96,8 +96,9 @@
 
   function showMenu() {
     if (timerId) { clearInterval(timerId); timerId = null; }
-    if (homeEl) homeEl.style.display = 'none';
+    if (homeEl) { homeEl.className = (homeEl.className || '') + ' hide'; }
     root.style.display = 'block';
+    try { window.scrollTo(0, 0); } catch(e) {}
     root.innerHTML =
       '<div style="background:#0f172a;border:1px solid #38bdf8;border-radius:10px;padding:12px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
@@ -115,7 +116,7 @@
 
     document.getElementById('m3BackHome').onclick = function() {
       root.style.display = 'none';
-      if (homeEl) homeEl.style.display = 'block';
+      if (homeEl) homeEl.className = (homeEl.className || '').replace(/\bhide\b/g, '');
     };
     var btns = root.querySelectorAll('button[data-m]');
     for (var i = 0; i < btns.length; i++) {
