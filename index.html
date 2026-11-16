@@ -1689,6 +1689,7 @@ function initOnlineClient() {
       ONLINE_CLIENT.subscribe('shiomi3d/v1/events', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/chat', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/dispatch/#', { qos: 0 });
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/ai/#', { qos: 0 });
       startOnlinePublishLoop();
       publishPresence(true);
       syncDriverToMQTT();
@@ -1720,6 +1721,11 @@ function initOnlineClient() {
           if (ev && ev.id && ev.id !== ONLINE_CLIENT_ID) {
             handleIncomingEvent(ev);
           }
+          return;
+        }
+        if (topic.startsWith('shiomi3d/v1/ai/')) {
+          const ap = JSON.parse(message.toString());
+          if (typeof window.handleAiPacket === 'function') window.handleAiPacket(topic, ap);
           return;
         }
         if (topic.startsWith('shiomi3d/v1/dispatch/')) {
@@ -4753,7 +4759,9 @@ function updPeople(dt){sweepStranded();
       const t=P(p.s)[2];const wx=Math.sin(t)*ds+Math.cos(t)*dO,wz=-Math.cos(t)*ds+Math.sin(t)*dO;if(dist>0.01)p.yaw=Math.atan2(wx,wz);
       if(dist<=step){p.s=ts;p.o=to;p.path.shift();if(!p.path.length&&p.end==='xfer'){xferArrive(p);continue;}
         if(!p.path.length&&(p.end==='board'||p.end==='free')){
-          if(p.end==='board'){const squeeze=p.train==='OWN'&&(G.noBoard||(G.atStation!==null&&G.promoted[G.atStation]));
+          if(p.end==='board'){
+            if(!boardOpen(p)){requeue(p);continue;} /* 列車がいない・ドアが閉まっていたら消さずに待機列へ戻す */
+            const squeeze=p.train==='OWN'&&(G.noBoard||(G.atStation!==null&&G.promoted[G.atStation]));
             const full=!p.forceIn&&!squeeze&&p.train==='OWN'&&isTrainFull(G.load,G.key); /* 他の電車は押し込んで乗る */
             if(full){ /* 満員：ドアギリギリに詰まる（戸が閉まらない） */
               p.kind='jam';p.end=null;p.path=[];p.delay=0;p.g.visible=true;
@@ -4996,7 +5004,77 @@ const POOLT={};
 /* 港見支線：電車は2本だけ。起点と終点から同時に出て、港前で行き違い、終点で折り返す */
 const MINIS={spawned:false};
 function miniSpawn(k,st){const a=POOL[k].find(x=>x.state==='off');if(!a)return;a.key=k;a.dir=TK[k].dir;aiSpawn(a,st.s+TK[k].so,0);a.state='dwell';a.v=0;a.t=34;a.stSt=st;a.last=st.i;a.side=TK[k].side(st);a.flowed=false;a.sndF={};a.hold=0;}
-function updPools(dt){const on=G.phase==='play';
+function initSyncedAiTrains(){
+  if(BRANCH||MINI)return;
+  const now=nowMs();
+  for(const k of KEYS){
+    const pool=POOL[k];if(!pool||!pool.length)continue;
+    const mins=SHIOMI_TT[k]||[0,20,40];
+    const T=TK[k],s0=STATIONS[0].s+T.so,spd=(VMAX[k]||22)*0.72;
+    const cnt=Math.min(2,pool.length);
+    for(let i=0;i<cnt;i++){
+      const a=pool[i];
+      if(a.state!=='off')continue;
+      const m=mins[i%mins.length];
+      const d=new Date(now);d.setSeconds(0,0);d.setMinutes(m);
+      if(d.getTime()>now)d.setHours(d.getHours()-1);
+      const elSec=Math.max(0,(now-d.getTime())/1000)+i*950;
+      const pos=mod(s0+T.dir*elSec*spd,L);
+      a.key=k;aiSpawn(a,pos);
+    }
+  }
+}
+let _aiSyncT=0,_aiLastRx=0,_aiLeaderId=null;
+function isAiSyncLeader(){
+  const vd=document.getElementById('viewDispatch');
+  if(vd&&!vd.classList.contains('hide'))return true;
+  if(!window.ONLINE_PLAYERS||!window.ONLINE_CLIENT_ID)return true;
+  const ids=[ONLINE_CLIENT_ID];
+  for(const pid in ONLINE_PLAYERS){const p=ONLINE_PLAYERS[pid];if(p&&p.id&&p.state!=='title')ids.push(p.id);}
+  ids.sort();return ids[0]===ONLINE_CLIENT_ID;
+}
+window.handleAiPacket=(topic,ap)=>{
+  if(!ap)return;
+  if(topic==='shiomi3d/v1/ai/cmd'&&ap.name){
+    const a=OT.find(x=>x&&x.name===ap.name);if(!a)return;
+    if(ap.cmd==='stop'){a.dispHold=true;a.slowMode=null;}
+    else if(ap.cmd==='resume'){a.dispHold=false;a.troubleActive=false;a.slowMode=null;a.forceDep=true;}
+    else if(ap.cmd==='prevStation'){a.dispHold=false;a.troubleActive=false;a.slowMode='prev';}
+    else if(ap.cmd==='nextStation'){a.dispHold=false;a.troubleActive=false;a.slowMode='next';}
+    else if(ap.cmd==='trouble'){a.troubleActive=true;a.dispHold=true;}
+    else if(ap.cmd==='yield'){a.forceDep=false;a.yieldToPlayer=true;}
+    else if(ap.cmd==='forceDep'){a.yieldToPlayer=false;a.forceDep=true;if(a.state==='dwell'&&a.t>5)a.t=5;}
+    return;
+  }
+  if(topic==='shiomi3d/v1/ai/state'&&ap.leader&&ap.leader!==ONLINE_CLIENT_ID&&Array.isArray(ap.trains)){
+    _aiLastRx=Date.now();_aiLeaderId=ap.leader;
+    for(const t of ap.trains){
+      const a=OT.find(x=>x&&x.name===t.n);if(!a)continue;
+      if(a.state==='off'){a.key=t.k;aiSpawn(a,t.s);}
+      if(Math.abs(sdiff(a.s,t.s))>25)a.s=t.s;else a.s=mod(a.s+sdiff(a.s,t.s)*0.35,L);
+      a.v=t.v;a.state=t.st;a.dir=t.d;a.side=t.sd;a.frac=t.f;a.dispHold=!!t.dh;a.slowMode=t.sm||null;a.troubleActive=!!t.tb;a.t=t.t;
+    }
+  }
+};
+function updPools(dt){const on=G.phase==='play'||window.__DISP_MONITOR;
+  if(!BRANCH&&!MINI&&on){
+    initSyncedAiTrains();
+    const camS=PAX?(RIDE?RIDE.a.s:W.s):(window.__DISP&&window.__DISP.on&&window.__DISP.focusS!=null?window.__DISP.focusS:G.s);
+    for(const k of KEYS)for(const a of POOL[k]){
+      if(a.state==='off')continue;
+      a.vis=Math.abs(sdiff(camS,a.s))<2600;
+      aiRun(a,dt);
+    }
+    _aiSyncT+=dt;
+    if(_aiSyncT>=0.7){
+      _aiSyncT=0;
+      if(ONLINE_CLIENT&&ONLINE_CLIENT.connected&&isAiSyncLeader()){
+        const trains=OT.filter(a=>a&&a.state!=='off').map(a=>({n:a.name,k:a.key,s:+a.s.toFixed(1),v:+a.v.toFixed(2),st:a.state,d:a.dir,sd:a.side,f:+a.frac.toFixed(2),dh:!!a.dispHold,sm:a.slowMode||null,tb:!!a.troubleActive,t:+a.t.toFixed(1)}));
+        try{ONLINE_CLIENT.publish('shiomi3d/v1/ai/state',JSON.stringify({leader:ONLINE_CLIENT_ID,ts:Date.now(),trains}),{qos:0});}catch(e){}
+      }
+    }
+    return;
+  }
   if(MINI){for(const k of KEYS)for(const a of POOL[k].slice())if(a.state!=='off')aiRun(a,dt);
     if(on&&!MINIS.spawned){MINIS.spawned=true;const s0=STATIONS[0],sN=STATIONS[NST-1];if(PAX){miniSpawn('A',s0);miniSpawn('B',sN);}else if(TK[G.key].dir>0)miniSpawn('B',sN);else miniSpawn('A',s0);}
     return;}
@@ -5930,7 +6008,7 @@ function updHomeDoors(dt){
           if(!p.key || physKey(p.key, st.s) !== k) continue;
           const pPos = p.smoothS != null ? p.smoothS : p.s;
           const d = Math.abs(sdiff(pPos, st.s + TK[k].so));
-          const isAtThisSt = (d < 50) || (p.stName && p.stName === st.name);
+          const isAtThisSt = (d < 25 && (p.v || 0) < 0.5 && p.state !== 'title');
           if(isAtThisSt && (p.door === 'open' || p.door === 'opening' || (p.doorFrac || 0) > 0.05)){
             const pf = p.doorFrac != null ? p.doorFrac : (p.door === 'open' ? 1.0 : 0.6);
             f = Math.max(f, pf);
@@ -9499,6 +9577,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         best.yieldToPlayer = false;
         best.forceDep = true;
         if (best.state === 'dwell' && best.t > 5) best.t = 5;
+        if (ONLINE_CLIENT && ONLINE_CLIENT.connected) try { ONLINE_CLIENT.publish('shiomi3d/v1/ai/cmd', JSON.stringify({ name: best.name, cmd: 'forceDep' }), { qos: 0 }); } catch(e) {}
         setTimeout(() => {
           appendDispatchLog('📻 AI(' + best.name + ')', '了解しました。当列車が先に発車します。貴列車はそのまま退避をお願いします。', 'sys');
           playDispatchChime();
@@ -9506,6 +9585,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       } else {
         best.forceDep = false;
         best.yieldToPlayer = true;
+        if (ONLINE_CLIENT && ONLINE_CLIENT.connected) try { ONLINE_CLIENT.publish('shiomi3d/v1/ai/cmd', JSON.stringify({ name: best.name, cmd: 'yield' }), { qos: 0 }); } catch(e) {}
         setTimeout(() => {
           appendDispatchLog('📻 AI(' + best.name + ')', '了解しました。貴列車を先にお通しします。発車までホームで待機します。', 'sys');
           playDispatchChime();
@@ -9832,6 +9912,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       viewDispatch.classList.remove('hide');
       document.body.classList.add('disp-monitor');
       if (typeof initOnlineClient === 'function') initOnlineClient();
+      if (typeof window.__ensureMonitorWorld === 'function') window.__ensureMonitorWorld();
       /* 指令モニター：選択列車の定点カメラ映像と音声を有効にする（クリック操作で AudioContext も起こす） */
       try { initAudio(); } catch(e) {}
       if (window.__DISP) {
@@ -9878,6 +9959,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       else if (cmd === 'prevStation') { ai.dispHold = false; ai.troubleActive = false; ai.slowMode = 'prev'; }
       else if (cmd === 'nextStation') { ai.dispHold = false; ai.troubleActive = false; ai.slowMode = 'next'; }
       else if (cmd === 'trouble') { ai.troubleActive = true; ai.dispHold = true; }
+      if (ONLINE_CLIENT && ONLINE_CLIENT.connected) {
+        try { ONLINE_CLIENT.publish('shiomi3d/v1/ai/cmd', JSON.stringify({ name: ai.name, cmd, reason }), { qos: 0 }); } catch(e) {}
+      }
       return true;
     };
     const bindDispCmd = (id, cmd, label) => {
