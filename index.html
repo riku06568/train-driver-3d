@@ -1314,14 +1314,23 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
       '.main-menu-buttons>*{margin-bottom:10px!important}' +
       '.menu-btn{display:block!important;width:100%!important;padding:12px 14px!important}';
     document.head.appendChild(stEl);
-    var btns = document.querySelectorAll('.menu-btn, #btnNavDuty, #btnChangeName, #btnCardLogin');
+    var btns = document.querySelectorAll('.menu-btn, #btnChangeName, #btnCardLogin');
     for (var i = 0; i < btns.length; i++) {
       btns[i].onclick = function() {
-        alert('この端末のブラウザは3D表示(WebGL)に対応していないため、3D運転は起動できません。スマホやPCからアクセスしてね！');
+        alert('この端末では簡易表示中だよ！「乗務開始」を押すと3DS向けの超軽量モードで運転できるよ！');
+      };
+    }
+    var btnDuty = document.getElementById('btnNavDuty');
+    if (btnDuty) {
+      btnDuty.onclick = function() {
+        if (window.__SHIOMI_3DS_SHOW_MENU) { window.__SHIOMI_3DS_SHOW_MENU(); return; }
+        var s = document.createElement('script');
+        s.src = 'assets/js/game-3ds.js?v=78';
+        document.body.appendChild(s);
       };
     }
     var st = document.querySelector('.online-status-bar');
-    if (st) st.innerHTML = '<span>📱 軽量表示モード（この端末は3D運転非対応です）</span>';
+    if (st) st.innerHTML = '<span>🎮 3DS・軽量モード（「乗務開始」で起動できます）</span>';
     return;
   }
   function loadScript(src, cb) {
