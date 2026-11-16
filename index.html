@@ -2636,8 +2636,15 @@ function sendPlayNotification(lineId, svcKey, startI, stName) {
    ===================================================================== */
 window.__PAX = false;
 function boot(LINE_ID,SVC,START_I){
-/* 指令モニター等で既に3Dの世界を作っているときは、古い描画ループと前のキャンバスを片付けてから作り直す */
+/* 指令モニター等で既に3Dの世界を作っているときは、古い描画ループ・イベントリスナ・前のキャンバスを片付けてから作り直す */
 const TOKEN=(window.__FRAME_TOKEN||0)+1; window.__FRAME_TOKEN=TOKEN;
+if(window.__WORLD_ABORT){try{window.__WORLD_ABORT.abort();}catch(e){}}
+const __WORLD_ABORT=typeof AbortController!=='undefined'?new AbortController():null;
+window.__WORLD_ABORT=__WORLD_ABORT;
+const __SIG=__WORLD_ABORT?__WORLD_ABORT.signal:undefined;
+const _on=(t,ev,fn,opt)=>{if(!t)return;const o=typeof opt==='boolean'?{capture:opt}:Object.assign({},opt);if(__SIG)o.signal=__SIG;t.addEventListener(ev,fn,o);};
+if(window.__WORLD_RENDERER){try{window.__WORLD_RENDERER.dispose();}catch(e){}}
+if(window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){const p=ONLINE_PLAYERS[pid];if(p){if(p.tr){try{disposeTrain(p.tr);}catch(e){}}p.tr=null;p.ai=null;p.paxG=null;}}}
 if(window.__WORLD_BUILT){ try{const og=document.getElementById('gl'); if(og&&og.parentNode) og.parentNode.removeChild(og);}catch(e){} }
 window.__WORLD_BUILT=true; window.__DISP_MONITOR=false;
 if (LINE_ID !== 'loop' && typeof isVeteranDriver === 'function' && !isVeteranDriver()) {
@@ -2812,8 +2819,9 @@ const renderer = new THREE.WebGLRenderer({
   powerPreference: isMobileDevice ? 'default' : 'high-performance'
 });
 let CTXLOST=false;
-renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();CTXLOST=true;},false);
-renderer.domElement.addEventListener('webglcontextrestored',()=>{CTXLOST=false; /* 画像を全部読み直す */
+window.__WORLD_RENDERER=renderer;
+_on(renderer.domElement,'webglcontextlost',e=>{e.preventDefault();CTXLOST=true;},false);
+_on(renderer.domElement,'webglcontextrestored',()=>{CTXLOST=false; /* 画像を全部読み直す */
   try{scene.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){for(const k of ['map','emissiveMap','alphaMap'])if(m[k])m[k].needsUpdate=true;m.needsUpdate=true;}});}catch(_){}},false);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, isMobileDevice ? 1.0 : 1.1));
 renderer.setSize(innerWidth,innerHeight);renderer.domElement.id='gl';document.body.prepend(renderer.domElement);
@@ -3742,6 +3750,8 @@ function buildTrain(dest,flip,liv,withDoors,greenCars,nCar,oldOv){const GC=green
 }
 function disposeTrain(tr){
   if(!tr)return;
+  try{if(tr.sled){if(tr.leds)for(const m of tr.leds)m.material=SLED_OFF;tr.sled.tr=null;tr.sled=null;}}catch(e){}
+  try{if(typeof CABATT!=='undefined'&&CABATT.has(tr)){const gs=CABATT.get(tr);for(const g of gs){if(g.parent)g.parent.remove(g);CABPOOL.push(g);}CABATT.delete(tr);}}catch(e){}
   try{if(tr.grp&&tr.grp.parent)tr.grp.parent.remove(tr.grp);}catch(e){}
   try{if(tr.nameplate&&tr.nameplate.material){if(tr.nameplate.material.map)tr.nameplate.material.map.dispose();tr.nameplate.material.dispose();}}catch(e){}
   try{if(tr.dk&&tr.dk.tex&&!SHARED.has(tr.dk.tex))tr.dk.tex.dispose();}catch(e){}
@@ -4017,7 +4027,7 @@ function paxEye(){return AVG?AVH*0.92:1.55;}
 function toggle3P(){AV3P=!AV3P;if(!AVG){try{buildAvatar();}catch(e){console.error(e);}}const b=document.getElementById('paxView');if(b)b.textContent=AV3P?'視点：三人称（V）':'視点：一人称（V）';toast(AV3P?'三人称視点':'一人称視点','info');}
 function updAvatar(dt){if(!AVG||!PAX)return;const g=AVG,u=g.userData,t=performance.now()/1000;
   const mvM=Math.hypot(W.mv.x,W.mv.y)+((W.keys.KeyW||W.keys.KeyS||W.keys.KeyA||W.keys.KeyD||W.keys.ArrowUp||W.keys.ArrowDown||W.keys.ArrowLeft||W.keys.ArrowRight)?1:0);
-  if(RIDE){const car=RIDE.a.tr.cars[RIDE.k];if(g.parent!==car)car.add(g);
+  if(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars&&RIDE.a.tr.cars[RIDE.k]){const car=RIDE.a.tr.cars[RIDE.k];if(g.parent!==car)car.add(g);
     if(RIDE.seat!=null){const st=seatsOf(RIDE.a,RIDE.k)[RIDE.seat];sitPose({g},st);}
     else{const fy=greenCar()?GFLOOR[RIDE.fl]:1.16;g.position.set(RIDE.lx,fy,RIDE.lz);g.rotation.set(0,W.yaw+Math.PI,0);personPose(g,mvM>0.1?'walk':'stand');}}
   else{if(g.parent!==scene)scene.add(g);g.position.copy(offs(W.s,W.o,PH));g.rotation.set(0,W.yaw+Math.PI,0);personPose(g,mvM>0.1?'walk':'stand');}
@@ -6149,7 +6159,7 @@ function openDoor(local,sys){if(sigStopped()){toast('停止信号で止まって
   if(G.phase!=='play')return;const D=G.door;
   if(D.state!=='closed'){if(D.local===local){if(D.state==='closing'){D.state='opening';G.noBoard=false;G.closeWait=null;doorOpenSnd();}}else toast('反対側の扉が開いています','warn');return;}
   if(G.v>0.05){toast('走行中は扉を開けられません','warn');return;}
-  if(G.depCheck!==null){const v=G.depCheck;if(local===localSide(stOf(v))&&Math.abs(stopDist(v))<20){G.atStation=v;G.nv=v;G.depCheck=null;D.local=local;D.side=local*G.dir;D.state='opening';doorOpenSnd();return;}}
+  if(G.depCheck!==null){const v=G.depCheck;if(local===localSide(stOf(v))&&Math.abs(stopDist(v))<20){G.atStation=v;G.nv=v;G.depCheck=null;D.local=local;D.side=local*G.dir;D.state='opening';doorOpenSnd();if(typeof broadcastEvent==='function')broadcastEvent('doorOpen');return;}}
   const v=G.nv,st=stOf(v),d=stopDist(v);
   if(d>17.9||d<-6.5){toast('ホームがありません','warn');return;}
   if(local!==localSide(st)){toast('ホームは'+(localSide(st)<0?'左':'右')+'側です','warn');return;}
@@ -6386,14 +6396,16 @@ function turnaround(){
   if(SAL.on)salFill(saloonFromLoad(G.load||0,carsFor(G.key)));
   const b=boundFor();toast('折り返し → '+b.jn+'（戸開で乗車扱い）','ok');setTimeout(()=>sayJE('折り返し、'+b.ja+'です。','This train is now '+b.en+'.'),300);
 }
-/* 手動運転（港見支線）：マスコン・ブレーキ。停止信号の直前で止まらないとATSの非常ブレーキ */
+/* 手動運転（港見支線・手動切替）：マスコン・ブレーキ。停止信号の直前で止まらないとATSの非常ブレーキ */
 function manualSafety(){const sg=G.sig;if(sg&&sg.asp==='R'&&sg.dist<6&&G.v>0.3&&G.mnotch>-8){G.mnotch=-8;toast('ATS 動作：非常ブレーキ（停止信号）','warn');beepATS();updMascon();return;}
-  if(G.phase==='play'&&!PAX&&G.atStation===null&&G.v>0){
+  if(G.atStation!==null){G._tascToast=false;}
+  else if(G.phase==='play'&&!PAX&&G.v>0){
     const d=stopDist(G.nv),v=G.v;
+    if(d>30)G._tascToast=false;
     if(d>-2&&d<450){
       const reqD=(v*v)/(2*0.65);
-      if(d<=reqD+3.0||(d<=0.5&&v>0.1)){
-        if(d<=0.25&&v<0.35){G.v=0;G.mnotch=-4;G.notch=-4;updMascon();if(!G._tascToast){G._tascToast=true;toast(stOf(G.nv).name+' 停止位置（自動ブレーキ停車）','ok');}return;}
+      if((d<=reqD+3.0||(d<=0.5&&v>0.1))&&!(G.mnotch>0&&d<0)){
+        if(d<=0.25&&v<0.35&&G.mnotch<=0){G.v=0;G.mnotch=-4;G.notch=-4;updMascon();if(!G._tascToast){G._tascToast=true;toast(stOf(G.nv).name+' 停止位置（自動ブレーキ停車）','ok');}return;}
         const areq=v*v/(2*Math.max(d-0.05,0.05))+9.8*trkSlope()*G.dir;
         const bn=-clamp(Math.round(areq/(1.15/8)+0.4),2,8);
         if(G.mnotch>bn){G.mnotch=bn;G.notch=bn;if(!G._tascToast){G._tascToast=true;toast('オーバーラン防止：自動ブレーキ作動中','warn');}}
@@ -6402,7 +6414,7 @@ function manualSafety(){const sg=G.sig;if(sg&&sg.asp==='R'&&sg.dist<6&&G.v>0.3&&
   }
   const lim=(limitFor(G.key,G.s)||99);if(G.v*3.6>lim+5){if(!G.ovT||nowMs()-G.ovT>4000){G.ovT=nowMs();toast('速度超過（制限 '+lim+'km/h）','warn');}}updMascon();}
 function beepATS(){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=880;g.gain.setValueAtTime(0.15,t);g.gain.setValueAtTime(0,t+0.6);o.connect(g);g.connect(master);o.start(t);o.stop(t+0.65);}
-function setMNotch(n){if(!G.manual&&!G.manualOverride)return;G.mnotch=clamp(n,-8,5);if(G.door&&G.door.state!=='closed'&&G.mnotch>0){G.mnotch=0;toast('扉を閉めてから発車してください','warn');}updMascon();}
+function setMNotch(n){if(!G.manual&&!G.manualOverride)return;if(n>0&&G.list&&G.nv>lastStop()){if(G.door&&G.door.state!=='closed'){toast('扉を閉めてから折り返してください','warn');return;}turnaround();return;}G.mnotch=clamp(n,-8,5);if(G.door&&G.door.state!=='closed'&&G.mnotch>0){G.mnotch=0;toast('扉を閉めてから発車してください','warn');}updMascon();}
 function updMascon(){const e=document.getElementById('mascon');if(!e)return;e.classList.toggle('hide',(!G.manual&&!G.manualOverride)||G.walkOn||G.lean||G.phase!=='play');const n=G.mnotch;
   const lb=document.getElementById('mcVal');if(lb){lb.textContent=n>0?'P'+n:n===0?'N':n===-8?'EB':'B'+(-n);lb.style.color=n>0?'#7fe3a0':n===0?'#fff':'#ff8a80';}
   const sp=document.getElementById('mcSpd');if(sp)sp.textContent=Math.round(G.v*3.6)+' km/h';}
@@ -7172,7 +7184,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   if(R.kind==='pax'){G.route=r;startPassenger(si);return;}
   G.route=r;G.key=R.key;G.mainKey=G.key;G.dir=TK[G.key].dir;
   {const needCars=carsFor(G.key),needGreen=greenCarsFor(G.key);
-    if(ownTrain.cars.length!==needCars){disposeTrain(ownTrain);ownTrain=buildTrain('普通',false,0x14935f,true,needGreen,needCars,BRANCH?OWNOLD:undefined);ownTrain.grp.traverse(o=>o.layers.set(1));}}
+    if(ownTrain.cars.length!==needCars){disposeTrain(ownTrain);ownTrain=buildTrain('普通',false,0x14935f,true,needGreen,needCars,BRANCH?OWNOLD:undefined);ownTrain.grp.traverse(o=>o.layers.set(1));if(OWNAI)OWNAI.tr=ownTrain;}}
   if(R.branch){const idx=STATIONS.filter(s=>serves(s,R.key)).map(s=>s.i);G.list=R.dir>0?idx:idx.slice().reverse();}
   else{G.list=null;G.cyc=STATIONS.filter(st=>serves(st,G.key)).map(st=>st.i);if(G.dir<0)G.cyc=[G.cyc[0],...G.cyc.slice(1).reverse()];G.cpos=Math.max(0,G.cyc.indexOf(si));}
   /* 乗務（ここで前回、上の停車駅リストの設定を壊していた → ツーマンで発車しない・別の駅に出る原因） */
@@ -7359,10 +7371,10 @@ function paxStairCheck(){if(!W.st||!PX.plats.length||RIDE)return;const st=W.st,p
   btns.push(['別の駅へ移動',()=>{W.s=sb+(W.s>sb?8:-8);PX.inStair=false;PX.skipStair=true;openPaxSel();},false]);
   btns.push(['もどる',()=>{W.s=sb+(W.s>sb?8:-8);PX.inStair=false;PX.skipStair=true;},false]);
   openAsk('階段（'+st.name+'）',PX.plats.length>1?'どのホームへ行きますか？':'別の駅へ移動できます',btns,0);}
-document.getElementById('paxStation').addEventListener('click',()=>openPaxSel());
-document.getElementById('paxPlat').addEventListener('click',()=>openPlatSel());
-document.getElementById('paxQuit').addEventListener('click',()=>location.href=location.pathname);
-document.getElementById('paxClose').addEventListener('click',()=>{document.getElementById('paxSel').classList.add('hide');PX.inStair=false;});
+_on(document.getElementById('paxStation'),'click',()=>openPaxSel());
+_on(document.getElementById('paxPlat'),'click',()=>openPlatSel());
+_on(document.getElementById('paxQuit'),'click',()=>location.href=location.pathname);
+_on(document.getElementById('paxClose'),'click',()=>{document.getElementById('paxSel').classList.add('hide');PX.inStair=false;});
 /* ================= riding a train in passenger mode ================= */
 function nearTrainDoor(){if(!PAX||RIDE||!W.st||!PX.plats.length)return null;const plat=PX.plats[PX.pi];if(!plat)return null;
   const trainList=[...OT];
@@ -7375,6 +7387,7 @@ function nearTrainDoor(){if(!PAX||RIDE||!W.st||!PX.plats.length)return null;cons
     }
   }
   for(const a of trainList){
+    if(!a||!a.tr||!a.tr.cars||!a.tr.cars.length)continue;
     if(!a.key||!plat.keys.includes(a.key))continue;
     const isAtSt = (a.stSt===W.st) || (a.p && a.p.stName===W.st.name) || (Math.abs(sdiff(a.s, W.st.s + (TK[a.key]?TK[a.key].so:0))) < 55);
     const isOpen = (a.state==='dwell'||(a.p&&(a.p.door==='open'||a.p.door==='opening'))||(a.frac||0)>0.15);
@@ -7401,6 +7414,7 @@ function paxWalkIn(rawS,rawO){if(RIDE||!W.st||!PX.plats.length)return false;cons
     }
   }
   for(const a of trainList){
+    if(!a||!a.tr||!a.tr.cars||!a.tr.cars.length)continue;
     if(!a.key||!plat.keys.includes(a.key))continue;
     const isAtSt = (a.stSt===W.st) || (a.p && a.p.stName===W.st.name) || (Math.abs(sdiff(a.s, W.st.s + (TK[a.key]?TK[a.key].so:0))) < 55);
     const isOpen = (a.state==='dwell'||(a.p&&(a.p.door==='open'||a.p.door==='opening'))||(a.frac||0)>0.15);
@@ -7434,7 +7448,7 @@ function alightTrain(force){stopGuide();if(RESV&&RIDE&&RIDE.a===RESV.a)cancelRes
     W.s=carS;W.o=0;W.yaw=0;toast('降車しました','info');
   }
   document.getElementById('walkHint').textContent='左側スワイプで移動　右側スワイプで視点　開いたドアへ歩くと乗車　階段に入ると別のホームへ';}
-function greenCar(){return !!(RIDE&&RIDE.a.tr.cars[RIDE.k].userData.green);}
+function greenCar(){return !!(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars&&RIDE.a.tr.cars[RIDE.k]&&RIDE.a.tr.cars[RIDE.k].userData.green);}
 function seatNear(){if(!RIDE||RIDE.seat!=null)return null;const a=RIDE.a,seats=seatsOf(a,RIDE.k),sl=carSlots(a,RIDE.k);
   if(greenCar()&&RIDE.fl==='deck')return null;                    // デッキには席がない
   let bi=null,bd=2.2;seats.forEach((s,i)=>{if(sl.seat[i])return;if(greenCar()&&s.fl!==RIDE.fl)return;const d=Math.abs(s.z-RIDE.lz)+0.28*Math.abs(s.x-RIDE.lx);
@@ -7630,7 +7644,7 @@ function updInterior(){const want=new Map();
       if(near.length)want.set(o,near);else{for(let i=0;i<o.tr.cars.length;i++)near.push(i);want.set(o,near);}}
     else if(G.phase==='play'&&monStation()){const all=[];for(let i=0;i<o.tr.cars.length;i++)all.push(i);want.set(o,all);} /* ホームカメラに映る車内 */
     else if(o.insideSet)releaseInterior(o);}
-  if(RIDE){const k=RIDE.k,NC=RIDE.a.tr.cars.length;want.set(RIDE.a,[k-1,k,k+1].filter(x=>x>=0&&x<NC));}
+  if(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars){const k=RIDE.k,NC=RIDE.a.tr.cars.length;want.set(RIDE.a,[k-1,k,k+1].filter(x=>x>=0&&x<NC));}
   const camS=PAX?(RIDE?RIDE.a.s:W.s):G.s;
   const allTrains = [...OT];
   if(IS_ONLINE && window.ONLINE_PLAYERS){
@@ -7872,7 +7886,7 @@ function updSideLEDs(dt){if(!SLED.slots.length)for(let i=0;i<SLED.N;i++)SLED.slo
   const cw=camera.getWorldPosition(camW2),cand=[];
   const near=tr=>{let d=1e9;for(const c of tr.cars)d=Math.min(d,c.position.distanceTo(cw));return d;};
   if(!PAX&&ownTrain.grp.visible)cand.push({tr:ownTrain,info:sledInfoOwn});
-  for(const a of OT)if(a.vis&&a.state!=='off'&&a.tr.leds&&a.tr.leds.length&&a.tr.grp.visible)cand.push({tr:a.tr,info:()=>sledInfoAI(a)});
+  for(const a of OT)if(a.vis&&a.state!=='off'&&a.tr&&a.tr.leds&&a.tr.leds.length&&a.tr.grp&&a.tr.grp.visible)cand.push({tr:a.tr,info:()=>sledInfoAI(a)});
   if (IS_ONLINE && window.ONLINE_PLAYERS) {
     for (const pid in ONLINE_PLAYERS) {
       const p = ONLINE_PLAYERS[pid];
@@ -7987,31 +8001,33 @@ function drawAds(){const x=ADS.x,W=512,H=274,now=performance.now()/1000,SC=6,i=M
     x.fillStyle='#eaf6ef';fitText(x,'ひと駅先の、湯けむり',238,104,252,32,'700');x.fillStyle='#9fe0c0';fitText(x,'奥峰温泉',238,150,252,28,'700');x.fillStyle='#bcd8cc';fitText(x,'白峰支線でのんびり40分',238,192,252,22,'500');}
   x.restore();ADS.tex.needsUpdate=true;}
 
-document.getElementById('paxSit').addEventListener('click',()=>{if(RIDE&&RIDE.seat!=null)standUp();else sitDown();});
+_on(document.getElementById('paxSit'),'click',()=>{if(RIDE&&RIDE.seat!=null)standUp();else sitDown();});
 function goFloor(f){if(!RIDE)return;standUp();RIDE.fl=f;RIDE.lz=f==='deck'?(RIDE.lz>=0?6.3:-6.3):(RIDE.lz>=0?4.6:-4.6);RIDE.lx=f==='up'?-0.4:f==='down'?0.4:0.2;
   toast(f==='up'?'2階へ上がりました':f==='down'?'1階へ下りました':'デッキに出ました','ok');}
-document.getElementById('paxUp').addEventListener('click',()=>goFloor(RIDE&&RIDE.fl==='deck'?'up':'deck'));
-document.getElementById('paxUse').addEventListener('click',()=>useFacility());
-document.getElementById('paxBack2').addEventListener('click',()=>leaveConcourse());
-document.getElementById('paxTask').addEventListener('click',()=>doStaffTask());
-document.getElementById('paxDown').addEventListener('click',()=>goFloor(RIDE&&RIDE.fl==='deck'?'down':'deck'));
+_on(document.getElementById('paxUp'),'click',()=>goFloor(RIDE&&RIDE.fl==='deck'?'up':'deck'));
+_on(document.getElementById('paxUse'),'click',()=>useFacility());
+_on(document.getElementById('paxBack2'),'click',()=>leaveConcourse());
+_on(document.getElementById('paxTask'),'click',()=>doStaffTask());
+_on(document.getElementById('paxDown'),'click',()=>goFloor(RIDE&&RIDE.fl==='deck'?'down':'deck'));
 let uiHidden=false;
 function setPaxUI(on){uiHidden=!on;const w=document.getElementById('walkUI');w.classList.toggle('uihide',!on);
   if(!on)toast('画面をタップすると表示が戻ります','info');}
-document.getElementById('paxHide').addEventListener('click',e=>{e.stopPropagation();setPaxUI(false);});
+_on(document.getElementById('paxHide'),'click',e=>{e.stopPropagation();setPaxUI(false);});
 {let px=0,py=0,pt=0;
- addEventListener('pointerdown',e=>{px=e.clientX;py=e.clientY;pt=performance.now();},true);
- addEventListener('pointerup',e=>{if(!uiHidden)return;if(performance.now()-pt<400&&Math.hypot(e.clientX-px,e.clientY-py)<12)setPaxUI(true);},true);}
-document.getElementById('paxAlight').addEventListener('click',()=>alightTrain());
+ _on(window,'pointerdown',e=>{px=e.clientX;py=e.clientY;pt=performance.now();},true);
+ _on(window,'pointerup',e=>{if(!uiHidden)return;if(performance.now()-pt<400&&Math.hypot(e.clientX-px,e.clientY-py)<12)setPaxUI(true);},true);}
+_on(document.getElementById('paxAlight'),'click',()=>alightTrain());
 {const hb=document.getElementById('holdBack');let t0=0,raf=0;const stop=()=>{t0=0;hb.style.setProperty('--p',0);};
   const tick=()=>{if(!t0)return;const p=Math.min(1,(performance.now()-t0)/(HOLD_T*1000));hb.style.setProperty('--p',p);if(p>=1){stop();exitWalk();return;}raf=requestAnimationFrame(tick);};
-  hb.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();t0=performance.now();tick();});['pointerup','pointerleave','pointercancel'].forEach(ev=>hb.addEventListener(ev,stop));}
+  _on(hb,'pointerdown',e=>{e.preventDefault();e.stopPropagation();t0=performance.now();tick();});['pointerup','pointerleave','pointercancel'].forEach(ev=>_on(hb,ev,stop));}
 
-addEventListener('keyup',e=>{W.keys[e.code]=false;});
-addEventListener('keydown',e=>{
+_on(window,'keyup',e=>{W.keys[e.code]=false;});
+_on(window,'keydown',e=>{
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;
+  if(G.phase!=='play')return;
   initAudio();unlockSpeech();
   if(G.walkOn){W.keys[e.code]=true;e.preventDefault();return;}
+  if(PAX)return;
   if(e.repeat&&!['KeyQ','KeyE'].includes(e.code))return;
   // キーボード操作：右矢印で右扉の開閉、左矢印で左扉の開閉、エンターキーでATO、スペースキーで次駅放送
   if(e.code==='ArrowRight'){
@@ -8047,10 +8063,10 @@ addEventListener('keydown',e=>{
   }
   switch(e.code){
     case 'KeyH':if(!e.repeat)startHoldHorn('elec');break;case 'KeyG':if(!e.repeat)startHoldHorn('air');break;case 'KeyY':if(!e.repeat)startHoldHorn('both');break;
-    case 'KeyA':doAct('lo');break;case 'KeyZ':doAct('lc');break;case 'KeyD':doAct('ro');break;case 'KeyC':doAct('rc');break;
+    case 'KeyA':doAct('lo');break;case 'KeyZ':if(G.manual)setMNotch(G.mnotch>0?0:G.mnotch-1);else doAct('lc');break;case 'KeyD':doAct('ro');break;case 'KeyC':doAct('rc');break;
     case 'KeyB':G.panel='ann';G.zoom='T';G.panelZoomed=true;break;case 'KeyP':G.panel='promo';G.zoom='T';G.panelZoomed=true;break;case 'KeyJ':musicHorn();G.mhornT=nowMs();break;case 'KeyK':musicHorn2();G.mhornT=nowMs();break;case 'KeyO':doAct('ato');break;case 'KeyU':doAct('auto');break;case 'KeyW':endWaiting();break;
     case 'Digit1':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(0);G.panel='main';G.zoom=null;break;}zoomTo('L');break;case 'Digit2':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(1);G.panel='main';G.zoom=null;break;}zoomTo('S');break;case 'Digit3':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(2);G.panel='main';G.zoom=null;break;}zoomTo('I');break;case 'Digit4':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(3);G.panel='main';G.zoom=null;break;}zoomTo('M');break;case 'Digit6':zoomTo('T');break;case 'Digit5':zoomTo('R');break;
-    case 'KeyQ':G.zoom=null;G.lookY=wrapA(G.lookY+0.15);break;case 'KeyE':G.zoom=null;G.lookY=wrapA(G.lookY-0.15);break;
+    case 'KeyQ':if(G.manual)setMNotch(G.mnotch<0?0:G.mnotch+1);else{G.zoom=null;G.lookY=wrapA(G.lookY+0.15);}break;case 'KeyE':G.zoom=null;G.lookY=wrapA(G.lookY-0.15);break;
     case 'KeyV':case 'Digit0':case 'Escape':G.zoom=null;G.lookY=0;G.lookP=0;break;
     default:return;}
   e.preventDefault();});
@@ -8071,14 +8087,14 @@ cv.addEventListener('pointermove',e=>{if(G.walkOn){const p=W.ptr.get(e.pointerId
 cv.addEventListener('pointerup',e=>{G.hold=null;stopHoldHorn();if(G.walkOn){const p=W.ptr.get(e.pointerId);if(p&&p.role==='move'){W.mv.x=W.mv.y=0;}W.ptr.delete(e.pointerId);return;}unlockSpeech();if(G.phase==='title')return;if(drag&&drag.moved<=8&&G.zoom)G.zoom=null;drag=null;});
 cv.addEventListener('click',()=>{unlockSpeech();});
 cv.addEventListener('pointercancel',e=>{drag=null;G.hold=null;stopHoldHorn();W.ptr.delete(e.pointerId);W.mv.x=W.mv.y=0;});
-addEventListener('keyup',e=>{if(e.code==='KeyH'||e.code==='KeyG'||e.code==='KeyY')stopHoldHorn();});
-addEventListener('blur',()=>stopHoldHorn());
+_on(window,'keyup',e=>{if(e.code==='KeyH'||e.code==='KeyG'||e.code==='KeyY')stopHoldHorn();});
+_on(window,'blur',()=>stopHoldHorn());
 cv.addEventListener('dblclick',()=>{G.zoom=null;G.lookY=0;G.lookP=0;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
-addEventListener('resize',applyView);addEventListener('orientationchange',()=>setTimeout(applyView,200));
+_on(window,'resize',applyView);_on(window,'orientationchange',()=>setTimeout(applyView,200));
 
 /* ================= home screen / terminal question ================= */
-document.getElementById('waitEnd').addEventListener('click',()=>endWaiting());
+_on(document.getElementById('waitEnd'),'click',()=>endWaiting());
 let askT=0;
 function updAsk(dt){if(G.askOpen&&askTimer>0){askTimer-=dt;if(askTimer<=0){const f=askTimeout;hideAsk();f&&f();}}
   if(G.askOpen&&G.v>0.5)hideAsk();
@@ -8223,7 +8239,7 @@ function update(dt,now){
     st1.classList.toggle('hide',!(atStair&&RIDE.fl!=='up'));st2.classList.toggle('hide',!(atStair&&RIDE.fl!=='down'));
     st1.textContent=RIDE&&RIDE.fl==='deck'?'2階へ':'デッキへ';st2.textContent=RIDE&&RIDE.fl==='deck'?'1階へ':'デッキへ';
     if(STAFF&&!RIDE)document.getElementById('paxWhere').innerHTML='<b>'+W.st.name+'　駅員</b>　'+(W.area==='conc'?'コンコース':PX.plats[PX.pi]?PX.plats[PX.pi].label:'')+'　対応 '+staffScore+'件';
-    else if(RIDE)document.getElementById('paxWhere').innerHTML='<b>'+(SVCLOOK[RIDE.a.key]?SVCLOOK[RIDE.a.key][1]:'列車')+(RIDE.a.p?'（'+RIDE.a.p.name+'運転士）':'')+'</b> '+(RIDE.a.tr.cars[RIDE.k].userData.green?'グリーン車':(RIDE.k+1)+'号車')+(sitting?'　着席中':'')+'　'+(RIDE.a.state==='dwell'&&RIDE.a.stSt?RIDE.a.stSt.name+' 停車中':'走行中');}
+    else if(RIDE)document.getElementById('paxWhere').innerHTML='<b>'+(SVCLOOK[RIDE.a.key]?SVCLOOK[RIDE.a.key][1]:'列車')+(RIDE.a.p?'（'+escapeHtml(RIDE.a.p.name)+'運転士）':'')+'</b> '+(greenCar()?'グリーン車':(RIDE.k+1)+'号車')+(sitting?'　着席中':'')+'　'+(RIDE.a.state==='dwell'&&RIDE.a.stSt?RIDE.a.stSt.name+' 停車中':'走行中');}
   bellT+=dt;if(bellT>0.42){bellT=0;const bellS=PAX?(RIDE?RIDE.a.s:W.s):G.s;for(const cr of CROSS)if(cr.act&&Math.abs(sdiff(bellS,cr.s))<500)playAt(offsG(cr.s,0,2),bellSnd);}placeTrain(ownTrain,G.s,s=>ownTrackOff(G.key,s),TK[G.key].y);
   const near=stationNear(G.s),ls=near.s-60;stLights.forEach(l=>l.intensity=near.under?1.5:1.5*(G.stLit||0));stLights[0].position.copy(offs(ls,near.type==='side'?-4.5:offC(ls)/2,4.5));stLights[1].position.copy(offs(ls,near.type==='side'?sepB(ls)+4.5:sepB(ls)/2,4.5));
   const offF=s=>ownTrackOff(G.key,s),rs=CONDV?G.s-G.dir*(carsFor(G.key)*CARL-0.7):G.s,rd=CONDV?-G.dir:G.dir,rp=trackPt(rs,offF),rq=trackPt(rs+rd*2,offF);
@@ -8498,6 +8514,9 @@ function frameBody(now){
 
           // 他プレイヤーの乗務種別・両数・旧型仕様に変更があれば自動で再構築
           if (p.tr && (p.currentKey !== k || p.currentNCars !== nCar || p.currentOld !== isOld || p.currentFlip !== flip || p.currentLiv !== liv)) {
+            if (typeof RIDE !== 'undefined' && RIDE && RIDE.a && RIDE.a.p === p && typeof alightTrain === 'function') {
+              alightTrain(true);
+            }
             disposeTrain(p.tr);
             p.tr = null;
           }
@@ -8640,8 +8659,7 @@ const ms=monStation(),side=ms?localSide(ms):0;
   if(PHOTO_REQ){PHOTO_REQ=false;try{PHOTOS.unshift(renderer.domElement.toDataURL('image/jpeg',0.82));if(PHOTOS.length>40)PHOTOS.pop();}catch(e){}}}
 /* 毎フレーム：先に次のフレームを予約してから処理する。途中でエラーが起きてもゲームは止まらずに続く */
 const LOOPERR={n:0,t:0,shown:0};
-function frame(now){requestAnimationFrame(frame);
-  if(window.__FRAME_TOKEN!==TOKEN)return; /* 作り直し前の古い世界の描画ループはここで止まる */
+function frame(now){if(window.__FRAME_TOKEN!==TOKEN)return;requestAnimationFrame(frame);
   if(CTXLOST)return;
   try{frameBody(now);if(isFinite(G.s)&&isFinite(G.v))G.lastGood={s:G.s,v:G.v};else if(G.lastGood){G.s=G.lastGood.s;G.v=0;}}
   catch(e){try{renderer.setRenderTarget(null);}catch(_){}last=now;LOOPERR.n++;if(!LOOPERR.t)LOOPERR.t=now;console.error('frame error',e);
@@ -8785,12 +8803,12 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
       const li=Math.floor(t/4)%LINES.length;x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(40,300,560,44);x.fillStyle='#fff';x.font='bold 22px sans-serif';x.textAlign='center';x.fillText(LINES[li],320,330);x.textAlign='left';}
     DEV.raf=requestAnimationFrame(loop);};DEV.raf=requestAnimationFrame(loop);}
 /* 支線：顔を出したときのボタン・ホームのメロディボタン */
-{const on=(id,f)=>{const e=document.getElementById(id);if(e)e.addEventListener('click',ev=>{ev.stopPropagation();initAudio();f();});};
+{const on=(id,f)=>{const e=document.getElementById(id);if(e)_on(e,'click',ev=>{ev.stopPropagation();initAudio();f();});};
   on('leanBackB',()=>leanBack());
   on('paxView',()=>toggle3P());on('liveBtn',()=>toggleLive());on('mcUp',()=>setMNotch(G.mnotch<0?0:G.mnotch+1));on('mcDn',()=>setMNotch(G.mnotch>0?0:G.mnotch-1));on('mcN',()=>setMNotch(0));on('mcEB',()=>setMNotch(-8));
-  addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(!G.manual)return;if(e.code==='KeyQ')setMNotch(G.mnotch<0?0:G.mnotch+1);else if(e.code==='KeyZ')setMNotch(G.mnotch>0?0:G.mnotch-1);});on('paxPhone',()=>openDev('phone'));on('paxTab',()=>openDev('tablet'));on('paxResv',()=>goReserved());
+  on('paxPhone',()=>openDev('phone'));on('paxTab',()=>openDev('tablet'));on('paxResv',()=>goReserved());
   on('devClose',()=>closeDev());on('devHome',()=>devHome());
-  addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(e.code==='KeyV'&&PAX)toggle3P();});
+  _on(window,'keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(G.phase==='play'&&e.code==='KeyV'&&PAX)toggle3P();});
   on('cExit',()=>enterWalk());on('cOpen',()=>{const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);openDoor(localSide(st));});on('cClose',()=>closeDoor(G.door.local));
   on('cMelo',()=>promote('st'));on('cPromo',()=>promote(1));on('cSig',()=>giveSignal());on('meloBtn',()=>promote(defaultPromo()));
   if(OWNOLD)setTimeout(()=>toast('支線の古い電車：乗降確認・戸開閉・発車メロディは、運転室の左右の壁「窓から顔を出す」から（メロディはホームのボタンでも）','info'),4200);}
@@ -9187,7 +9205,6 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   };
   const btnChangeName = document.getElementById('btnChangeName');
   const btnCardLogin = document.getElementById('btnCardLogin');
-  const btnNavOnline = document.getElementById('btnNavOnline');
   const onlineModal = document.getElementById('onlineModal');
   const onlineNameInput = document.getElementById('onlineNameInput');
   const driverPassInput = document.getElementById('driverPassInput');
@@ -9208,7 +9225,6 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     updateDriverCardUI();
     if (onlineModal) onlineModal.classList.remove('hide');
   };
-  if (btnNavOnline) btnNavOnline.onclick = showOnlineModal;
   if (btnChangeName) btnChangeName.onclick = showOnlineModal;
   if (btnCardLogin) btnCardLogin.onclick = showOnlineModal;
   if (btnOnlineCancel) btnOnlineCancel.onclick = hideOnlineModal;
@@ -10365,7 +10381,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
           const trbBadge = r.trb
             ? '<span style="background:rgba(245,158,11,0.22);border:1px solid #f59e0b;color:#fbbf24;font-size:10.5px;padding:1px 6px;border-radius:6px;margin-left:4px;">⚠️トラブルON</span>'
             : '<span style="background:rgba(100,116,139,0.2);border:1px solid rgba(148,163,184,0.35);color:#94a3b8;font-size:10.5px;padding:1px 6px;border-radius:6px;margin-left:4px;">通常(OFF)</span>';
-          html += `<button data-pid="${r.pid}" class="disp-drv-row dt-btn" style="text-align:left;padding:7px 10px;border-color:${sel?'#fbbf24':'rgba(255,255,255,0.14)'};background:${sel?'rgba(245,158,11,0.22)':'#132038'};display:flex;justify-content:space-between;align-items:center;"><span>🚆 ${r.name}${un} <small class="disp-sub" style="color:#94a3b8;">(${r.dirTxt}・${r.stLbl})</small>${trbBadge}</span><span class="disp-spd" style="color:#38bdf8;font-size:11.5px;">${r.spd} km/h</span></button>`;
+          html += `<button data-pid="${r.pid}" class="disp-drv-row dt-btn" style="text-align:left;padding:7px 10px;border-color:${sel?'#fbbf24':'rgba(255,255,255,0.14)'};background:${sel?'rgba(245,158,11,0.22)':'#132038'};display:flex;justify-content:space-between;align-items:center;"><span>🚆 ${escapeHtml(r.name)}${un} <small class="disp-sub" style="color:#94a3b8;">(${r.dirTxt}・${r.stLbl})</small>${trbBadge}</span><span class="disp-spd" style="color:#38bdf8;font-size:11.5px;">${r.spd} km/h</span></button>`;
         } else {
           const stBadge = r.trb ? '<span style="background:rgba(239,68,68,0.25);border:1px solid #ef4444;color:#fca5a5;font-size:10px;padding:1px 5px;border-radius:6px;margin-left:4px;">🚨異常停止</span>' : '<span style="background:rgba(16,185,129,0.18);border:1px solid #34d399;color:#6ee7b7;font-size:10px;padding:1px 5px;border-radius:6px;margin-left:4px;">AI運行</span>';
           html += `<button data-pid="${r.pid}" class="disp-drv-row dt-btn" style="text-align:left;padding:7px 10px;border-color:${sel?'#fbbf24':'rgba(52,211,153,0.25)'};background:${sel?'rgba(245,158,11,0.22)':'#0e2420'};display:flex;justify-content:space-between;align-items:center;"><span>🤖 ${r.name} <small class="disp-sub" style="color:#94a3b8;">(${r.dirTxt}・${r.stLbl})</small>${stBadge}</span><span class="disp-spd" style="color:#34d399;font-size:11.5px;">${r.spd} km/h</span></button>`;
