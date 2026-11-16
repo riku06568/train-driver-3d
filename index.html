@@ -2351,7 +2351,7 @@ function publishPresence(force) {
   if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
   const curG = (typeof G !== 'undefined' ? G : (window.G || (window.__T ? window.__T.G : null)));
   const isPax = !!(typeof PAX !== 'undefined' ? PAX : window.__PAX);
-  const isDisp = !!(typeof document !== 'undefined' && document.getElementById('viewDispatch') && !document.getElementById('viewDispatch').classList.contains('hide'));
+  const isDisp = !!(typeof document !== 'undefined' && document.getElementById('viewDispatch') && !document.getElementById('viewDispatch').classList.contains('hide')) || window.__DISP_MONITOR === true;
   const isDriving = curG && curG.phase === 'play' && !isPax && !isDisp;
   const now = Date.now();
   const minGap = (isDriving || isPax) ? 380 : 2800;
@@ -2529,6 +2529,10 @@ function sendPlayNotification(lineId, svcKey, startI, stName) {
    ===================================================================== */
 window.__PAX = false;
 function boot(LINE_ID,SVC,START_I){
+/* 指令モニター等で既に3Dの世界を作っているときは、古い描画ループと前のキャンバスを片付けてから作り直す */
+const TOKEN=(window.__FRAME_TOKEN||0)+1; window.__FRAME_TOKEN=TOKEN;
+if(window.__WORLD_BUILT){ try{const og=document.getElementById('gl'); if(og&&og.parentNode) og.parentNode.removeChild(og);}catch(e){} }
+window.__WORLD_BUILT=true; window.__DISP_MONITOR=false;
 if (LINE_ID !== 'loop' && typeof isVeteranDriver === 'function' && !isVeteranDriver()) {
   alert('🔒 支線は「🏅 ベテラン運転士」（累計100km以上）限定です。環状線で経験を積んでください！');
   location.href = location.pathname;
@@ -6641,7 +6645,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   spawnWait(st,G.key);updSpawns();
   const loc=localSide(st);G.door={state:'open',frac:1,side:loc*G.dir,local:loc};
   G.phase='play';G.zoom=null;G.flowV=G.nv;G.asked=false;if(G.load==null||G.load<10)G.load=trainLoadFor(G.key);startFlows(st,G.key,G.s,'OWN');salFill(saloonFromLoad(G.load,carsFor(G.key)));planFrom(nowMs()+30000);
-  const b=boundFor();setTimeout(()=>sayJE('ご乗車ありがとうございます。この電車は、'+lineJa()+'、'+b.ja+'です。','Thank you for riding the '+R.en+'. This train is '+b.en+'.'),1800);
+  const b=boundFor(); if(!window.__DISP_MONITOR) setTimeout(()=>sayJE('ご乗車ありがとうございます。この電車は、'+lineJa()+'、'+b.ja+'です。','Thank you for riding the '+R.en+'. This train is '+b.en+'.'),1800);
   toast(R.name+'　'+b.jn+'　乗り降りを見て、促進・戸閉・ATOで出発','info');
   if(!G.list&&(st.cls==='M'||st.i===0))setTimeout(()=>{if(G.atStation===G.nv)askStation(st,true);},2600);}
 /* ================= walking on the platform ================= */
@@ -8045,6 +8049,7 @@ const ms=monStation(),side=ms?localSide(ms):0;
 /* 毎フレーム：先に次のフレームを予約してから処理する。途中でエラーが起きてもゲームは止まらずに続く */
 const LOOPERR={n:0,t:0,shown:0};
 function frame(now){requestAnimationFrame(frame);
+  if(window.__FRAME_TOKEN!==TOKEN)return; /* 作り直し前の古い世界の描画ループはここで止まる */
   if(CTXLOST)return;
   try{frameBody(now);if(isFinite(G.s)&&isFinite(G.v))G.lastGood={s:G.s,v:G.v};else if(G.lastGood){G.s=G.lastGood.s;G.v=0;}}
   catch(e){try{renderer.setRenderTarget(null);}catch(_){}last=now;LOOPERR.n++;if(!LOOPERR.t)LOOPERR.t=now;console.error('frame error',e);
@@ -9596,6 +9601,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
           if (Math.hypot(cx-hb.x, cy-hb.y) < 22 || (cx>=hb.rx && cx<=hb.rx+hb.rw && cy>=hb.ry && cy<=hb.ry+hb.rh)) {
             dispSelectedId = hb.pid;
             if (window.__DISP) { window.__DISP.sel = dispSelectedId; if (typeof window.__DISP.resetCam === 'function') window.__DISP.resetCam(); }
+            if (typeof window.__ensureMonitorWorld === 'function') window.__ensureMonitorWorld();
             const p = ONLINE_PLAYERS[dispSelectedId];
             if (dispTargetLabel) dispTargetLabel.textContent = '対象列車: ' + (p ? p.name : dispSelectedId);
             refreshDispatchDrivers();
@@ -9607,6 +9613,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     }
     const refreshDispatchDrivers = () => {
       if (!dispDriversList || !viewDispatch || viewDispatch.classList.contains('hide')) return;
+      if (window.__DISP_MONITOR) ['btnChatFab','btnDriverTablet','btnOnlineHud','btnTitleReturn','walkUI'].forEach(id => { const e = document.getElementById(id); if (e && !e.classList.contains('hide')) e.classList.add('hide'); });
       drawDispatchMap();
       let html = '';
       for (const pid in ONLINE_PLAYERS) {
@@ -9626,6 +9633,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         btn.addEventListener('click', () => {
           dispSelectedId = btn.dataset.pid;
           if (window.__DISP) { window.__DISP.sel = dispSelectedId; if (typeof window.__DISP.resetCam === 'function') window.__DISP.resetCam(); }
+          if (typeof window.__ensureMonitorWorld === 'function') window.__ensureMonitorWorld();
           const p = ONLINE_PLAYERS[dispSelectedId];
           if (dispTargetLabel) dispTargetLabel.textContent = '対象列車: ' + (p ? p.name : dispSelectedId);
           refreshDispatchDrivers();
@@ -9643,6 +9651,28 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       if (cv && !D.camOn) cv.style.display = 'none';
       try { initAudio(); } catch(e) {}
     });
+    window.__ensureMonitorWorld = () => {
+      if (window.__DISP) return true;                 /* すでに3Dの世界ができている */
+      if (window.__DISP_BOOTING) return false;
+      window.__DISP_BOOTING = true;
+      const lab0 = document.getElementById('dispCamLabel');
+      if (lab0) lab0.textContent = '📹 指令モニター準備中…（3Dモニターを起動しています）';
+      setTimeout(() => {
+        try {
+          boot('loop', 'lo', 0);
+          window.__DISP_MONITOR = true;
+          ['btnChatFab','btnDriverTablet','btnOnlineHud','btnTitleReturn','walkUI'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hide'); });
+        } catch(e) { console.error('指令モニター起動失敗', e); }
+        window.__DISP_BOOTING = false;
+        const onDisp = !!(viewDispatch && !viewDispatch.classList.contains('hide'));
+        const D = window.__DISP;
+        if (D) { D.on = onDisp; D.sel = onDisp ? dispSelectedId : null; if (typeof D.resetCam === 'function') D.resetCam(); }
+        const lab1 = document.getElementById('dispCamLabel');
+        if (lab1 && !onDisp) lab1.textContent = '📹 背景カメラ：列車を選ぶと、その列車の近くの定点カメラ映像がリアルタイムで出ます';
+        if (onDisp) refreshDispatchDrivers();
+      }, 80);
+      return false;
+    };
     window.__openDispatchConsole = () => {
       if (!viewDispatch) return;
       document.querySelectorAll('.home-view').forEach(v => v.classList.add('hide'));
