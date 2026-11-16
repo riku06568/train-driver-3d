@@ -4095,9 +4095,10 @@ for(const [k,x,ry] of [['L',-1.335,Math.PI/2],['R',1.335,-Math.PI/2]]){const kc=
   const p=cplane(0.28,0.175,mat,0,0,0.001,g);p.userData.act='exit'+k;INTER.push(p);EXITB[k]={kc,mat,last:-1};}
 /* ===== 新形車両（v1.9.0）：側面のデジタル表示パネル（左＝駅・時刻案内／右＝車両情報TIMS） ===== */
 const CANV2={WL:mkCanvas(640,384),WR:mkCanvas(640,384)};
-if(!OWNOLD)for(const [k,sx] of [['WL',-1],['WR',1]]){const g=new THREE.Group();g.position.set(sx*1.30,2.50,0.62);g.rotation.y=(sx>0?-1:1)*(Math.PI/2-0.28);cab.add(g);
-  cbox(0.375,0.235,0.022,CM.frame,0,0,-0.014,g);cbox(0.375,0.016,0.03,CM.accentDim,0,-0.128,-0.006,g);
-  const p=cplane(0.34,0.20,basic(CANV2[k].tex),0,0,0.001,g);p.userData.act='mon'+k;INTER.push(p);MON[k]={g,w:0.34,h:0.20,screens:[{p}]};}
+if(!OWNOLD)for(const [k,sx] of [['WL',-1],['WR',1]]){const g=new THREE.Group();g.position.set(sx*1.30,2.47,0.55);g.rotation.y=(sx>0?-1:1)*(Math.PI/2-0.30);cab.add(g);
+  cbox(0.42,0.26,0.026,CM.frame,0,0,-0.016,g);cbox(0.42,0.02,0.09,CM.metal,0,-0.14,-0.05,g);cbox(0.06,0.06,0.10,CM.frame,sx*0.19,0,-0.06,g);
+  cbox(0.40,0.016,0.03,CM.accentDim,0,-0.145,-0.004,g);
+  const p=cplane(0.38,0.222,basic(CANV2[k].tex),0,0,0.001,g);p.userData.act='mon'+k;INTER.push(p);MON[k]={g,w:0.38,h:0.222,screens:[{p}]};}
 const LEANB={};
 if(OWNOLD)for(const [k,x,ry] of [['L',-1.335,Math.PI/2],['R',1.335,-Math.PI/2]]){const g=new THREE.Group();g.position.set(x,2.45,1.5);g.rotation.y=ry;cab.add(g);cbox(0.3,0.2,0.02,CM.frame,0,0,-0.012,g);
   const tex=canvasTex(256,160,(c,w,h)=>{c.fillStyle='#7a4a12';c.fillRect(0,0,w,h);c.fillStyle='#fff';c.textAlign='center';c.textBaseline='middle';c.font='700 32px '+FONT;c.fillText('窓から顔を出す',w/2,58);c.font='500 19px '+FONT;c.fillStyle='#ffe2b0';c.fillText('乗降確認・戸閉・発車メロディ',w/2,104);});
