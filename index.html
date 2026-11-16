@@ -4952,7 +4952,7 @@ function aiRun(a,dt){
     aiSounds(a,el,tot);if(a.t<=0&&BRANCH&&a.stSt&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0))&&a!==FT){aiTurn(a,a.stSt);}
     else if(a.t<=0){const leftSt=a.stSt;a.state='run';a.frac=0;a.forceDep=false;a.shiomiDepMs=0;
       const isDispTracked=!!(window.__DISP&&window.__DISP.on&&window.__DISP.sel===('ai:'+a.name));
-      if((RIDE&&RIDE.a===a||isDispTracked)&&leftSt){const gk=guideKindFor(a.key,leftSt);if(gk)scheduleGuideAfterSpeech(gk,()=>!!((RIDE&&RIDE.a===a)||(window.__DISP&&window.__DISP.on&&window.__DISP.sel===('ai:'+a.name))));}} /* 車内放送は乗っている電車・指令監視中の電車 */
+      if((RIDE&&RIDE.a===a||isDispTracked)&&leftSt){const gk=guideKindFor(a.key,leftSt);if(gk)scheduleGuideAfterSpeech(gk,()=>!!((RIDE&&RIDE.a===a)||(window.__DISP&&window.__DISP.on&&window.__DISP.sel===('ai:'+a.name))));}}} /* 車内放送は乗っている電車・指令監視中の電車 */
   a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);}
 }
 function aiSounds(a,el,tot){
