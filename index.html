@@ -6387,34 +6387,65 @@ function preloadStationAnnounce(st){
     }
   }
 }
+const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v193.mp3';
 const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。今回のアップデートでは、後続のAI列車の追突防止や、ホームドアと乗客の動きの修正に加え、さらに軽い最軽量画質モードと、車内の広告放送を追加しました。';
-let _adQueueTimer=null;
-function stopAdBroadcast(){if(_adQueueTimer){clearTimeout(_adQueueTimer);_adQueueTimer=null;}try{if(typeof speechSynthesis!=='undefined')speechSynthesis.cancel();}catch(_){}if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.15);}catch(_){}}
+let _adQueueTimer=null,_adWebSrc=null,_adAudio=null;
+function stopAdBroadcast(){
+  if(_adQueueTimer){clearTimeout(_adQueueTimer);_adQueueTimer=null;}
+  if(_adWebSrc){try{_adWebSrc.onended=null;_adWebSrc.stop();}catch(_){}_adWebSrc=null;}
+  if(_adAudio){try{_adAudio.onended=null;_adAudio.pause();_adAudio.currentTime=0;}catch(_){}_adAudio=null;}
+  if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.15);}catch(_){}
+}
 function playAdBroadcastForDep(depSt){
   if(PAX||G.phase!=='play'||!depSt)return;
-  if(typeof speechSynthesis==='undefined')return;
   const msgs=[];
   if(isMajorStation(depSt)){
-    msgs.push('このゲームの開発者よりお願いです。ゲームのバグを見つけた場合はどんなに小さなバグでも構いませんのでホーム画面のご意見箱より報告して下さい。ゲーム改善にご協力をお願いします。');
+    msgs.push({
+      file:'assets/audio/ann/ad_bug_report.mp3',
+      text:'このゲームの開発者よりお願いです。ゲームのバグを見つけた場合はどんなに小さなバグでも構いませんのでホーム画面のご意見箱より報告して下さい。ゲーム改善にご協力をお願いします。'
+    });
   }
   if(!BRANCH&&(serves(depSt,'E')||serves(depSt,'F'))){
-    msgs.push('ゲームの最新版はホーム画面の最新版を強制再読み込みからアップデートできます。適度にアップデートをお願いします。');
+    msgs.push({
+      file:'assets/audio/ann/ad_update_guide.mp3',
+      text:'ゲームの最新版はホーム画面の最新版を強制再読み込みからアップデートできます。適度にアップデートをお願いします。'
+    });
   }
-  msgs.push(LATEST_UPDATE_AD_TEXT);
+  msgs.push({file:LATEST_UPDATE_AD_FILE,text:LATEST_UPDATE_AD_TEXT});
+  const finishAll=()=>{if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.2);}catch(_){}};
   const runQueue=()=>{
     if(G.phase!=='play'||G.atStation!==null){stopAdBroadcast();return;}
-    if(!msgs.length){if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.2);}catch(_){}return;}
-    const txt=msgs.shift();
+    if(!msgs.length){finishAll();return;}
+    const item=msgs.shift();
+    if(master&&AC)try{master.gain.setTargetAtTime(0.42,AC.currentTime,0.08);}catch(_){}
+    chime();
+    toast('📢 広告放送：'+item.text,'info');
+    const next=()=>{_adQueueTimer=setTimeout(runQueue,450);};
     try{
-      if(master&&AC)master.gain.setTargetAtTime(0.35,AC.currentTime,0.08);
-      chime();
-      toast('📢 広告放送：'+txt,'info');
-      const u=new SpeechSynthesisUtterance(txt);
-      u.lang='ja-JP';u.rate=1.0;u.pitch=1.0;u.volume=1.0;
-      u.onend=()=>{_adQueueTimer=setTimeout(runQueue,450);};
-      u.onerror=()=>{_adQueueTimer=setTimeout(runQueue,450);};
-      speechSynthesis.speak(u);
-    }catch(_){if(master&&AC)try{master.gain.setTargetAtTime(0.75,AC.currentTime,0.2);}catch(_){}}
+      initAudio();
+      if(AC){
+        if(AC.state==='suspended'){try{AC.resume();}catch(_){}}
+        loadAnnBuffer(item.file).then(buf=>{
+          if(G.phase!=='play'||G.atStation!==null){stopAdBroadcast();return;}
+          const s=AC.createBufferSource(),g=AC.createGain();
+          g.gain.value=1.25;
+          s.buffer=buf;s.connect(g);g.connect(AC.destination);
+          _adWebSrc=s;
+          s.onended=()=>{if(_adWebSrc===s)_adWebSrc=null;next();};
+          s.start(0);
+        }).catch(()=>{
+          const a=new Audio(item.file);a.volume=1.0;_adAudio=a;
+          a.onended=()=>{if(_adAudio===a)_adAudio=null;next();};
+          a.onerror=()=>{if(_adAudio===a)_adAudio=null;next();};
+          a.play().catch(()=>{next();});
+        });
+        return;
+      }
+      const a=new Audio(item.file);a.volume=1.0;_adAudio=a;
+      a.onended=()=>{if(_adAudio===a)_adAudio=null;next();};
+      a.onerror=()=>{if(_adAudio===a)_adAudio=null;next();};
+      a.play().catch(()=>{next();});
+    }catch(_){next();}
   };
   const waitAnn=()=>{
     if(G.phase!=='play'||G.atStation!==null)return;
