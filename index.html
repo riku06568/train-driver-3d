@@ -5040,7 +5040,7 @@ function aiSounds(a,el,tot){
   if(window.__DISP&&window.__DISP.on&&window.__DISP.sel&&!isDispTracked)return;
   const _acCam=(window.__DISP&&window.__DISP.on&&typeof DISPCAM!=='undefined'&&DISPCAM.cam)?DISPCAM.cam:camera;
   const d=isDispTracked?10:a.tr.cars[2].position.distanceTo(_acCam.getWorldPosition(camW));if(d>320)return;
-  if(!a.sndF.v&&a.t<(BRANCH?7.5:4.2)){a.sndF.v=1;if(a.vis&&d<(isDispTracked?180:(PAX?90:(G.v<3?65:0))))playGuide('tab_doors',isDispTracked?master:(getExtBus()||master),isDispTracked?0.9:clamp(1.2/(1+Math.pow(d/60,2)),0.35,1.2));}
+  if(!a.sndF.v&&a.t<(BRANCH?7.5:4.2)){a.sndF.v=1;if(a.vis&&d<(isDispTracked?180:(PAX?90:(G.v<3?65:0)))&&(isDispTracked||!(typeof listenerSealed==='function'&&listenerSealed())))playGuide('tab_doors',isDispTracked?master:(getExtBus()||master),isDispTracked?0.9:clamp(1.2/(1+Math.pow(d/60,2)),0.35,1.2));}
   if(!AC)return;if(AC.state==='suspended'){try{AC.resume();}catch(e){}}
   if(!a.sndF.o&&el>0.1){a.sndF.o=1;playAt(isDispTracked?_acCam.position:a.tr.cars[1].position,doorOpenSnd);}
   if(a.sndF.mStart==null)a.sndF.mStart=(a.doors?26:22)-rand(3,10);                                     /* ドアが開いてから少しして */
@@ -5450,7 +5450,7 @@ function getExtBus(){if(extBus||!AC)return extBus;extLP=AC.createBiquadFilter();
   extBus=AC.createGain();extBus.gain.value=1;extBus.connect(extLP);extLP.connect(master);return extBus;}
 function listenerSealed(){if(RIDE)return !(RIDE.a.state==='dwell'&&RIDE.a.frac>0.05);if(PAX||G.walkOn)return false;return G.door.state==='closed';}
 function updExtBus(){const b=getExtBus();if(!b)return;const t=AC.currentTime,sl=listenerSealed();
-  b.gain.setTargetAtTime(sl?0.03:1,t,0.25);extLP.frequency.setTargetAtTime(sl?420:18000,t,0.25);}
+  b.gain.setTargetAtTime(sl?0:1,t,0.12);extLP.frequency.setTargetAtTime(sl?320:18000,t,0.12);}
 /* positional one-shot bus */
 function playAt(pos,fn){if(!AC||!pos)return;try{const cw=camera.getWorldPosition(new THREE.Vector3());const d=pos.distanceTo(cw);if(!isFinite(d)||d>400)return;
   const dest=getExtBus()||master; /* 車内でドアが閉まっていれば extBus で小さくなる */
@@ -6104,7 +6104,7 @@ function updDoor(dt){const D=G.door;
 /* platform doors follow whichever train is standing there */
 const hdPrev=new Map();
 let _ebAnnSent=false;
-function playRecordedAnn(file,gainVal){
+function playRecordedAnn(file,gainVal,destNode){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
   const playFallback=()=>{try{const au=new Audio(file);au.volume=Math.min(1,(gainVal||1)*0.8);au.play().catch(()=>{});}catch(_){}};
   if(typeof loadAnnBuffer==='function'&&AC){
@@ -6112,7 +6112,7 @@ function playRecordedAnn(file,gainVal){
       if(!buf){playFallback();return;}
       const src=AC.createBufferSource(),g=AC.createGain();
       src.buffer=buf;g.gain.value=gainVal||1.0;
-      src.connect(g);g.connect(master||AC.destination);
+      src.connect(g);g.connect(destNode||master||AC.destination);
       src.start();
     }).catch(playFallback);
   }else{playFallback();}
@@ -6139,10 +6139,12 @@ function playEmergencyStopAnn(){
 const _apCool=new Map();
 function playApproachAnn(st,k){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
+  if(typeof listenerSealed==='function'&&listenerSealed())return;
   const key=st.i+':'+k,now=Date.now();
   if((_apCool.get(key)||0)>now-35000)return;
   _apCool.set(key,now);
   try{
+    const ext=getExtBus()||master;
     if(AC){
       const t0=AC.currentTime;
       [[880,0,0.18],[659.25,0.19,0.28]].forEach(([f,dt0,dur])=>{
@@ -6151,12 +6153,15 @@ function playApproachAnn(st,k){
         g.gain.setValueAtTime(0.001,t0+dt0);
         g.gain.exponentialRampToValueAtTime(0.07,t0+dt0+0.03);
         g.gain.exponentialRampToValueAtTime(0.001,t0+dt0+dur);
-        o.connect(g);g.connect(master||AC.destination);
+        o.connect(g);g.connect(ext||AC.destination);
         o.start(t0+dt0);o.stop(t0+dt0+dur+0.02);
       });
     }
     const isOuter=!(TK[k]&&TK[k].dir<0);
-    setTimeout(()=>playRecordedAnn(isOuter?'assets/audio/ann/approach_outer.mp3':'assets/audio/ann/approach_inner.mp3',0.75),450);
+    setTimeout(()=>{
+      if(typeof listenerSealed==='function'&&listenerSealed())return;
+      playRecordedAnn(isOuter?'assets/audio/ann/approach_outer.mp3':'assets/audio/ann/approach_inner.mp3',0.75,getExtBus()||master);
+    },450);
   }catch(e){}
 }
 function updHomeDoors(dt){
