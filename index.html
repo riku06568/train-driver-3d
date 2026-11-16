@@ -2632,10 +2632,10 @@ for(let i=0;i<=L;i++){let wR=0,wX=0,wJ=0,wM=0;
     if(st.cls==='R')wR=Math.max(wR,w);else if(st.cls==='J'||st.cls==='I')wJ=Math.max(wJ,w);else if(st.cls==='M')wM=Math.max(wM,w);else wX=Math.max(wX,w);}
   const isl=Math.max(wR,wX);
   if(BRANCH){GAP[0][i]=0;GAP[1][i]=0;GAP[2][i]=0;GAP[3][i]=0;GAP[4][i]=MINI?11*wJ:4.2+6.8*wJ;continue;} /* 港見支線は単線（行き違いの駅だけ2線） */
-  const wS0=bump(STATIONS[0],i)*5.4; /* 汐見駅は6面12線化（各線路にAI用＋プレイヤー退避用の2線） */
+  const wS0=bump(STATIONS[0],i)*9.0; /* 汐見駅は6面12線化（各線路にAI用＋プレイヤー退避用の2線） */
   GAP[0][i]=4.2+6.8*isl+wS0;GAP[1][i]=4.2+6.8*wM+wS0;GAP[2][i]=4.6+6.4*wX+wS0;GAP[3][i]=4.2+6.8*wM+wS0;GAP[4][i]=4.2+6.8*isl+wS0;}
 const shiomiBump=s=>BRANCH?0:bump(STATIONS[0],s);
-const ownTrackOff=(k,s)=>{const T=TK[k];if(!T)return 0;if(BRANCH)return T.off(s);return T.off(s)-T.dir*4.6*shiomiBump(s);};
+const ownTrackOff=(k,s)=>{const T=TK[k];if(!T)return 0;if(BRANCH)return T.off(s);return T.off(s)-T.dir*8.6*shiomiBump(s);};
 const look=(arr,s)=>{s=mod(s,L);const i=Math.floor(s);return arr[i]+(arr[i+1]-arr[i])*(s-i);};
 const offCv=s=>look(GAP[0],s),offE=s=>offCv(s)+look(GAP[1],s),offF=s=>offE(s)+look(GAP[2],s),offD=s=>offF(s)+look(GAP[3],s);
 const sepB=s=>BRANCH?look(GAP[4],s):offD(s)+look(GAP[4],s);
@@ -2664,7 +2664,7 @@ for(const ci of BIG){const st=STATIONS[ci];let n=0;const sides=BRANCH?[1]:[-1,1]
 const KEYS=BRANCH?(B3?['A','B','C','D']:['A','B']):['A','B','C','D','E','F'];
 const TRACKS=[];
 for(const k of (MINI?['A']:BRANCH?['A','B']:KEYS))TRACKS.push({k,off:{A:()=>0,B:sepB,C:offC,D:offD,E:offE,F:offF}[k],a:BRANCH?TRK0:null,b:TRK1});
-if(!BRANCH){const s0=STATIONS[0],sa=s0.s-PBof(s0)-140,sb=s0.s+PF+140;for(const k of KEYS)TRACKS.push({k:'S'+k,off:s=>TK[k].off(s)-TK[k].dir*4.6*shiomiBump(s),a:sa,b:sb});} /* 汐見駅：各線路にプレイヤー退避線（左側）を追加し12線化 */
+if(!BRANCH){const s0=STATIONS[0],sa=s0.s-PBof(s0)-140,sb=s0.s+PF+140;for(const k of KEYS)TRACKS.push({k:'S'+k,off:s=>TK[k].off(s)-TK[k].dir*8.6*shiomiBump(s),a:sa,b:sb});} /* 汐見駅：各線路にプレイヤー退避線（左側）を追加し12線化 */
 if(MINI){const st=STATIONS[CFG.mini.loop];TRACKS.push({k:'B',off:sepB,a:st.s-PBof(st)-170,b:st.s+PF+170});} /* 行き違い用の線路 */
 if(B3)for(const st of STATIONS){if(st.cls!=='Q'&&st.cls!=='T')continue;const a=platMid(st)-platHalf(st)-150,b=platMid(st)+platHalf(st)+150; /* 副本線（分岐して戻る） */
   TRACKS.push({k:'SA',off:s=>-sidDev(s),a,b});TRACKS.push({k:'SB',off:s=>sepB(s)+sidDev(s),a,b});}
@@ -3093,7 +3093,7 @@ function buildStation(st,c){
   }else if(BRANCH){island(1.72,s=>sepB(s)-1.72,'A','B');}
   else if(st.cls==='M'){ // main station: locals on side platforms, rapid and limited express across the same islands
     if(!BRANCH&&i===0){ /* 汐見駅：6面12線（各線路の右側=AI列車、左側=プレイヤー退避線） */
-      const pl=(k,sd)=>island(s=>TK[k].off(s)+(sd<0?-4.6:0)+1.72,s=>TK[k].off(s)+(sd<0?0:4.6)-1.72,k,k);
+      const pl=(k,sd)=>island(s=>TK[k].off(s)+(sd<0?-8.6:0)+1.72,s=>TK[k].off(s)+(sd<0?0:8.6)-1.72,k,k);
       for(const k of KEYS)pl(k,-TK[k].dir);
       greenMarks(c,st,'E');greenMarks(c,st,'F');
     }else{
@@ -6736,11 +6736,21 @@ function platformsOf(st){const out=[],s=st.s-62;
     add((BRANCH?'2':PLATNO.B)+'番線　'+nm('B'),BRANCH&&serves(st,'D')?['B','D']:['B'],rB,sideStair(rB[0],rB[1],false));
   }else if(BRANCH){add('1・2番線　'+nm('A')+'／'+nm('B'),KEYS.filter(k=>serves(st,k)),platRange(st,'A'));}
   else if(st.cls==='M'){
-    const rA=platRange(st,'A'),rB=platRange(st,'B'),rC=platRange(st,'C'),rD=platRange(st,'D');
-    add('1番線　各停 外回り',['A'],rA,sideStair(rA[0],rA[1],true));
-    add('2・3番線　快速・快速特急 外回り',['C','E'],rC); /* 島式：中央に階段 */
-    add('4・5番線　快速特急・快速 内回り',['F','D'],rD);
-    add('6番線　各停 内回り',['B'],rB,sideStair(rB[0],rB[1],false));
+    if(!BRANCH&&st.i===0){
+      const sr=(k)=>{const sd=-TK[k].dir,o0=TK[k].off(s);return [o0+(sd<0?-8.6:0)+1.72,o0+(sd<0?0:8.6)-1.72];};
+      add('1・2番線　各停 外回り（左:退避 / 右:AI）',['A'],sr('A'));
+      add('3・4番線　快速 外回り（左:退避 / 右:AI）',['C'],sr('C'));
+      add('5・6番線　快速特急 外回り（左:退避 / 右:AI）',['E'],sr('E'));
+      add('7・8番線　快速特急 内回り（左:退避 / 右:AI）',['F'],sr('F'));
+      add('9・10番線　快速 内回り（左:退避 / 右:AI）',['D'],sr('D'));
+      add('11・12番線　各停 内回り（左:退避 / 右:AI）',['B'],sr('B'));
+    }else{
+      const rA=platRange(st,'A'),rB=platRange(st,'B'),rC=platRange(st,'C'),rD=platRange(st,'D');
+      add('1番線　各停 外回り',['A'],rA,sideStair(rA[0],rA[1],true));
+      add('2・3番線　快速・快速特急 外回り',['C','E'],rC); /* 島式：中央に階段 */
+      add('4・5番線　快速特急・快速 内回り',['F','D'],rD);
+      add('6番線　各停 内回り',['B'],rB,sideStair(rB[0],rB[1],false));
+    }
   }else{
     add('1・2番線　各停・快速 外回り',['A','C'],platRange(st,'A'));
     if(st.cls==='X')add('3・4番線　快速特急 外回り・内回り',['E','F'],platRange(st,'E'));
