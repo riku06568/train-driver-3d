@@ -586,8 +586,8 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">← (左矢印)</b> : 左扉の開閉</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Enter</b> : ATO運転開始 / 停止</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Space</b> : 次駅放送 / まもなく放送</div>
-          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">H キー</b> : 電笛 (警笛)</div>
-          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">J キー</b> : ミュージックホーン</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">H / G / Y キー</b> : 電笛 / 空笛 / 両方（長押しで連続鳴動）</div>
+          <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">J / K キー</b> : ミュージックホーン① / ②</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Q / E</b> : 視点左右回転</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">V キー</b> : 視点を正面に戻す</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">T キー</b> : オンラインチャットを開く</div>
@@ -1241,6 +1241,16 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
       <div style="font-size:13.5px;font-weight:800;color:#f87171;">🚨 緊急停止・異常発生</div>
       <div id="dtTroubleText" style="font-size:13px;font-weight:700;margin-top:3px;line-height:1.5;"></div>
       <div style="font-size:11px;color:#fca5a5;margin-top:4px;">※ 指令所へ連絡し、再開許可が出るまで運転再開できません。</div>
+    </div>
+    <div style="font-size:12px;color:#fbbf24;font-weight:700;">📣 警笛・ミュージックホーン（長押しで長く鳴動）</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+      <button id="dtHornElec" class="dt-btn" style="padding:8px 4px;font-size:11.5px;user-select:none;-webkit-user-select:none;touch-action:none;">📢 電笛</button>
+      <button id="dtHornAir" class="dt-btn" style="padding:8px 4px;font-size:11.5px;user-select:none;-webkit-user-select:none;touch-action:none;">📯 空笛</button>
+      <button id="dtHornBoth" class="dt-btn" style="padding:8px 4px;font-size:11.5px;user-select:none;-webkit-user-select:none;touch-action:none;">🔊 電＋空</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+      <button id="dtMHorn1" class="dt-btn" style="padding:7px 6px;font-size:11.5px;background:rgba(139,92,246,0.22);border-color:rgba(167,139,250,0.45);">🎵 Mホーン①</button>
+      <button id="dtMHorn2" class="dt-btn" style="padding:7px 6px;font-size:11.5px;background:rgba(139,92,246,0.22);border-color:rgba(167,139,250,0.45);">🎶 Mホーン②(特急)</button>
     </div>
     <div style="font-size:12px;color:#93c5fd;font-weight:700;">自列車・運行操作（この列車のみに反映）</div>
     <div class="dt-grid">
@@ -5420,7 +5430,60 @@ function airHiss(vol,dur){if(!AC)return;try{const src=AC.createBufferSource();if
 function tone(freq,start,dur,type,vol,dest){if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=freq;
   const t=AC.currentTime+start;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((vol||0.15)*7.5,t+0.02);g.gain.linearRampToValueAtTime(0,t+dur);
   o.connect(g);g.connect(dest||master);o.start(t);o.stop(t+dur+0.05);}
-function horn(){initAudio();tone(349,0,0.9,'square',0.22);tone(440,0,0.9,'square',0.22);tone(349,0.05,0.85,'sawtooth',0.12);tone(440,0.05,0.85,'sawtooth',0.12);if(typeof broadcastEvent==='function')broadcastEvent('horn');}
+let _activeHorn=null;
+function startHoldHorn(kind){
+  initAudio();
+  kind=kind||'elec';
+  if(_activeHorn){if(_activeHorn.kind===kind)return;stopHoldHorn(true);}
+  G.hornT=nowMs();
+  if(typeof broadcastEvent==='function')broadcastEvent('horn');
+  if(!AC){_activeHorn={kind,nodes:[],started:nowMs()};return;}
+  const t0=AC.currentTime,bus=AC.createGain();
+  bus.gain.setValueAtTime(0.001,t0);
+  bus.gain.linearRampToValueAtTime(1.0,t0+0.035);
+  bus.connect(master);
+  const rv=AC.createGain();rv.gain.value=0.35;bus.connect(rv);rv.connect(getReverb());
+  const oscs=[];
+  const addTone=(freq,type,vol,det)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type=type;o.frequency.value=freq;if(det)o.detune.value=det;
+    g.gain.value=vol*7.5;
+    o.connect(g);g.connect(bus);o.start(t0);oscs.push(o);
+  };
+  if(kind==='elec'||kind==='both'){
+    addTone(349,'square',0.20,0);
+    addTone(440,'square',0.20,0);
+    addTone(349,'sawtooth',0.11,4);
+    addTone(440,'sawtooth',0.11,-4);
+  }
+  if(kind==='air'||kind==='both'){
+    const sc=kind==='both'?0.75:1.0;
+    addTone(233.08,'sawtooth',0.22*sc,0);
+    addTone(293.66,'sawtooth',0.22*sc,3);
+    addTone(349.23,'sawtooth',0.16*sc,-3);
+    addTone(116.54,'triangle',0.14*sc,0);
+  }
+  const timer=setTimeout(()=>stopHoldHorn(),12000);
+  _activeHorn={kind,bus,oscs,started:nowMs(),t0,timer};
+}
+function stopHoldHorn(immediate){
+  if(!_activeHorn)return;
+  const h=_activeHorn;_activeHorn=null;
+  if(h.timer)clearTimeout(h.timer);
+  if(!AC||!h.bus)return;
+  const elapsed=(nowMs()-h.started)/1000;
+  const minHold=immediate?0:Math.max(0,0.28-elapsed);
+  const tEnd=AC.currentTime+minHold;
+  try{
+    h.bus.gain.setValueAtTime(h.bus.gain.value||1.0,tEnd);
+    h.bus.gain.exponentialRampToValueAtTime(0.0001,tEnd+0.14);
+    setTimeout(()=>{for(const o of h.oscs){try{o.stop();o.disconnect();}catch(_){}}try{h.bus.disconnect();}catch(_){}},(minHold+0.2)*1000);
+  }catch(_){}
+}
+function horn(kind){
+  startHoldHorn(kind||'elec');
+  setTimeout(()=>stopHoldHorn(),520);
+}
 function chime(dest, type){
   if (!AC) return;
   initAudio();
@@ -5751,6 +5814,18 @@ function musicHorn(){initAudio();if(typeof broadcastEvent==='function')broadcast
         const lfo=AC.createOscillator(),lg=AC.createGain();lfo.frequency.value=5.2;lg.gain.value=base*0.004;lfo.connect(lg);lg.connect(o.frequency);lfo.start(t);lfo.stop(t+d+0.1);
         g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(amp,t+0.035);g.gain.setValueAtTime(amp,t+Math.max(0.05,d-0.08));
         g.gain.exponentialRampToValueAtTime(0.0001,t+d+(d>0.6?0.35:0.06));o.connect(g);g.connect(f);o.start(t);o.stop(t+d+0.45);}}
+    t+=d;}}
+function musicHorn2(){initAudio();if(typeof broadcastEvent==='function')broadcastEvent('mhorn');if(!AC)return;const t0=AC.currentTime+0.03;
+  const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(1100,t0);f.frequency.linearRampToValueAtTime(2800,t0+0.18);f.Q.value=0.7;
+  const bus=AC.createGain();bus.gain.value=1.45;f.connect(bus);bus.connect(master);const rv=AC.createGain();rv.gain.value=0.75;bus.connect(rv);rv.connect(getReverb());
+  const seq=[[76,0.28,[0,4,7]],[80,0.28,[0,3,7]],[83,0.34,[0,4,7]],[88,0.88,[0,4,7,12]],[83,0.26,[0,4,7]],[88,1.15,[0,4,7,12]]];
+  let t=t0;
+  for(const [m,d,ch] of seq){
+    for(const iv of ch){const base=mF(m+iv-12),amp=iv===0?0.26:iv===12?0.12:0.15;
+      for(const det of [-4,4]){const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.value=base;o.detune.value=det;
+        const lfo=AC.createOscillator(),lg=AC.createGain();lfo.frequency.value=4.8;lg.gain.value=base*0.004;lfo.connect(lg);lg.connect(o.frequency);lfo.start(t);lfo.stop(t+d+0.1);
+        g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(amp,t+0.04);g.gain.setValueAtTime(amp,t+Math.max(0.05,d-0.08));
+        g.gain.exponentialRampToValueAtTime(0.0001,t+d+(d>0.6?0.4:0.06));o.connect(g);g.connect(f);o.start(t);o.stop(t+d+0.48);}}
     t+=d;}}
 function ponSnd(dest){
   if (!AC) return 1.4;
@@ -6571,7 +6646,7 @@ function panelAct(u,v){ // touch panel hit (u,v in 0..1)
 
   const t=Math.floor(x/(512/3));
   if(t===0||t===1){G.panel=t===0?'promo':'ann';if(G.zoom!=='T'){G.zoom='T';G.panelZoomed=true;}}
-  else if(y<142){horn();G.hornT=nowMs();}else{musicHorn();G.mhornT=nowMs();}
+  else if(y<142){startHoldHorn('elec');}else{musicHorn();G.mhornT=nowMs();}
 }
 // stopped at a platform: the zoomed camera monitor works as a touch panel
 function camTouchOn(){if(PAX||G.phase!=='play'||G.v>0.05)return false;if(G.atStation!==null||G.depCheck!==null)return true;const d=stopDist(G.nv);return d>-6.5&&d<17.9;}
@@ -6581,7 +6656,7 @@ function doAct(a,hit){
   initAudio();unlockSpeech();
   switch(a){case 'lo':openDoor(-1*SIDEINV);break;case 'lc':closeDoor(-1*SIDEINV);break;case 'ro':openDoor(1*SIDEINV);break;case 'rc':closeDoor(1*SIDEINV);break;
     case 'ato':if(G.crew==='twoC'){toast('運転は運転士が行います（車掌は合図で発車させます）','info');break;}toggleATO();break;case 'auto':toggleAuto();break;
-    case 'hornA':horn();G.hornT=nowMs();break;case 'hornE':musicHorn();G.mhornT=nowMs();break;
+    case 'hornA':startHoldHorn('air');break;case 'hornE':startHoldHorn('elec');break;
     case 'ann0':case 'ann1':case 'ann2':case 'ann3':broadcast(+a.slice(3));break;
     case 'leanL':toggleLean(-1);break;case 'leanR':toggleLean(1);break;
     case 'lnOpen':openDoor(G.lean);break;case 'lnClose':closeDoor(G.lean);break;case 'lnMelo':promote(defaultPromo());break;
@@ -6931,15 +7006,15 @@ function drawPanel(){const x=CANV.T.x,W=512,H=284;x.fillStyle='#07101e';x.fillRe
     x.font='700 20px '+FONT;
     x.fillText((isSoon?'まもなく ':'次は ')+(nst?nst.name:'')+'（タップで放送）',5+bw/2,H/2+28);
 
-    const bx=2*(W/3)+5,cw=W/3-10,hOn=nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
-    x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 36px '+FONT;x.fillText('警笛',bx+cw/2,71);
+    const bx=2*(W/3)+5,cw=W/3-10,hOn=!!_activeHorn||nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
+    x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText('警笛',bx+cw/2,56);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,98);
     x.fillStyle=mOn?'#f2c230':'#6a3fa0';x.fillRect(bx,146,cw,130);x.fillStyle=mOn?'#111':'#fff';x.font='700 24px '+FONT;x.fillText('ミュージック',bx+cw/2,196);x.fillText('ホーン',bx+cw/2,228);
   }
   else{const cw=W/3-10;
     [['乗降促進',G.promoOn?'#e0a21a':'#5a4410',G.promoOn?'再生中':'4種類'],['放送','#2e63a3','4種類']].forEach(([t,c,sub],i)=>{const bx=i*(W/3)+5;x.fillStyle=c;x.fillRect(bx,8,cw,H-16);
       x.fillStyle=(G.promoOn&&i===0)?'#111':'#fff';x.font='700 38px '+FONT;x.fillText(t,bx+cw/2,H/2-16);x.font='500 18px '+FONT;x.fillText(sub,bx+cw/2,H/2+30);});
-    const bx=2*(W/3)+5,hOn=nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
-    x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 36px '+FONT;x.fillText('警笛',bx+cw/2,71);
+    const bx=2*(W/3)+5,hOn=!!_activeHorn||nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
+    x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText('警笛',bx+cw/2,56);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,98);
     x.fillStyle=mOn?'#f2c230':'#6a3fa0';x.fillRect(bx,146,cw,130);x.fillStyle=mOn?'#111':'#fff';x.font='700 24px '+FONT;x.fillText('ミュージック',bx+cw/2,196);x.fillText('ホーン',bx+cw/2,228);}
   CANV.T.tex.needsUpdate=true;}
 /* 新形運転台：側面パネル（WL=駅・時刻、WR=車両情報TIMS） */
@@ -7902,8 +7977,9 @@ addEventListener('keydown',e=>{
     return;
   }
   switch(e.code){
-    case 'KeyH':horn();G.hornT=nowMs();break;case 'KeyA':doAct('lo');break;case 'KeyZ':doAct('lc');break;case 'KeyD':doAct('ro');break;case 'KeyC':doAct('rc');break;
-    case 'KeyB':G.panel='ann';G.zoom='T';G.panelZoomed=true;break;case 'KeyP':G.panel='promo';G.zoom='T';G.panelZoomed=true;break;case 'KeyJ':musicHorn();G.mhornT=nowMs();break;case 'KeyO':doAct('ato');break;case 'KeyU':doAct('auto');break;case 'KeyW':endWaiting();break;
+    case 'KeyH':if(!e.repeat)startHoldHorn('elec');break;case 'KeyG':if(!e.repeat)startHoldHorn('air');break;case 'KeyY':if(!e.repeat)startHoldHorn('both');break;
+    case 'KeyA':doAct('lo');break;case 'KeyZ':doAct('lc');break;case 'KeyD':doAct('ro');break;case 'KeyC':doAct('rc');break;
+    case 'KeyB':G.panel='ann';G.zoom='T';G.panelZoomed=true;break;case 'KeyP':G.panel='promo';G.zoom='T';G.panelZoomed=true;break;case 'KeyJ':musicHorn();G.mhornT=nowMs();break;case 'KeyK':musicHorn2();G.mhornT=nowMs();break;case 'KeyO':doAct('ato');break;case 'KeyU':doAct('auto');break;case 'KeyW':endWaiting();break;
     case 'Digit1':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(0);G.panel='main';G.zoom=null;break;}zoomTo('L');break;case 'Digit2':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(1);G.panel='main';G.zoom=null;break;}zoomTo('S');break;case 'Digit3':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(2);G.panel='main';G.zoom=null;break;}zoomTo('I');break;case 'Digit4':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(3);G.panel='main';G.zoom=null;break;}zoomTo('M');break;case 'Digit6':zoomTo('T');break;case 'Digit5':zoomTo('R');break;
     case 'KeyQ':G.zoom=null;G.lookY=wrapA(G.lookY+0.15);break;case 'KeyE':G.zoom=null;G.lookY=wrapA(G.lookY-0.15);break;
     case 'KeyV':case 'Digit0':case 'Escape':G.zoom=null;G.lookY=0;G.lookP=0;break;
@@ -7923,9 +7999,11 @@ cv.addEventListener('pointermove',e=>{if(G.walkOn){const p=W.ptr.get(e.pointerId
     else{const dx=e.clientX-p.x0,dy=e.clientY-p.y0;W.mv.x=clamp(dx/70,-1,1);W.mv.y=clamp(-dy/70,-1,1);}p.x=e.clientX;p.y=e.clientY;return;}
   if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);
   if(drag.moved>8){G.zoom=null;G.lookY=wrapA(G.lookY+dx*0.005);G.lookP=clamp(G.lookP+dy*0.004,-0.6,0.5);}});
-cv.addEventListener('pointerup',e=>{G.hold=null;if(G.walkOn){const p=W.ptr.get(e.pointerId);if(p&&p.role==='move'){W.mv.x=W.mv.y=0;}W.ptr.delete(e.pointerId);return;}unlockSpeech();if(G.phase==='title')return;if(drag&&drag.moved<=8&&G.zoom)G.zoom=null;drag=null;});
+cv.addEventListener('pointerup',e=>{G.hold=null;stopHoldHorn();if(G.walkOn){const p=W.ptr.get(e.pointerId);if(p&&p.role==='move'){W.mv.x=W.mv.y=0;}W.ptr.delete(e.pointerId);return;}unlockSpeech();if(G.phase==='title')return;if(drag&&drag.moved<=8&&G.zoom)G.zoom=null;drag=null;});
 cv.addEventListener('click',()=>{unlockSpeech();});
-cv.addEventListener('pointercancel',e=>{drag=null;G.hold=null;W.ptr.delete(e.pointerId);W.mv.x=W.mv.y=0;});
+cv.addEventListener('pointercancel',e=>{drag=null;G.hold=null;stopHoldHorn();W.ptr.delete(e.pointerId);W.mv.x=W.mv.y=0;});
+addEventListener('keyup',e=>{if(e.code==='KeyH'||e.code==='KeyG'||e.code==='KeyY')stopHoldHorn();});
+addEventListener('blur',()=>stopHoldHorn());
 cv.addEventListener('dblclick',()=>{G.zoom=null;G.lookY=0;G.lookP=0;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('resize',applyView);addEventListener('orientationchange',()=>setTimeout(applyView,200));
@@ -9962,6 +10040,21 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     if (dtClose && driverTabletModal) {
       dtClose.addEventListener('click', () => driverTabletModal.classList.add('hide'));
     }
+    const bindHoldBtn = (id, kind) => {
+      const b = document.getElementById(id);
+      if (!b) return;
+      b.addEventListener('pointerdown', e => { e.preventDefault(); startHoldHorn(kind); });
+      b.addEventListener('pointerup', () => stopHoldHorn());
+      b.addEventListener('pointercancel', () => stopHoldHorn());
+      b.addEventListener('pointerleave', () => stopHoldHorn());
+    };
+    bindHoldBtn('dtHornElec', 'elec');
+    bindHoldBtn('dtHornAir', 'air');
+    bindHoldBtn('dtHornBoth', 'both');
+    const bMH1 = document.getElementById('dtMHorn1');
+    if (bMH1) bMH1.addEventListener('click', () => { musicHorn(); if (typeof G !== 'undefined') G.mhornT = nowMs(); });
+    const bMH2 = document.getElementById('dtMHorn2');
+    if (bMH2) bMH2.addEventListener('click', () => { musicHorn2(); if (typeof G !== 'undefined') G.mhornT = nowMs(); });
     const bindDtCmd = (id, cmd, label) => {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => {
@@ -10390,6 +10483,13 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
     // ご意見箱 返信コーナー（作者サトタケ / riku06568 が反映）
     window.FEEDBACK_REPLIES = [
+      {
+        id: 2,
+        date: '2026/11/16',
+        sender: '名無し運転士さん',
+        q: 'いつも面白いゲームをありがとうございます！\n警笛の種類を増やしていただいて欲しくて長く警笛が鳴らせるようにしていただきたいです！',
+        a: '貴重なご意見をいただき、またいつも遊んでいただきありがとうございます。\nご要望いただいた「警笛の種類の追加（電笛・空笛・電＋空・ミュージックホーン2種）」と「長押しで長く警笛を鳴らせる機能」を実装しましたので、ぜひお試しください！'
+      },
       {
         id: 1,
         date: '2026/11/14',
