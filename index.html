@@ -1886,18 +1886,19 @@ function handleRemotePlayerUpdate(data) {
       }
       p.lastDoor = data.door;
     }
-    // 他プレイヤーの警笛再生
+    // 他プレイヤーの警笛再生（5種類対応）
     if (data.hornT && (!p.lastHornT || data.hornT > p.lastHornT)) {
       p.lastHornT = data.hornT;
-      playRemoteTrainSound(p, 'horn');
+      playRemoteTrainSound(p, 'horn', { hornKind: data.hornKind || 'elec' });
     }
-    // 他プレイヤーのミュージックホーン再生
+    // 他プレイヤーのミュージックホーン再生（①②対応）
     if (data.mhornT && (!p.lastMhornT || data.mhornT > p.lastMhornT)) {
       p.lastMhornT = data.mhornT;
-      playRemoteTrainSound(p, 'mhorn');
+      playRemoteTrainSound(p, 'mhorn', { mhornKind: data.mhornKind || 1 });
     }
 
     p.name = data.name || p.name;
+    p.isDev = !!data.isDev;
     p.line = data.line || p.line || 'loop';
     p.service = data.service || p.service;
     p.key = data.key || p.key;
@@ -1948,16 +1949,18 @@ function removeRemotePlayer(id) {
     p.ai.inside.length = 0;
   }
   if (p.tr) {
-    if (p.tr.nameplate && p.tr.nameplate.material) {
-      try {
-        if (p.tr.nameplate.material.map) p.tr.nameplate.material.map.dispose();
-        p.tr.nameplate.material.dispose();
-      } catch(e) {}
-    }
-    if (p.tr.grp && p.tr.grp.parent) {
-      try {
-        p.tr.grp.parent.remove(p.tr.grp);
-      } catch(e) {}
+    if (typeof disposeTrain === 'function') {
+      disposeTrain(p.tr);
+    } else {
+      if (p.tr.nameplate && p.tr.nameplate.material) {
+        try {
+          if (p.tr.nameplate.material.map) p.tr.nameplate.material.map.dispose();
+          p.tr.nameplate.material.dispose();
+        } catch(e) {}
+      }
+      if (p.tr.grp && p.tr.grp.parent) {
+        try { p.tr.grp.parent.remove(p.tr.grp); } catch(e) {}
+      }
     }
     p.tr = null;
   }
@@ -1993,13 +1996,7 @@ function playRemoteTrainSound(p, type, opt) {
     }
     if (!pos || !_camera) return;
     const cw = _camera.getWorldPosition(new THREE.Vector3());
-    /* 総合指令所：選択列車の近くの定点カメラ位置を基準に鳴らす（距離減衰なしのモニター音量） */
-    const _D = window.__DISP;
-    if (_D && _D.on && _D.sel && _D.sel !== p.id) return;
-    const dispOn = !!(_D && _D.on && _D.pos);
-    const isSelTrain = !!(dispOn && _D.sel && p.id === _D.sel);
-    let d = pos.distanceTo(dispOn ? _D.pos : cw);
-    if (isSelTrain) d = Math.min(d, 26);
+    let d = pos.distanceTo(cw);
     if (!isFinite(d)) return;
 
     const isHorn = (type === 'horn' || type === 'mhorn');
@@ -2007,13 +2004,13 @@ function playRemoteTrainSound(p, type, opt) {
     if (d > maxD) return;
 
     // 運転室内・客室内にいる場合の音響減衰（窓ガラス越しにリアルに響かせる）
-    const inCab = dispOn ? false : ((typeof A.listenerSealed === 'function') ? A.listenerSealed() : false);
+    const inCab = (typeof A.listenerSealed === 'function') ? A.listenerSealed() : false;
     const cabFilter = inCab ? 3400 : 18000;
     const cabVolMult = inCab ? (isHorn ? 0.65 : 0.48) : 1.0;
 
     const refD = isHorn ? 110 : 55;
     const distGain = Math.min(3.8, 5.0 / (1 + Math.pow(d / refD, 1.35)));
-    const totalGain = distGain * cabVolMult * (dispOn ? (isSelTrain ? 1.35 : 1.1) : 1.0);
+    const totalGain = distGain * cabVolMult;
 
     const g = _AC.createGain();
     g.gain.value = totalGain;
@@ -2037,13 +2034,26 @@ function playRemoteTrainSound(p, type, opt) {
     }
 
     if (type === 'horn') {
-      A.tone(349, 0, 0.9, 'square', 0.28, out);
-      A.tone(440, 0, 0.9, 'square', 0.28, out);
-      A.tone(349, 0.04, 0.85, 'sawtooth', 0.16, out);
-      A.tone(440, 0.04, 0.85, 'sawtooth', 0.16, out);
+      const hk = (opt && opt.hornKind) || 'elec';
+      if (hk === 'elec' || hk === 'both') {
+        A.tone(349, 0, 0.9, 'square', 0.24, out);
+        A.tone(440, 0, 0.9, 'square', 0.24, out);
+        A.tone(349, 0.04, 0.85, 'sawtooth', 0.14, out);
+        A.tone(440, 0.04, 0.85, 'sawtooth', 0.14, out);
+      }
+      if (hk === 'air' || hk === 'both') {
+        const sc = hk === 'both' ? 0.75 : 1.0;
+        A.tone(233.08, 0, 0.95, 'sawtooth', 0.24 * sc, out);
+        A.tone(293.66, 0, 0.95, 'sawtooth', 0.24 * sc, out);
+        A.tone(349.23, 0, 0.95, 'sawtooth', 0.17 * sc, out);
+        A.tone(116.54, 0, 0.95, 'triangle', 0.15 * sc, out);
+      }
     } else if (type === 'mhorn') {
       const t0 = _AC.currentTime + 0.02;
-      const seq = [[72,0.22],[76,0.22],[79,0.3],[84,0.72],[81,0.24],[79,0.24],[84,1.05]];
+      const mk = (opt && opt.mhornKind) || 1;
+      const seq = mk === 2
+        ? [[74,0.20],[78,0.20],[81,0.26],[86,0.56],[83,0.24],[81,0.28],[86,0.95]]
+        : [[72,0.22],[76,0.22],[79,0.3],[84,0.72],[81,0.24],[79,0.24],[84,1.05]];
       let curT = t0;
       for (const [m, dur] of seq) {
         if (typeof A.mnote === 'function') {
@@ -2209,17 +2219,18 @@ function handleIncomingChat(chat) {
 function handleIncomingEvent(ev) {
   const p = ONLINE_PLAYERS[ev.id] || { s: ev.s, key: ev.key };
   if (ev.type === 'horn') {
-    if (p) p.lastHornT = ev.t || Date.now();
-    playRemoteTrainSound(p, 'horn');
+    const et = ev.t || Date.now();
+    if (p.lastHornT && et <= p.lastHornT) return;
+    p.lastHornT = et;
+    playRemoteTrainSound(p, 'horn', { hornKind: ev.hornKind || 'elec' });
   } else if (ev.type === 'mhorn') {
-    if (p) p.lastMhornT = ev.t || Date.now();
-    playRemoteTrainSound(p, 'mhorn');
+    const et = ev.t || Date.now();
+    if (p.lastMhornT && et <= p.lastMhornT) return;
+    p.lastMhornT = et;
+    playRemoteTrainSound(p, 'mhorn', { mhornKind: ev.mhornKind || 1 });
   } else if (ev.type === 'promo') {
     if (p) p.lastPromoT = ev.t || Date.now();
     playRemoteTrainSound(p, 'promo', { promoN: ev.promoN, stName: ev.stName });
-  } else if (ev.type === 'ann') {
-    const _D = window.__DISP;
-    if (_D && _D.on && _D.sel && ev.id === _D.sel) playDispatchAnn(ev.annFile);
   }
 }
 
@@ -2253,7 +2264,13 @@ function displayChatBubble(playerId, name, text, isMe) {
     if (!targetCar) return;
 
     if (targetCar.chatBubble) {
-      try { targetCar.remove(targetCar.chatBubble); } catch(e) {}
+      try {
+        targetCar.remove(targetCar.chatBubble);
+        if (targetCar.chatBubble.material) {
+          if (targetCar.chatBubble.material.map) targetCar.chatBubble.material.map.dispose();
+          targetCar.chatBubble.material.dispose();
+        }
+      } catch(e) {}
       targetCar.chatBubble = null;
     }
 
@@ -2264,7 +2281,13 @@ function displayChatBubble(playerId, name, text, isMe) {
 
     setTimeout(() => {
       if (targetCar && targetCar.chatBubble === bubble) {
-        try { targetCar.remove(bubble); } catch(e) {}
+        try {
+          targetCar.remove(bubble);
+          if (bubble.material) {
+            if (bubble.material.map) bubble.material.map.dispose();
+            bubble.material.dispose();
+          }
+        } catch(e) {}
         targetCar.chatBubble = null;
       }
     }, 6000);
@@ -2370,6 +2393,7 @@ function checkOnlineStationBlocked(st, serviceKey, lineId) {
   const trackSo = (typeof TK !== 'undefined' && TK[serviceKey]) ? (TK[serviceKey].so || 0) : 0;
   for (const pid in ONLINE_PLAYERS) {
     const p = ONLINE_PLAYERS[pid];
+    if (!p || p.isPax || p.state !== 'driving') continue;
     const pLine = p.line || 'loop';
     if (pLine === targetLine && p.key === serviceKey && p.s != null) {
       const d = Math.abs(mod(p.s - (st.s + trackSo) + L / 2, L) - L / 2);
@@ -2458,7 +2482,9 @@ function publishPresence(force) {
     doorSide: (isDriving && curG.door) ? curG.door.side : 1,
     doorFrac: (isDriving && curG.door) ? curG.door.frac : 0,
     hornT: (isDriving && curG.hornT) ? curG.hornT : 0,
+    hornKind: (isDriving && curG.hornKind) ? curG.hornKind : 'elec',
     mhornT: (isDriving && curG.mhornT) ? curG.mhornT : 0,
+    mhornKind: (isDriving && curG.mhornKind) ? curG.mhornKind : 1,
     promoT: (isDriving && curG.promoLoop) ? curG.promoLoop.t0 : 0,
     promoOn: (isDriving && curG.promoOn) ? true : false,
     promoN: (isDriving && curG.promoLoop) ? curG.promoLoop.n : 0,
@@ -2505,7 +2531,7 @@ document.addEventListener('visibilitychange', () => {
       isConnectingOnline = false;
       initOnlineClient();
     } else {
-      publishPresence();
+      publishPresence(true);
       updateOnlineHud(true);
     }
   }
@@ -5042,23 +5068,20 @@ function aiRun(a,dt){
         if(Math.abs(sdiff(G.s,a.stSt.s))<1400){const r=startFlows(a.stSt,a.key,a.stSt.s+T.so,a);a.load=term?r.b:clamp(a.load-Math.min(r.a,a.load)+r.b,0,maxLoadFor(a.key));}else if(term)a.load=0;else a.load=clamp(a.load+irand(-6,10),Math.round(trainLoadFor(a.key)*0.55),maxLoadFor(a.key));}}
     aiSounds(a,el,tot);if(a.t<=0&&BRANCH&&a.stSt&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0))&&a!==FT){aiTurn(a,a.stSt);}
     else if(a.t<=0){const leftSt=a.stSt;a.state='run';a.frac=0;a.forceDep=false;a.shiomiDepMs=0;
-      const isDispTracked=!!(window.__DISP&&window.__DISP.on&&window.__DISP.sel===('ai:'+a.name));
-      if((RIDE&&RIDE.a===a||isDispTracked)&&leftSt){const gk=guideKindFor(a.key,leftSt);if(gk)scheduleGuideAfterSpeech(gk,()=>!!((RIDE&&RIDE.a===a)||(window.__DISP&&window.__DISP.on&&window.__DISP.sel===('ai:'+a.name))));}}} /* 車内放送は乗っている電車・指令監視中の電車 */
-  a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);}
+      if(RIDE&&RIDE.a===a&&leftSt){const gk=guideKindFor(a.key,leftSt);if(gk)scheduleGuideAfterSpeech(gk,()=>!!(RIDE&&RIDE.a===a));}}} /* 車内放送は乗っている電車のみ */
+  if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);}}
 }
 function aiSounds(a,el,tot){
-  const isDispTracked=!!(window.__DISP&&window.__DISP.on&&window.__DISP.sel===('ai:'+a.name));
-  if(window.__DISP&&window.__DISP.on&&window.__DISP.sel&&!isDispTracked)return;
-  const _acCam=(window.__DISP&&window.__DISP.on&&typeof DISPCAM!=='undefined'&&DISPCAM.cam)?DISPCAM.cam:camera;
-  const d=isDispTracked?10:a.tr.cars[2].position.distanceTo(_acCam.getWorldPosition(camW));if(d>320)return;
-  if(!a.sndF.v&&a.t<(BRANCH?7.5:4.2)){a.sndF.v=1;if(a.vis&&d<(isDispTracked?180:(PAX?90:(G.v<3?65:0)))&&(isDispTracked||!(typeof listenerSealed==='function'&&listenerSealed())))playGuide('tab_doors',isDispTracked?master:(getExtBus()||master),isDispTracked?0.9:clamp(1.2/(1+Math.pow(d/60,2)),0.35,1.2));}
+  if(!a.vis||!a.doors||!a.stSt||!a.tr||!a.tr.cars||!a.tr.cars[2])return;
+  const d=a.tr.cars[2].position.distanceTo(camera.getWorldPosition(camW));if(d>320)return;
+  if(!a.sndF.v&&a.t<(BRANCH?7.5:4.2)){a.sndF.v=1;if(d<(PAX?90:(G.v<3?65:0))&&!(typeof listenerSealed==='function'&&listenerSealed()))playGuide('tab_doors',getExtBus()||master,clamp(1.2/(1+Math.pow(d/60,2)),0.35,1.2));}
   if(!AC)return;if(AC.state==='suspended'){try{AC.resume();}catch(e){}}
-  if(!a.sndF.o&&el>0.1){a.sndF.o=1;playAt(isDispTracked?_acCam.position:a.tr.cars[1].position,doorOpenSnd);}
+  if(!a.sndF.o&&el>0.1){a.sndF.o=1;playAt(a.tr.cars[1].position,doorOpenSnd);}
   if(a.sndF.mStart==null)a.sndF.mStart=(a.doors?26:22)-rand(3,10);                                     /* ドアが開いてから少しして */
   if(a.t<a.sndF.mStart&&a.t>(BRANCH?8.2:4.9)){const now=AC.currentTime;if(!a.sndF.mEnd||now>a.sndF.mEnd){const kd=BRANCH?'branch':KIND[a.key];let dur=6;      /* 終わったらまた流す */
-      playAt(isDispTracked?_acCam.position:a.tr.cars[1].position,dest=>{dur=kd==='branch'?playSong(branchSong(a.stSt.i),dest,0.85):kd==='rapid'?playSong(SONG_A,dest,0.85):kd==='ltd'?playSong(SONG_B,dest,0.85):melody(dest,0.85);return dur;});
+      playAt(a.tr.cars[1].position,dest=>{dur=kd==='branch'?playSong(branchSong(a.stSt.i),dest,0.85):kd==='rapid'?playSong(SONG_A,dest,0.85):kd==='ltd'?playSong(SONG_B,dest,0.85):melody(dest,0.85);return dur;});
       a.sndF.mEnd=now+Math.max(2,dur||6)+0.25;}}
-  if(!a.sndF.c&&a.t<3.2){a.sndF.c=1;playAt(isDispTracked?_acCam.position:a.tr.cars[1].position,doorCloseSnd);}}
+  if(!a.sndF.c&&a.t<3.2){a.sndF.c=1;playAt(a.tr.cars[1].position,doorCloseSnd);}}
 /* station PA: simple approach announcement for the platform the player is on */
 let paCool=0;
 function paStation(){if(PAX)return RIDE?null:W.st;if(G.atStation!==null||G.depCheck!==null){const st=stOf(G.atStation!==null?G.atStation:G.depCheck);return Math.abs(stopDist(G.atStation!==null?G.atStation:G.depCheck))<30?st:null;}return null;}
