@@ -51,10 +51,10 @@ canvas#gl{position:fixed;top:0;left:0;display:block}
 .hide{display:none!important}
 
 /* Start Menu Redesign & Background Photos */
-#home{position:fixed;inset:0;z-index:10;display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(32px + env(safe-area-inset-bottom,0px));overflow:auto;touch-action:pan-y;overscroll-behavior:contain;background:#080c16}
+#home{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:10;display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(32px + env(safe-area-inset-bottom,0px));overflow:auto;touch-action:pan-y;overscroll-behavior:contain;background:#080c16}
 #viewMain{margin:auto 0;width:100%}
-#homeBg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.68) saturate(1.15);transition:background-image 1.2s ease-in-out;transform:scale(1.02)}
-#homeBgOverlay{position:fixed;inset:0;z-index:1;background:radial-gradient(ellipse at 50% 25%,rgba(10,16,28,0.65) 0%,rgba(5,8,15,0.92) 100%);pointer-events:none}
+#homeBg{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.68) saturate(1.15);transition:background-image 1.2s ease-in-out;transform:scale(1.02)}
+#homeBgOverlay{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:1;background:radial-gradient(ellipse at 50% 25%,rgba(10,16,28,0.65) 0%,rgba(5,8,15,0.92) 100%);pointer-events:none}
 #home .wrap{position:relative;z-index:2;width:100%;max-width:760px}
 .brand-center{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:24px}
 .main-menu-buttons{display:flex;flex-direction:column;gap:14px;max-width:440px;margin:0 auto 24px}
@@ -1305,13 +1305,22 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
     hasGL = !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
   } catch(e) {}
   if (is3DS || !hasGL) {
-    var btns = document.querySelectorAll('.menuBtn, #btnStart');
+    var stEl = document.createElement('style');
+    stEl.textContent = 'html,body{height:auto!important;min-height:100%;overflow:auto!important;background:#080c16!important;color:#eef2f8!important;touch-action:auto!important}' +
+      '#home{position:static!important;display:block!important;height:auto!important;overflow:visible!important;padding:12px!important}' +
+      '#homeBg,#homeBgOverlay,#btnOnlinePlayers,#btnQual{display:none!important}' +
+      '#viewMain{margin:0!important;width:100%!important}' +
+      '.main-menu-buttons{display:block!important;max-width:440px;margin:0 auto}' +
+      '.main-menu-buttons>*{margin-bottom:10px!important}' +
+      '.menu-btn{display:block!important;width:100%!important;padding:12px 14px!important}';
+    document.head.appendChild(stEl);
+    var btns = document.querySelectorAll('.menu-btn, #btnNavDuty, #btnChangeName, #btnCardLogin');
     for (var i = 0; i < btns.length; i++) {
       btns[i].onclick = function() {
         alert('この端末のブラウザは3D表示(WebGL)に対応していないため、3D運転は起動できません。スマホやPCからアクセスしてね！');
       };
     }
-    var st = document.getElementById('onlineStatusBar');
+    var st = document.querySelector('.online-status-bar');
     if (st) st.innerHTML = '<span>📱 軽量表示モード（この端末は3D運転非対応です）</span>';
     return;
   }
