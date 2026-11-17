@@ -5339,11 +5339,15 @@ let annWebSrc = null;
 const annBufCache = new Map();
 function stopStationAnnounce(){
   if(annWebSrc){
-    try { annWebSrc.stop(); } catch(e){}
+    try { annWebSrc.onended = null; annWebSrc.stop(); } catch(e){}
     annWebSrc = null;
   }
   if(annAudio){
-    try { annAudio.pause(); annAudio.currentTime = 0; } catch(e){}
+    try { annAudio.onended = null; annAudio.pause(); annAudio.currentTime = 0; } catch(e){}
+    annAudio = null;
+  }
+  if(master && AC && !_adWebSrc && !_adAudio){
+    try { master.gain.setTargetAtTime(9.5, AC.currentTime, 0.15); } catch(_){}
   }
 }
 function loadAnnBuffer(url){
@@ -5393,14 +5397,20 @@ function playStationAnnounce(st, mode){
       if(AC.state === 'suspended'){ try { AC.resume(); } catch(e){} }
       const playBuf = (buf) => {
         stopStationAnnounce();
+        if(master && AC){ try { master.gain.setTargetAtTime(4.5, AC.currentTime, 0.08); } catch(_){} }
         const s = AC.createBufferSource();
         const g = AC.createGain();
-        g.gain.value = master ? 0.12 : 0.85;
+        g.gain.value = 1.35;
         s.buffer = buf;
         s.connect(g);
-        g.connect(master || AC.destination);
+        g.connect(AC.destination);
         annWebSrc = s;
-        s.onended = () => { if(annWebSrc === s) annWebSrc = null; };
+        s.onended = () => {
+          if(annWebSrc === s) annWebSrc = null;
+          if(master && AC && !_adWebSrc && !_adAudio){
+            try { master.gain.setTargetAtTime(9.5, AC.currentTime, 0.2); } catch(_){}
+          }
+        };
         s.start(0);
       };
       loadAnnBuffer(fname).then(playBuf).catch(err => {
