@@ -5445,7 +5445,7 @@ const ANN_SENTENCE_END=new Set([
   'ja_desu.mp3','ja_homen_desu.mp3','ja_deguchi_l.mp3','ja_deguchi_r.mp3',
   'ja_ni_teisha.mp3','ja_ni_teisha_itashimasu.mp3','ja_ltd_degozaimasu.mp3',
   'ja_ltd_arr_prep.mp3','ja_norikae_intro.mp3','ja_thanks.mp3','ja_loop_welcome.mp3',
-  'ja_ltd_dep_intro.mp3','ja_ltd_arr_intro.mp3','oki_dep_end.mp3','oki_arr_end.mp3',
+  'ja_ltd_dep_intro.mp3','ja_ltd_arr_intro.mp3','ainu_dep_end.mp3','ainu_arr_end.mp3','oki_dep_end.mp3','oki_arr_end.mp3',
   'ko_desu.mp3','ko_arr_end.mp3','ko_exit_l.mp3','ko_exit_r.mp3',
   'zh_exit_l.mp3','zh_exit_r.mp3','en_exit_l.mp3','en_exit_r.mp3',
   'en_outer_rapid.mp3','en_outer_local.mp3','en_inner_rapid.mp3','en_inner_local.mp3'
@@ -5460,7 +5460,7 @@ function getAnnGapSec(prevUrl, nextUrl){
   if(!p||!n) return 0;
   if(p===n) return 0.12;
   if(p==='ainu_dep_intro.mp3'||p==='ainu_arr_intro.mp3'||p==='oki_dep_intro.mp3'||p==='oki_arr_intro.mp3') return 0.0;
-  if(n==='oki_dep_end.mp3'||n==='oki_arr_end.mp3') return -0.015;
+  if(n==='ainu_dep_end.mp3'||n==='ainu_arr_end.mp3'||n==='oki_dep_end.mp3'||n==='oki_arr_end.mp3') return -0.015;
   const lp=annLangOf(p), ln=annLangOf(n);
   if(lp!==ln){
     if(lp==='ja'&&ln==='ainu') return 0.32;
@@ -5665,7 +5665,7 @@ function buildAnnouncementData(st, mode){
         P+'ja_ltd_next_stop.mp3',
         stPartJa(st),
         P+'ja_ltd_degozaimasu.mp3',
-        P+'ainu_dep_intro.mp3', stPartJa(st), P+'ja_desu.mp3',
+        P+'ainu_dep_intro.mp3', stPartJa(st), P+'ainu_dep_end.mp3',
         P+'oki_dep_intro.mp3', stPartJa(st), P+'oki_dep_end.mp3',
         P+(isOuter?'en_outer_ltd.mp3':'en_inner_ltd.mp3'), stPartEn(st),
         P+'ko_ltd_dep.mp3', P+'st_ko_'+st.i+'.mp3', P+'ko_desu.mp3',
@@ -5681,7 +5681,7 @@ function buildAnnouncementData(st, mode){
         P+'ja_ltd_arr_intro.mp3', stPartJa(st), P+'ja_ltd_arr_prep.mp3',
         stPartJa(st), P+'ja_wo_demasuto.mp3', stPartJa(nextAfter), P+'ja_ni_teisha_itashimasu.mp3',
         ...tr.parts,
-        P+'ainu_arr_intro.mp3', stPartJa(st), P+'ja_desu.mp3',
+        P+'ainu_arr_intro.mp3', stPartJa(st), P+'ainu_arr_end.mp3',
         P+'oki_arr_intro.mp3', stPartJa(st), P+'oki_arr_end.mp3',
         P+'en_arr.mp3', stPartEn(st), P+'en_after.mp3', stPartEn(nextAfter),
         P+'ko_arr.mp3', P+'st_ko_'+st.i+'.mp3', P+'ko_arr_end.mp3',
