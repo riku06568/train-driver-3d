@@ -5627,8 +5627,8 @@ function preloadStationAnnounce(st){
   loadAnnBuffer(stPartJa(st)).catch(()=>{});
   loadAnnBuffer(stPartEn(st)).catch(()=>{});
 }
-const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v195.mp3';
-const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。今回のアップデートでは、急停車や駅接近放送を含めた全音声の録音化、開発者バッジ表示、エーアイ列車の閉塞と衝突防止の強化、および地下区間の演出強化を行いました。';
+const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v196.mp3';
+const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。バージョン1.9.6では、英語・韓国語・中国語・ドイツ語・フランス語・ポルトガル語に加え、アイヌ語や沖縄弁にも対応した新車内放送、主要駅の乗り換え時刻案内、快速特急の10秒チャイム、運転士タブレットの警笛5種、さらに汐見駅6面12線の改良や駅発車標の液晶化を行いました。';
 const RANDOM_ADS=[
   {file:LATEST_UPDATE_AD_FILE,text:LATEST_UPDATE_AD_TEXT},
   {file:'assets/audio/ann/parts/ad_random_2.mp3',text:'汐見環状線より、車内マナーのお願いです。お年寄りや体の不自由なお客様には席をお譲りください。また、歩きながらのスマートフォン操作はおやめください。'},
