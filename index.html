@@ -1297,42 +1297,6 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
 <div id="leanUI" class="hide"><div class="lt">窓から顔を出しています：すぐ横の操作箱のボタン（戸開・戸閉・メロディ）を押します／ドラッグで見回し</div><div class="lb"><button id="leanBackB" style="background:#34445e;color:#fff">運転席に戻る</button></div></div>
 <script>
 (function(){
-  var ua = navigator.userAgent || '';
-  var is3DS = /Nintendo (3DS|DSi|WiiU)/i.test(ua);
-  var hasGL = false;
-  try {
-    var c = document.createElement('canvas');
-    hasGL = !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
-  } catch(e) {}
-  if (is3DS || !hasGL) {
-    var stEl = document.createElement('style');
-    stEl.textContent = 'html,body{height:auto!important;min-height:100%;overflow:auto!important;background:#080c16!important;color:#eef2f8!important;touch-action:auto!important}' +
-      '#home{position:static!important;display:block!important;height:auto!important;overflow:visible!important;padding:12px!important}' +
-      '#homeBg,#homeBgOverlay,#btnOnlinePlayers,#btnQual{display:none!important}' +
-      '#viewMain{margin:0!important;width:100%!important}' +
-      '.main-menu-buttons{display:block!important;max-width:440px;margin:0 auto}' +
-      '.main-menu-buttons>*{margin-bottom:10px!important}' +
-      '.menu-btn{display:block!important;width:100%!important;padding:12px 14px!important}';
-    document.head.appendChild(stEl);
-    var btns = document.querySelectorAll('.menu-btn, #btnChangeName, #btnCardLogin');
-    for (var i = 0; i < btns.length; i++) {
-      btns[i].onclick = function() {
-        alert('この端末では簡易表示中だよ！「乗務開始」を押すと3DS向けの超軽量モードで運転できるよ！');
-      };
-    }
-    var btnDuty = document.getElementById('btnNavDuty');
-    if (btnDuty) {
-      btnDuty.onclick = function() {
-        if (window.__SHIOMI_3DS_SHOW_MENU) { window.__SHIOMI_3DS_SHOW_MENU(); return; }
-        var s = document.createElement('script');
-        s.src = 'assets/js/game-3ds.js?v=81';
-        document.body.appendChild(s);
-      };
-    }
-    var st = document.querySelector('.online-status-bar');
-    if (st) st.innerHTML = '<span>🎮 3DS・軽量モード（「乗務開始」で起動できます）</span>';
-    return;
-  }
   function loadScript(src, cb) {
     var s = document.createElement('script');
     s.src = src;
@@ -1342,7 +1306,7 @@ body.disp-monitor #btnTitleReturn,body.disp-monitor #btnChatFab,body.disp-monito
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=76', function() {});
+      loadScript('assets/js/game.js?v=82', function() {});
     });
   });
 })();
