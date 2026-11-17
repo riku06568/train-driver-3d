@@ -5357,6 +5357,8 @@ let annWebSrc = null;
 let annSeqToken = 0;
 let annSeqTimer = null;
 const annBufCache = new Map();
+const annLoadPromises = new Map();
+const annTrimCache = new Map();
 const CITYLINE_PART_IDX={'朱雀線':0,'高原線':1,'地下鉄みどり線':2,'湾岸線':3,'蒼海線':4,'北嶺線':5,'みなと線':6,'白浜線':7,'港見支線':8,'翠湖線':9,'丘陽線':10,'地下鉄こだま線':11,'湖畔線':12,'東都線':13,'丘陵線':14,'地下鉄あおば線':15,'臨海線':16,'白峰支線':17,'峰越線':18,'地下鉄ひばり線':19,'北原線':20,'金波線':21,'海峡線':22,'東雲線':23,'地下鉄ひかり線':24,'黎明線':25,'地下鉄あかつき線':26,'東海岸線':27,'西谷線':28,'紫雲地下線':29,'空港線':30,'西岳線':31,'地下鉄つばさ線':32,'碧浜線':33,'臨港線':34,'地下鉄しおかぜ線':35,'浜手線':36,'天宮高架線':37,'南山線':38,'地下鉄すばる線':39,'空港快速線':40};
 function stopStationAnnounce(){
   annSeqToken++;
@@ -5373,15 +5375,158 @@ function stopStationAnnounce(){
     try { master.gain.setTargetAtTime(9.5, AC.currentTime, 0.15); } catch(_){}
   }
 }
+function getAnnTrimBounds(url, buf){
+  if(annTrimCache.has(url)) return annTrimCache.get(url);
+  const sr=buf.sampleRate||44100, len=buf.length|0, nc=buf.numberOfChannels||1;
+  const chs=[];
+  for(let c=0;c<nc;c++) chs.push(buf.getChannelData(c));
+  const thr=0.006;
+  let first=-1, last=-1;
+  for(let i=0;i<len;i++){
+    let mx=0;
+    for(let c=0;c<nc;c++){ const v=Math.abs(chs[c][i]); if(v>mx) mx=v; }
+    if(mx>=thr){ first=i; break; }
+  }
+  for(let i=len-1;i>=0;i--){
+    let mx=0;
+    for(let c=0;c<nc;c++){ const v=Math.abs(chs[c][i]); if(v>mx) mx=v; }
+    if(mx>=thr){ last=i; break; }
+  }
+  const padPre=Math.round(sr*0.014), padPost=Math.round(sr*0.022);
+  let res;
+  if(first<0||last<=first){
+    res={start:0, end:len};
+  }else{
+    const s=Math.max(0, first-padPre), e=Math.min(len, last+padPost);
+    res=(e>s)?{start:s, end:e}:{start:0, end:len};
+  }
+  annTrimCache.set(url, res);
+  return res;
+}
 function loadAnnBuffer(url){
   if(annBufCache.has(url)) return Promise.resolve(annBufCache.get(url));
-  return fetch(url).then(r=>{
+  if(annLoadPromises.has(url)) return annLoadPromises.get(url);
+  const p=fetch(url).then(r=>{
     if(!r.ok) throw new Error('HTTP '+r.status);
     return r.arrayBuffer();
   }).then(b=>AC.decodeAudioData(b)).then(buf=>{
     annBufCache.set(url, buf);
+    getAnnTrimBounds(url, buf);
+    annLoadPromises.delete(url);
     return buf;
+  }).catch(err=>{
+    annLoadPromises.delete(url);
+    throw err;
   });
+  annLoadPromises.set(url, p);
+  return p;
+}
+function preloadAnnUrls(urls){
+  if(!AC||!urls||!urls.length) return;
+  const seen=new Set();
+  for(let i=0;i<urls.length;i++){
+    const u=urls[i];
+    if(u&&!seen.has(u)){ seen.add(u); loadAnnBuffer(u).catch(()=>{}); }
+  }
+}
+function annLangOf(fname){
+  if(!fname) return 'ja';
+  if(fname.startsWith('ainu_')) return 'ainu';
+  if(fname.startsWith('oki_')) return 'oki';
+  if(fname.startsWith('en_')||fname.startsWith('st_en_')||fname.includes('_en_')) return 'en';
+  if(fname.startsWith('ko_')||fname.startsWith('st_ko_')) return 'ko';
+  if(fname.startsWith('zh_')||fname.startsWith('st_zh_')) return 'zh';
+  if(fname.startsWith('de_')||fname.startsWith('st_de_')) return 'de';
+  if(fname.startsWith('fr_')||fname.startsWith('st_fr_')) return 'fr';
+  if(fname.startsWith('pt_')||fname.startsWith('st_pt_')) return 'pt';
+  return 'ja';
+}
+const ANN_SENTENCE_END=new Set([
+  'ja_desu.mp3','ja_homen_desu.mp3','ja_deguchi_l.mp3','ja_deguchi_r.mp3',
+  'ja_ni_teisha.mp3','ja_ni_teisha_itashimasu.mp3','ja_ltd_degozaimasu.mp3',
+  'ja_ltd_arr_prep.mp3','ja_norikae_intro.mp3','ja_thanks.mp3','ja_loop_welcome.mp3',
+  'ja_ltd_dep_intro.mp3','ja_ltd_arr_intro.mp3','oki_dep_end.mp3','oki_arr_end.mp3',
+  'ko_desu.mp3','ko_arr_end.mp3','ko_exit_l.mp3','ko_exit_r.mp3',
+  'zh_exit_l.mp3','zh_exit_r.mp3','en_exit_l.mp3','en_exit_r.mp3',
+  'en_outer_rapid.mp3','en_outer_local.mp3','en_inner_rapid.mp3','en_inner_local.mp3'
+]);
+const ANN_COMMA_PAUSE=new Set([
+  'ja_tsugiwa.mp3','ja_mamonaku.mp3','ja_konodensha.mp3',
+  'en_next.mp3','en_arr.mp3','en_after.mp3'
+]);
+function getAnnGapSec(prevUrl, nextUrl){
+  const p=(prevUrl||'').split('/').pop();
+  const n=(nextUrl||'').split('/').pop();
+  if(!p||!n) return 0;
+  if(p===n) return 0.12;
+  if(p==='ainu_dep_intro.mp3'||p==='ainu_arr_intro.mp3'||p==='oki_dep_intro.mp3'||p==='oki_arr_intro.mp3') return 0.0;
+  if(n==='oki_dep_end.mp3'||n==='oki_arr_end.mp3') return -0.015;
+  const lp=annLangOf(p), ln=annLangOf(n);
+  if(lp!==ln){
+    if(lp==='ja'&&ln==='ainu') return 0.32;
+    return 0.34;
+  }
+  if(ANN_SENTENCE_END.has(p)||p.startsWith('ja_m_')) return 0.17;
+  if(ANN_COMMA_PAUSE.has(p)) return 0.025;
+  return -0.024;
+}
+function buildMergedAnnBuffer(items){
+  if(!AC||!items.length) return null;
+  const sr=AC.sampleRate||44100;
+  let maxCh=1;
+  const segs=[];
+  for(let i=0;i<items.length;i++){
+    const {url, buf}=items[i];
+    if(!buf||!buf.length) continue;
+    const tb=getAnnTrimBounds(url, buf);
+    const len=tb.end-tb.start;
+    if(len<=0) continue;
+    if(buf.numberOfChannels>maxCh) maxCh=buf.numberOfChannels;
+    const bSr=buf.sampleRate||sr;
+    const outLen=Math.max(1, Math.round(len*(sr/bSr)));
+    segs.push({url, buf, tb, outLen, ratio:bSr/sr});
+  }
+  if(!segs.length) return null;
+  let cursor=0;
+  const placements=[];
+  for(let i=0;i<segs.length;i++){
+    if(i>0){
+      const gapSec=getAnnGapSec(segs[i-1].url, segs[i].url);
+      cursor=Math.max(0, cursor+Math.round(gapSec*sr));
+    }
+    placements.push({seg:segs[i], offset:cursor});
+    cursor+=segs[i].outLen;
+  }
+  const totalLen=Math.max(1, cursor+Math.round(sr*0.03));
+  const outBuf=AC.createBuffer(maxCh, totalLen, sr);
+  const fadeSamples=Math.max(1, Math.round(sr*0.008));
+  for(let c=0;c<maxCh;c++){
+    const dst=outBuf.getChannelData(c);
+    for(let pIdx=0;pIdx<placements.length;pIdx++){
+      const {seg, offset}=placements[pIdx];
+      const srcCh=seg.buf.getChannelData(Math.min(c, seg.buf.numberOfChannels-1));
+      const n=seg.outLen, st=seg.tb.start, r=seg.ratio;
+      const fIn=Math.min(fadeSamples, Math.floor(n/3));
+      const fOut=Math.min(fadeSamples, Math.floor(n/3));
+      for(let j=0;j<n;j++){
+        const pos=st+j*r;
+        const idx0=pos|0;
+        const frac=pos-idx0;
+        const s0=srcCh[idx0]||0;
+        const s1=srcCh[Math.min(idx0+1, seg.buf.length-1)]||s0;
+        let v=s0+(s1-s0)*frac;
+        if(j<fIn) v*=j/fIn;
+        else if(j>=n-fOut) v*=(n-1-j)/fOut;
+        const di=offset+j;
+        if(di>=0&&di<totalLen) dst[di]+=v;
+      }
+    }
+    for(let k=0;k<totalLen;k++){
+      if(dst[k]>0.98) dst[k]=0.98;
+      else if(dst[k]<-0.98) dst[k]=-0.98;
+    }
+  }
+  return outBuf;
 }
 function playDispatchAnn(file){
   try{
@@ -5404,30 +5549,30 @@ function playAnnQueue(urls){
     if(AC){
       if(AC.state==='suspended'){try{AC.resume();}catch(_){}}
       if(master){try{master.gain.setTargetAtTime(4.5,AC.currentTime,0.08);}catch(_){}}
-      const list=urls.slice();
-      const step=()=>{
+      Promise.all(urls.map(u=>loadAnnBuffer(u).then(buf=>({url:u,buf})).catch(()=>null))).then(res=>{
         if(tok!==annSeqToken||G.phase!=='play'||(typeof G!=='undefined'&&G.sound===false)){
           if(master&&AC&&!_adWebSrc&&!_adAudio)try{master.gain.setTargetAtTime(9.5,AC.currentTime,0.18);}catch(_){}
           return;
         }
-        if(!list.length){
+        const items=res.filter(Boolean);
+        const merged=buildMergedAnnBuffer(items);
+        if(!merged){
           annWebSrc=null;
           if(master&&AC&&!_adWebSrc&&!_adAudio)try{master.gain.setTargetAtTime(9.5,AC.currentTime,0.2);}catch(_){}
           return;
         }
-        const u=list.shift();
-        loadAnnBuffer(u).then(buf=>{
-          if(tok!==annSeqToken)return;
-          const s=AC.createBufferSource(),g=AC.createGain();
-          g.gain.value=1.35;
-          s.buffer=buf;s.connect(g);g.connect(AC.destination);
-          annWebSrc=s;
-          s.onended=()=>{if(annWebSrc===s)annWebSrc=null;step();};
-          s.start(0);
-        }).catch(()=>{step();});
-      };
-      urls.slice(0,6).forEach(u=>loadAnnBuffer(u).catch(()=>{}));
-      step();
+        const s=AC.createBufferSource(), g=AC.createGain();
+        g.gain.value=1.35;
+        s.buffer=merged;
+        s.connect(g);
+        g.connect(AC.destination);
+        annWebSrc=s;
+        s.onended=()=>{
+          if(annWebSrc===s) annWebSrc=null;
+          if(master&&AC&&!_adWebSrc&&!_adAudio)try{master.gain.setTargetAtTime(9.5,AC.currentTime,0.2);}catch(_){}
+        };
+        s.start(0);
+      });
     }
   }catch(e){console.warn('playAnnQueue error',e);}
 }
@@ -5694,6 +5839,7 @@ function triggerNextStationAnnounce(mode){
   if(mode==='soon')stopAdBroadcast();
   const isSoon=mode==='soon';
   const info=buildAnnouncementData(nst,isSoon?'soon':'next');
+  preloadAnnUrls(info.parts);
   const chimeDelay=info.isLtd?chimeLtdLong(AC?AC.destination:null):(chime(),600);
   toast((isSoon?'📢 まもなく放送：':'📢 次駅放送：')+info.text,'info');
   if(annSeqTimer){clearTimeout(annSeqTimer);annSeqTimer=null;}
