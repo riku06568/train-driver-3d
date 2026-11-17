@@ -4375,11 +4375,12 @@ function stopHoldHorn(immediate){
   if(!AC||!h.bus)return;
   const elapsed=(nowMs()-h.started)/1000;
   const minHold=immediate?0:Math.max(0,0.28-elapsed);
-  const tEnd=AC.currentTime+minHold;
+  const tEnd=Math.max(AC.currentTime+minHold, (h.t0||AC.currentTime)+0.04);
   try{
-    h.bus.gain.setValueAtTime(h.bus.gain.value||1.0,tEnd);
+    if(typeof h.bus.gain.cancelScheduledValues==='function')h.bus.gain.cancelScheduledValues(tEnd);
+    h.bus.gain.setValueAtTime(1.0,tEnd);
     h.bus.gain.exponentialRampToValueAtTime(0.0001,tEnd+0.14);
-    setTimeout(()=>{for(const o of h.oscs){try{o.stop();o.disconnect();}catch(_){}}try{h.bus.disconnect();}catch(_){}},(minHold+0.2)*1000);
+    setTimeout(()=>{for(const o of h.oscs){try{o.stop();o.disconnect();}catch(_){}}try{h.bus.disconnect();}catch(_){}},Math.max(200,(tEnd-AC.currentTime+0.25)*1000));
   }catch(_){}
 }
 function horn(kind){
@@ -9041,10 +9042,14 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const bindHoldBtn = (id, kind) => {
       const b = document.getElementById(id);
       if (!b) return;
-      b.addEventListener('pointerdown', e => { e.preventDefault(); startHoldHorn(kind); });
-      b.addEventListener('pointerup', () => stopHoldHorn());
-      b.addEventListener('pointercancel', () => stopHoldHorn());
-      b.addEventListener('pointerleave', () => stopHoldHorn());
+      b.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        try { if (b.setPointerCapture && e.pointerId != null) b.setPointerCapture(e.pointerId); } catch(_){}
+        startHoldHorn(kind);
+      });
+      b.addEventListener('pointerup', e => { e.stopPropagation(); stopHoldHorn(); });
+      b.addEventListener('pointercancel', e => { e.stopPropagation(); stopHoldHorn(); });
+      b.addEventListener('click', e => { e.stopPropagation(); if (AC && AC.state !== 'running') { try { AC.resume(); } catch(_){} } });
     };
     bindHoldBtn('dtHornElec', 'elec');
     bindHoldBtn('dtHornAir', 'air');
