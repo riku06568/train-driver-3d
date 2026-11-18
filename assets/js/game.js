@@ -2437,14 +2437,19 @@ function carTemplate(front,rear,panto,staticDoors,green,old){
             if(MINI&&sg!==lcdSide)return;if(MINI){pl('ioled',0.86,0.14,IX-sg*0.008,3.30,z,iry);pl(sg>0?'ilampR':'ilampL',0.44,0.05,IX-sg*0.008,3.14,z,iry);return;}
             if(sg===lcdSide)pl('iled',0.58,0.33,IX-sg*0.008,3.23,z,iry);
             else{pl('ioled',0.86,0.14,IX-sg*0.008,3.30,z,iry);pl(sg>0?'ilampR':'ilampL',0.44,0.05,IX-sg*0.008,3.14,z,iry);}});}
-        else{ /* 新形：ドア上は「案内ワイド＋広告」の2画面、窓上は横長のデジタルサイネージ */
+        else{ /* 新形：ドア上・戸袋上・窓上・天井中吊り・妻面に案内用・広告用液晶を多数配置 */
           for(const z of LY.doors){
-            pl('iledW',0.78,0.293,IX-sg*0.008,3.24,z-0.19,iry);
-            pl('iad',0.38,0.203,IX-sg*0.008,3.24,z+0.41,iry);}
-          for(const z of LY.lcdSeat)pl('iad',0.62,0.332,IX-sg*0.008,3.226,z,iry);
-          for(const z of [-3.2,3.2]){ /* 中吊りデジタルサイネージ（両面・向き一致） */
-            box('dark',0.66,0.38,0.045,0,3.15,z);
-            for(const face of [0,Math.PI])pl('iad',0.60,0.32,0,3.15,z+(face?-0.026:0.026),face);
+            pl('iad',0.46,0.24,IX-sg*0.008,3.24,z-0.34,iry);
+            pl('iledW',0.68,0.26,IX-sg*0.008,3.24,z+0.26,iry);
+            pl('iled',0.42,0.24,IX-sg*0.008,3.24,z-0.92,iry);
+            pl('iad',0.42,0.24,IX-sg*0.008,3.24,z+0.92,iry);}
+          for(const [a,b] of LY.seats){let si=0;for(let z=a+0.7;z<=b-0.65;z+=1.15,si++){
+            if(si%2===0)pl('iad',0.60,0.31,IX-sg*0.008,3.226,z,iry);
+            else pl('iledW',0.64,0.25,IX-sg*0.008,3.226,z,iry);}}
+          for(const z of [-6.0,-3.2,0,3.2,6.0]){ /* 中吊りデジタルサイネージ（両面・中央は案内用、他は広告用） */
+            box('dark',0.68,0.38,0.045,0,3.15,z);
+            const mat=z===0?'iledW':'iad';
+            for(const face of [0,Math.PI])pl(mat,0.62,z===0?0.24:0.32,0,3.15,z+(face?-0.026:0.026),face);
             for(const k of [-1,1])box('grack',0.02,0.09,0.02,k*0.26,3.38,z);}}
         for(const [a,b] of LY.seats){box('iseat',0.46,0.42,b-a-0.3,sg*1.1,1.37,(a+b)/2);box('iseat',0.08,0.45,b-a-0.3,sg*1.31,1.8,(a+b)/2);
           if(MINI&&old){let q=0;for(let z2=a+0.6;z2<b-0.5;z2+=1.3,q++)pl('pad'+((q+(sg>0?3:0))%6),0.9,0.24,IX-sg*0.01,3.18,z2,iry); /* 窓上の紙の広告 */
@@ -2964,15 +2969,24 @@ const SM=OWNOLD?OLDI:TM;
       if(MINI&&sg!==lcdSide)return;if(MINI){const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;return;}
       if(sg===lcdSide){const a=cplane(0.58,0.33,TM.iled,x-sg*0.045,3.23,dz);a.rotation.y=iry;}
       else{const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;}});
-    else for(const dz of DOORC){ /* 新形：ドア上は案内ワイド＋広告の2画面 */
-      const aG=cplane(0.78,0.293,TM.iledW,x-sg*0.045,3.24,dz-0.19);aG.rotation.y=iry;
-      const aA=cplane(0.38,0.203,TM.iad,x-sg*0.045,3.24,dz+0.41);aA.rotation.y=iry;}
-    if(!OWNOLD){for(const z of SEATC){ /* 窓上のデジタルサイネージ */
-      const aA=cplane(0.62,0.332,TM.iad,x-sg*0.045,3.226,z);aA.rotation.y=iry;}
-      for(const z of [-3.2,3.2]){const hz=z+OFF;if(hz<Z0+0.6||hz>Z1-0.6)continue; /* 中吊りデジタルサイネージ（両面） */
-        cbox(0.66,0.38,0.045,CM.desk,0,3.15,hz);
-        for(const face of [0,Math.PI]){const pp=cplane(0.60,0.32,TM.iad,0,3.15,hz+(face?-0.026:0.026));pp.rotation.y=face;}
+    else{for(const dz of DOORC){ /* 新形：ドア上＋戸袋上に案内用・広告用液晶を複数配置 */
+      const aA1=cplane(0.46,0.24,TM.iad,x-sg*0.045,3.24,dz-0.34);aA1.rotation.y=iry;
+      const aG=cplane(0.68,0.26,TM.iledW,x-sg*0.045,3.24,dz+0.26);aG.rotation.y=iry;
+      const aG2=cplane(0.42,0.24,TM.iled,x-sg*0.045,3.24,dz-0.92);aG2.rotation.y=iry;
+      const aA2=cplane(0.42,0.24,TM.iad,x-sg*0.045,3.24,dz+0.92);aA2.rotation.y=iry;}
+      for(const [a,b] of LY.seats){let si=0;for(let z2=a+0.7;z2<=b-0.65;z2+=1.15,si++){
+        const z=z2+OFF;if(z<Z0+0.4||z>Z1-0.4)continue;
+        const m=si%2===0?TM.iad:TM.iledW,h=si%2===0?0.31:0.25,w=si%2===0?0.60:0.64;
+        const aS=cplane(w,h,m,x-sg*0.045,3.226,z);aS.rotation.y=iry;}}
+      for(const z of [-6.0,-3.2,0,3.2,6.0]){const hz=z+OFF;if(hz<Z0+0.6||hz>Z1-0.6)continue; /* 中吊りデジタルサイネージ（両面） */
+        cbox(0.68,0.38,0.045,CM.desk,0,3.15,hz);
+        const m=z===0?TM.iledW:TM.iad,h=z===0?0.24:0.32;
+        for(const face of [0,Math.PI]){const pp=cplane(0.62,h,m,0,3.15,hz+(face?-0.026:0.026));pp.rotation.y=face;}
         cbox(0.02,0.09,0.02,CM.metal,0.26,3.38,hz);cbox(0.02,0.09,0.02,CM.metal,-0.26,3.38,hz);}}}
+  if(!OWNOLD){
+    const eG=cplane(0.76,0.28,TM.iledW,0,3.20,Z1-0.04);eG.rotation.y=Math.PI;
+    for(const sx of [-1,1]){const eA=cplane(0.56,0.30,TM.iad,sx*0.86,2.60,Z1-0.04);eA.rotation.y=Math.PI;}
+  }
   cbox(2.74,2.26,0.06,SM.iwall,0,2.28,Z1);cbox(0.9,1.9,0.07,TM.door,0,2.1,Z1-0.01);
 }
 {const v=cplane(0.7,0.26,CM.visor,-0.75,3.3,0.3);v.rotation.x=-0.6;}
@@ -5848,11 +5862,12 @@ function getTransferPartsAndText(st){
 function buildAnnouncementData(st, mode){
   const P='assets/audio/ann/parts/';
   const isSoon=(mode==='soon');
-  const dir=(typeof G!=='undefined'&&G)?G.dir:1;
-  const key=(PAX&&RIDE&&RIDE.a)?RIDE.a.key:((typeof G!=='undefined'&&G&&G.key)?G.key:'A');
+  const isRide=!!(PAX&&RIDE&&RIDE.a);
+  const dir=isRide?(RIDE.a.dir||1):((typeof G!=='undefined'&&G)?G.dir:1);
+  const key=isRide?(RIDE.a.key||'A'):((typeof G!=='undefined'&&G&&G.key)?G.key:'A');
   const kind=KIND[key]||'local';
   const isOuter=dir>0;
-  const sideIsLeft=localSide(st)<0;
+  const sideIsLeft=isRide?(TK[key].side(st)*dir<0):(localSide(st)<0);
   const nextAfter=getAfterStopStation(st,dir,kind);
   const majorsAhead=getAheadMajorStations(st.i,dir,kind,3);
   const isMajor=isMajorStation(st);
@@ -5995,7 +6010,8 @@ function stopAdBroadcast(){
   if(master&&AC&&!annWebSrc)try{master.gain.setTargetAtTime(9.5,AC.currentTime,0.15);}catch(_){}
 }
 function playAdBroadcastForDep(depSt, nextSt){
-  if(PAX||G.phase!=='play'||(typeof G!=='undefined'&&G.sound===false))return;
+  const isRide=!!(PAX&&RIDE&&RIDE.a);
+  if((!PAX&&G.phase!=='play')||(PAX&&!isRide)||(typeof G!=='undefined'&&G.sound===false))return;
   if((depSt&&isMajorStation(depSt))||(nextSt&&isMajorStation(nextSt)))return;
   let item=null;
   if(!G.firstDepAdDone){
@@ -6008,8 +6024,9 @@ function playAdBroadcastForDep(depSt, nextSt){
     item=RANDOM_ADS[(Math.random()*RANDOM_ADS.length)|0];
   }
   const finishAll=()=>{if(master&&AC&&!annWebSrc)try{master.gain.setTargetAtTime(9.5,AC.currentTime,0.2);}catch(_){}};
+  const inRun=()=>((!PAX&&G.phase==='play'&&G.atStation===null)||(PAX&&RIDE&&RIDE.a&&RIDE.a.state==='run'));
   const runAd=()=>{
-    if(G.phase!=='play'||G.atStation!==null){stopAdBroadcast();return;}
+    if(!inRun()){stopAdBroadcast();return;}
     if(master&&AC)try{master.gain.setTargetAtTime(4.2,AC.currentTime,0.08);}catch(_){}
     chime();
     toast('📢 広告放送：'+item.text,'info');
@@ -6018,7 +6035,8 @@ function playAdBroadcastForDep(depSt, nextSt){
       if(AC){
         if(AC.state==='suspended'){try{AC.resume();}catch(_){}}
         loadAnnBuffer(item.file).then(buf=>{
-          if(G.phase!=='play'||G.atStation!==null){stopAdBroadcast();return;}
+          if(!inRun()){stopAdBroadcast();return;}
+          if(!buf){finishAll();return;}
           const s=AC.createBufferSource(),g=AC.createGain();
           g.gain.value=1.25;
           s.buffer=buf;s.connect(g);g.connect(AC.destination);
@@ -6031,12 +6049,45 @@ function playAdBroadcastForDep(depSt, nextSt){
     }catch(_){finishAll();}
   };
   const waitAnn=()=>{
-    if(G.phase!=='play'||G.atStation!==null)return;
+    if(!inRun())return;
     if(annWebSrc||annPlaying||(annQ&&annQ.length)||(annAudio&&!annAudio.paused&&!annAudio.ended)){_adQueueTimer=setTimeout(waitAnn,350);return;}
     _adQueueTimer=setTimeout(runAd,600);
   };
   clearTimeout(_adQueueTimer);
   _adQueueTimer=setTimeout(waitAnn,1200);
+}
+function triggerRideAnnounce(a, mode){
+  if(!PAX||!RIDE||RIDE.a!==a||(typeof G!=='undefined'&&G.sound===false))return;
+  const nx=aiStop(a);if(!nx||!nx.st)return;
+  const nst=nx.st;
+  const isSoon=(mode==='soon');
+  if(isSoon)stopAdBroadcast();
+  const info=buildAnnouncementData(nst,isSoon?'soon':'next');
+  preloadAnnUrls(info.parts);
+  try{prepareAnnBuffer(info.parts);}catch(e){}
+  const run=()=>{
+    if(!PAX||!RIDE||RIDE.a!==a)return;
+    try{initAudio();}catch(_){}
+    if(AC&&AC.state==='suspended'){try{AC.resume();}catch(_){}}
+    const chimeDelay=info.isLtd?chimeLtdLong(AC?AC.destination:null):(chime(),600);
+    if(annSeqTimer){clearTimeout(annSeqTimer);annSeqTimer=null;}
+    annSeqTimer=setTimeout(()=>{
+      annSeqTimer=null;
+      if(!PAX||!RIDE||RIDE.a!==a)return;
+      playAnnQueue(info.parts);
+      if(!isSoon){
+        const dst=RIDE.lastDepSt||null;
+        RIDE.lastDepSt=null;
+        playAdBroadcastForDep(dst,nst);
+      }
+    },chimeDelay);
+  };
+  if(!isSoon){
+    if(annSeqTimer){clearTimeout(annSeqTimer);annSeqTimer=null;}
+    annSeqTimer=setTimeout(run,2000);
+  }else{
+    run();
+  }
 }
 function triggerNextStationAnnounce(mode){
   if(G.phase!=='play'||(typeof G!=='undefined'&&G.sound===false))return;
@@ -6820,7 +6871,7 @@ function paxWalkIn(rawS,rawO){if(RIDE||!W.st||!PX.plats.length)return false;cons
       const sx=Math.sign(_pwP.x)||1;boardTrain({a,k,lz:clamp(_pwP.z,dz-0.4,dz+0.4),lx:sx*0.8,yaw:sx*Math.PI/2});return true;}}
   return false;}
 function stopGuide(){clearTimeout(guideTimer);if(guideAudio){try{guideAudio.pause();guideAudio.currentTime=0;}catch(e){}}}
-function alightTrain(force){stopGuide();if(RESV&&RIDE&&RIDE.a===RESV.a)cancelResv();if(!RIDE)return;const a=RIDE.a;
+function alightTrain(force){stopGuide();stopAdBroadcast();if(annSeqTimer){clearTimeout(annSeqTimer);annSeqTimer=null;}if(RESV&&RIDE&&RIDE.a===RESV.a)cancelResv();if(!RIDE)return;const a=RIDE.a;
   let st=a.stSt;
   if(!st && typeof STATIONS !== 'undefined' && STATIONS.length){
     let bd=1e9;for(const s of STATIONS){const d=Math.abs(sdiff(a.s,s.s));if(d<bd){bd=d;st=s;}}
@@ -6932,9 +6983,9 @@ function rideWalk(dt){
     else RIDE.lz=clamp(RIDE.lz,-5.1,5.1);}
   const eye=RIDE.seat!=null?seatsOf(RIDE.a,RIDE.k)[RIDE.seat].h+(greenCar()?0.86:0.72)*(paxEye()/1.55):floorY+paxEye()*1.006;
   camera.position.set(RIDE.lx,eye,RIDE.lz);camera.rotation.set(W.pitch,W.yaw,0);G.s=a.s;W.s=a.s;updAvatar(dt);
-  if(RIDE.prev==='dwell'&&a.state==='run'){const m=rideAnn(a,'次は、');RIDE.soon=false;if(m)setTimeout(()=>annJE(m.ja,m.en),2500);}
-  if(!RIDE.soon&&a.state==='run'){const nx=aiStop(a);if(nx&&nx.D<600){RIDE.soon=true;const m=rideAnn(a,'まもなく、');if(m)sayJE(m.ja,m.en);}}
-  if(RIDE.prev==='run'&&a.state==='dwell'){const s0=a.stSt||stationNear(a.s);if(s0){const end=BRANCH&&((a.dir>0&&s0.i===NST-1)||(a.dir<0&&s0.i===0));setTimeout(()=>sayJE(arriveAnn(s0,end),arriveAnnEn(s0,end)),300);}}
+  if(RIDE.prev==='dwell'&&a.state==='run'){RIDE.lastDepSt=RIDE.depSt||a.stSt||null;RIDE.soon=false;triggerRideAnnounce(a,'next');}
+  if(!RIDE.soon&&a.state==='run'){const nx=aiStop(a),thr=(KIND[a.key]==='ltd'&&!BRANCH)?1000:600;if(nx&&nx.D<thr){RIDE.soon=true;triggerRideAnnounce(a,'soon');}}
+  if(RIDE.prev==='run'&&a.state==='dwell'){RIDE.depSt=a.stSt||stationNear(a.s);stopAdBroadcast();}
   RIDE.prev=a.state;}
 /* ================= people inside trains (seats, standing, walking in/out) ================= */
 const INTP=[],INTW=[];
@@ -7031,7 +7082,7 @@ function boardInside(a,k,dz,ls){if(a.tr&&a.tr.rev)dz=-dz;const car=a.tr.cars[k];
     let bj=-1,bd=1e9;if(canStrap(p)&&Math.random()<0.6)SP.forEach((sp,j)=>{if(sl.strap[j])return;const d=Math.abs(sp.z-tz)+rand(0,1.2);if(d<bd){bd=d;bj=j;}});
     if(bj>=0){sl.strap[bj]=p;p.strapI=bj;const q=strapPlace(p,SP[bj].sg,SP[bj].z);p.strapYaw=q.yaw;p.tgt={x:q.x,z:q.z};p.path=[[SP[bj].sg*0.4,q.z],[q.x,q.z]];}
     else{const [g0,g1]=standRange(car),gr0=standGrid(g0,g1,car.userData.green?null:DOORZ),fs=pickFreeSpot(car.userData.green?gr0.filter(c2=>Math.abs(c2.z)>5.9):gr0,sl.stand,p,sl.strap,SP);
-      if(fs){p.tgt={x:fs.x,z:fs.z};p.standYaw=fs.yaw;p.path=[[ls*0.55,dz],[fs.x,fs.z]];}else{const fx=rand(-0.5,0.5),fz=car.userData.green?(dz<0?-1:1)*rand(6.0,9.2):rand(g0,g1);p.tgt={x:fx,z:fz};p.path=[[ls*0.55,dz],[fx,fz]];}}} /* 満員でも1か所に固まらない（グリーン車はデッキ） */
+      if(fs){p.tgt={x:fs.x,z:fs.z};p.standYaw=fs.yaw!=null?fs.yaw:rand(0,Math.PI*2);p.path=[[ls*0.55,dz],[fs.x,fs.z]];}else{const fx=rand(-0.5,0.5),fz=car.userData.green?(dz<0?-1:1)*rand(6.0,9.2):rand(g0,g1);p.tgt={x:fx,z:fz};p.standYaw=rand(0,Math.PI*2);p.path=[[ls*0.55,dz],[fx,fz]];}}} /* 満員でも1か所に固まらず向きもランダム（グリーン車はデッキ） */
   INTW.push(p);return true;}
 /* 乗ってきた人の立ち位置：決まった立ち位置の中から、立っている人（向かっている途中の人の行き先も）と0.45m以上離れた所を選ぶ。
    なるべく周りが空いている所を選ぶので、ドア付近に固まらず車内に散らばる */
@@ -7176,7 +7227,7 @@ function salBoard(dz,ls){const p=salPerson(),z0=9.75+dz;
     let bj=-1,bd=1e9;if(canStrap(p)&&Math.random()<0.6)SALSTRAP.forEach((sp,j)=>{if(SAL.strap[j])return;const d=Math.abs(sp.z-tz)+rand(0,1.2);if(d<bd){bd=d;bj=j;}});
     if(bj>=0){SAL.strap[bj]=p;p.strapI=bj;const q=strapPlace(p,SALSTRAP[bj].sg,SALSTRAP[bj].z);p.strapYaw=q.yaw;p.tgt={x:q.x,z:q.z};p.path=[[SALSTRAP[bj].sg*0.4,q.z],[q.x,q.z]];}
     else{const fs=pickFreeSpot(standGrid(3.2,18.6,salLayout(true,false).doors.map(d=>d+CARHALF)),SAL.stand,p,SAL.strap,SALSTRAP);
-      if(fs){p.tgt={x:fs.x,z:fs.z};p.standYaw=fs.yaw;p.path=[[ls*0.55,z0],[fs.x,fs.z]];}else{const fx=rand(-0.5,0.5),fz=rand(3.4,18.4);p.tgt={x:fx,z:fz};p.path=[[ls*0.55,z0],[fx,fz]];}}}
+      if(fs){p.tgt={x:fs.x,z:fs.z};p.standYaw=fs.yaw!=null?fs.yaw:rand(0,Math.PI*2);p.path=[[ls*0.55,z0],[fs.x,fs.z]];}else{const fx=rand(-0.5,0.5),fz=rand(3.4,18.4);p.tgt={x:fx,z:fz};p.standYaw=rand(0,Math.PI*2);p.path=[[ls*0.55,z0],[fx,fz]];}}}
   INTW.push(p);}
 function salAlight(dz,ls,done){const z0=9.75+dz;let p=null,si=-1;
   const fromSeat=SAL.seat.some(q=>q&&q.used)&&(!SAL.stand.length||Math.random()<0.4); /* 座っている人も一部降りる */
