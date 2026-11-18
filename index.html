@@ -332,7 +332,7 @@ body.disp-monitor #gl{display:none!important}
 #viewDispatch .dt-btn.warn{border-color:#92400e;background:#1c1206;color:#fcd34d}
 #viewDispatch select,#viewDispatch input{background:#0a1524;border:1px solid #22466a;border-radius:9px;color:#dfeaf7;font:inherit;font-size:12px;padding:8px 10px;width:100%}
 #viewDispatch .dt-log{overflow-y:auto;background:#04090f;border:1px solid #14293f;border-radius:10px;padding:9px;font-size:12px;line-height:1.6;color:#c8d8e8}
-#viewDispatch .tid-chat{display:flex;flex-direction:column}
+#viewDispatch .tid-chat{display:flex;flex-direction:column;grid-column:1/-1}
 #viewDispatch .disp-drv-row{display:flex;justify-content:space-between;align-items:center;gap:6px;text-align:left;padding:7px 9px;border:1px solid #17324c;background:#08121f;border-radius:9px;color:#cfe0f0;font:inherit;font-size:12px;cursor:pointer;width:100%}
 #viewDispatch .disp-drv-row.on{border-color:#fbbf24;background:#241a06;color:#fff}
 </style>
@@ -1393,7 +1393,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=95', function() {});
+      loadScript('assets/js/game.js?v=96', function() {});
     });
   });
 })();

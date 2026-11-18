@@ -9656,6 +9656,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       }
       /* 駅 */
       const many = sts.length > 22;
+      let labRow = 0;
       ctx.textAlign = 'center';
       for (const st of sts){
         const x = X(st.s);
@@ -9668,7 +9669,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         const showName = !many || major;
         if (showName){
           ctx.save();
-          ctx.translate(x, H - 26);
+          ctx.translate(x, H - 24 - (labRow++ % 2) * 16);
           ctx.rotate(-Math.PI / 4);
           ctx.fillStyle = major ? '#ffd76b' : '#8fa8c4';
           ctx.font = (major ? '700 11px ' : '10px ') + FONT;
@@ -9685,6 +9686,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       }
       /* 列車 */
       dispHitBoxes.length = 0;
+      const drawnLabels = [];
       const trains = dispLineTrains(dispLineId);
       for (const tr of trains){
         const lane = tr.dir > 0 ? laneUp : laneDn;
@@ -9707,12 +9709,16 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         if (ctx.roundRect) ctx.roundRect(x0, lane - 6, wPx, 12, 3); else ctx.rect(x0, lane - 6, wPx, 12);
         ctx.fill();
         if (sel){ ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke(); }
-        /* 名前 */
+        /* 名前（重なるときは選択中の列車だけ表示して読みやすくする） */
         const tag = tr.name + (tr.delay > 0 ? ' +' + Math.max(1, Math.round(tr.delay / 60)) + '分' : '');
         ctx.font = '700 10.5px ' + FONT;
         const tw = ctx.measureText(tag).width;
         const ty = tr.dir > 0 ? lane - 12 : lane + 24;
         const tx = Math.min(W - tw - 8, Math.max(4, x - tw / 2));
+        let clash = false;
+        for (const lb of drawnLabels) if (Math.abs(lb.y - ty) < 14 && tx < lb.x + lb.w && tx + tw + 8 > lb.x){ clash = true; break; }
+        if (clash && !sel){ dispHitBoxes.push({ pid: tr.pid, x, y: lane, rx: x0, ry: lane - 8, rw: wPx, rh: 16 }); continue; }
+        drawnLabels.push({ x:tx, y:ty, w:tw + 8 });
         ctx.fillStyle = sel ? 'rgba(120,63,6,0.95)' : 'rgba(6,14,24,0.9)';
         ctx.strokeStyle = sel ? '#fbbf24' : 'rgba(120,150,180,0.45)';
         ctx.lineWidth = 1;
@@ -9852,7 +9858,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     }
     function dispHideWorld(on){
       const gl = document.getElementById('gl');
-      if (gl) gl.style.display = on ? 'none' : 'block';
+      if (gl){ gl.style.display = on ? 'none' : 'block'; gl.style.left = on ? '-20000px' : '0px'; gl.style.visibility = on ? 'hidden' : 'visible'; }
       const pc = document.getElementById('dispCamCanvas');
       if (pc) pc.style.display = 'none';
     }
