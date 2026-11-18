@@ -9598,23 +9598,34 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     /* ===== 路線タブ ===== */
     function renderLineTabs(){
       if (!tidLineTabsEl) return;
-      let html = '';
-      for (const d of DISP_LINES){
-        const n = dispLineTrains(d.id).length;
-        html += '<button class="tid-tab'+(d.id===dispLineId?' on':'')+'" data-line="'+d.id+'">'
-              + '<i style="background:'+d.col+'"></i>'+d.name+'<span class="n">'+n+'</span></button>';
-      }
-      tidLineTabsEl.innerHTML = html;
-      tidLineTabsEl.querySelectorAll('.tid-tab').forEach(b => {
-        b.addEventListener('click', () => {
-          dispLineId = b.dataset.line;
-          dispSelectedId = null;
-          dispTargetLabel.textContent = '対象列車：未選択';
-          renderDispatchThread(null);
-          if (window.__DISP) { window.__DISP.sel = null; window.__DISP.focusS = null; }
-          if (dispLineId === 'loop' && !window.__DISP_MONITOR && typeof window.__ensureMonitorWorld === 'function') window.__ensureMonitorWorld();
-          refreshDispatchDrivers();
+      /* v1.9.7：タブは一度だけ作り、文字だけ更新（毎回作り直すと操作が取りこぼされ重くなるため） */
+      if (!tidLineTabsEl.dataset.built){
+        let html = '';
+        for (const d of DISP_LINES){
+          html += '<button class="tid-tab" data-line="'+d.id+'">'
+                + '<i style="background:'+d.col+'"></i>'+d.name+'<span class="n">0</span></button>';
+        }
+        tidLineTabsEl.innerHTML = html;
+        tidLineTabsEl.dataset.built = '1';
+        tidLineTabsEl.querySelectorAll('.tid-tab').forEach(b => {
+          b.addEventListener('click', () => {
+            dispLineId = b.dataset.line;
+            dispSelectedId = null;
+            dispTargetLabel.textContent = '対象列車：未選択';
+            renderDispatchThread(null);
+            if (window.__DISP) { window.__DISP.sel = null; window.__DISP.focusS = null; }
+            if (dispLineId === 'loop' && !window.__DISP_MONITOR && typeof window.__ensureMonitorWorld === 'function') window.__ensureMonitorWorld();
+            refreshDispatchDrivers();
+          });
         });
+      }
+      tidLineTabsEl.querySelectorAll('.tid-tab').forEach(b => {
+        const id = b.dataset.line;
+        const n = dispLineTrains(id).length;
+        const el = b.querySelector('.n');
+        if (el && el.textContent !== String(n)) el.textContent = String(n);
+        const on = id === dispLineId;
+        if (b.classList.contains('on') !== on) b.classList.toggle('on', on);
       });
     }
     /* ===== 在線表示盤（TID）===== */
@@ -9743,7 +9754,20 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       /* タブ・駅ストリップの更新 */
       if (tidBoardInfoEl) tidBoardInfoEl.textContent = '在線 ' + trains.length + ' 本 ／ ' + (def.loop ? '環状' : '片道') + ' ' + Math.round(L / 1000) + 'km';
       if (tidStripInfoEl) tidStripInfoEl.textContent = sts.length + '駅';
-      if (tidStripEl){
+      if (tidStripEl && tidStripEl.dataset.line === dispLineId){
+        const dw = new Set();
+        for (const tr of trains) if (tr.state === 'dwell'){
+          let near = null, bd = 1e9;
+          for (const st of sts){ const d = Math.abs(sdm(tr.s, st.s, L)); if (d < bd){ bd = d; near = st; } }
+          if (near && bd < 60) dw.add(near.i);
+        }
+        const kids = tidStripEl.children;
+        for (let i = 0; i < kids.length && i < sts.length; i++){
+          const want = dw.has(sts[i].i);
+          if (kids[i].classList.contains('dw') !== want) kids[i].classList.toggle('dw', want);
+        }
+      }
+      if (tidStripEl && tidStripEl.dataset.line !== dispLineId){
         const dwMap = {};
         for (const tr of trains) if (tr.state === 'dwell'){
           let near = null, bd = 1e9;
@@ -9753,9 +9777,10 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         let html = '';
         for (const st of sts){
           const c = dwMap[st.i];
-          html += '<span class="tid-st' + (c ? ' dw' : '') + '"><b>' + escapeHtml(st.name) + '</b>' + (c ? ' 🚏停車' : '') + '</span>';
+          html += '<span class="tid-st' + (c ? ' dw' : '') + '"><b>' + escapeHtml(st.name) + '</b></span>';
         }
         tidStripEl.innerHTML = html;
+        tidStripEl.dataset.line = dispLineId;
       }
       if (tidTrainCountEl) tidTrainCountEl.textContent = trains.length + ' 本';
     };
