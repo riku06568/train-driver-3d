@@ -8307,6 +8307,7 @@ window.__T={
     return {dur:+(buf.length/sr).toFixed(2), peak:+peak.toFixed(3), gapCount:gaps.length, gaps:gaps.slice(0,30)};
   }).catch(e=>String(e)),
   annState:()=>({playing:annPlaying, queued:annQ.length, cached:annMergeCache.size}),
+  annPlay:(urls)=>{ try{ playAnnQueue(urls); return true; }catch(e){ return String(e); } },
   AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
 /* ================= home screen (before the world is built) ================= */
