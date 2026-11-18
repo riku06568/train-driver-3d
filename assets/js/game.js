@@ -4246,6 +4246,8 @@ function preloadGuides(){if(guideReady)return;guideReady=true;
   for(const k of Object.keys(GUIDE_URI)){try{const a=new Audio();a.preload='auto';a.src=GUIDE_URI[k];a.volume=1;a.load();guideEls[k]=a;}catch(e){}}}
 const guideBufCache={};
 function playGuide(kind,dest,gainVal){const src=GUIDE_URI[kind];if(!src)return;
+  /* v1.9.8：戸締め放送は「呼んだ時点」で終了予定時刻を確保する（音声の読み込みに時間がかかっても、その間に戸閉してしまわない） */
+  if(kind==='tab_doors'){doorWarnT=nowMs();if(nowMs()>=doorAnnUntil)doorAnnUntil=nowMs()+3400;}
   try{initAudio();
     if(AC){
       if(AC.state==='suspended'){try{AC.resume();}catch(e){}}
@@ -4255,14 +4257,14 @@ function playGuide(kind,dest,gainVal){const src=GUIDE_URI[kind];if(!src)return;
         s.buffer=buf;s.connect(g);
         if(dest){g.connect(dest);}else{g.connect(AC.destination);}
         s.start(0);
-        if(kind==='tab_doors'){doorAnnUntil=nowMs()+(buf.duration||3)*1000+220;doorWarnT=nowMs();}
+        if(kind==='tab_doors'){doorAnnUntil=Math.max(doorAnnUntil,nowMs()+(buf.duration||3)*1000+220);doorWarnT=nowMs();}
       };
       if(guideBufCache[kind]){playBuf(guideBufCache[kind]);return;}
       fetch(src).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(buf=>{
         guideBufCache[kind]=buf;playBuf(buf);
       }).catch(()=>{
         try{const a=new Audio(src);a.volume=1;a.play().catch(()=>{});
-          if(kind==='tab_doors'){doorAnnUntil=nowMs()+((a.duration&&isFinite(a.duration))?a.duration*1000:3200)+220;doorWarnT=nowMs();}
+          if(kind==='tab_doors'){doorAnnUntil=Math.max(doorAnnUntil,nowMs()+((a.duration&&isFinite(a.duration))?a.duration*1000:3200)+220);doorWarnT=nowMs();}
         }catch(e2){}
       });
       return;
@@ -4271,7 +4273,7 @@ function playGuide(kind,dest,gainVal){const src=GUIDE_URI[kind];if(!src)return;
     let a=guideEls[kind];if(!a){a=new Audio(src);a.volume=1;guideEls[kind]=a;}
     a.volume=1;a.muted=false;try{a.currentTime=0;}catch(e){}
     a.play().catch(()=>{});
-    if(kind==='tab_doors'){doorAnnUntil=nowMs()+((a.duration&&isFinite(a.duration)&&a.duration>0)?a.duration*1000:3200)+220;doorWarnT=nowMs();}
+    if(kind==='tab_doors'){doorAnnUntil=Math.max(doorAnnUntil,nowMs()+((a.duration&&isFinite(a.duration)&&a.duration>0)?a.duration*1000:3200)+220);doorWarnT=nowMs();}
   }catch(e){console.warn(e);}}
 function scheduleGuide(kind,delayMs){if(!kind)return;preloadGuides();clearTimeout(guideTimer);
   guideTimer=setTimeout(function(){playGuide(kind);},Math.max(300,delayMs|0));}
