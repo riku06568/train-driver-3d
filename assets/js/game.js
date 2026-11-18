@@ -3168,6 +3168,7 @@ cbox(0.44, 0.046, 0.022, CM.frame, 0, 0, -0.01, indRig);
 
 const IND_CANV = mkCanvas(512, 64);
 const IND_MAT = new THREE.MeshBasicMaterial({ map: IND_CANV.tex });
+let _ebAnnSent = false;   /* v1.9.7：初回描画時にTDZ参照エラーにならないよう先に宣言 */
 function drawIndicatorLamps() {
   if (typeof G === 'undefined' || !G) return;
   const x = IND_CANV.x, W = 512, H = 64;
@@ -5089,7 +5090,6 @@ function updDoor(dt){const D=G.door;
   setDoors(ownTrain,D.side,D.frac);}
 /* platform doors follow whichever train is standing there */
 const hdPrev=new Map();
-let _ebAnnSent=false;
 function playRecordedAnn(file,gainVal,destNode){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
   const playFallback=()=>{try{const au=new Audio(file);au.volume=Math.min(1,(gainVal||1)*0.8);au.play().catch(()=>{});}catch(_){}};
@@ -8295,7 +8295,17 @@ window.__spawnTroubleVisual=spawnTroubleVisual;
 window.__clearTroubleVisual=clearTroubleVisual;
 window.toast=toast;
 window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,playGuide,playStationAnnounce,ltdSong,SONG_A,SONG_B,listenerSealed,clamp};
-window.__T={AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
+window.__T={
+  /* v1.9.7：放送の結合結果を確認するための診断（開発・検証用。読み取りのみ） */
+  annTest:(urls)=>prepareAnnBuffer(urls).then(buf=>{ if(!buf) return null; const d=buf.getChannelData(0), sr=buf.sampleRate;
+    let peak=0; for(let i=0;i<d.length;i+=3){const v=d[i]<0?-d[i]:d[i]; if(v>peak)peak=v;}
+    let run=0,start=0; const gaps=[];
+    for(let i=0;i<d.length;i++){ const quiet=(d[i]<0?-d[i]:d[i])<Math.max(0.001,peak*0.02);
+      if(quiet){ if(!run)start=i; run++; } else { if(run>sr*0.06){ gaps.push([+(start/sr).toFixed(2), +(run/sr).toFixed(2)]); } run=0; } }
+    return {dur:+(buf.length/sr).toFixed(2), peak:+peak.toFixed(3), gapCount:gaps.length, gaps:gaps.slice(0,30)};
+  }).catch(e=>String(e)),
+  annState:()=>({playing:annPlaying, queued:annQ.length, cached:annMergeCache.size}),
+  AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
 /* ================= home screen (before the world is built) ================= */
 // audio must be started inside the user's tap (iOS / Chrome autoplay rules)
@@ -9865,6 +9875,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       document.querySelectorAll('.home-view').forEach(v => v.classList.add('hide'));
       viewDispatch.classList.remove('hide');
       document.body.classList.add('disp-monitor');
+      const _wrap=document.querySelector('#home .wrap'); if(_wrap)_wrap.classList.add('disp-wide');
       if (typeof initOnlineClient === 'function') initOnlineClient();
       if (typeof window.__ensureMonitorWorld === 'function') window.__ensureMonitorWorld();
       /* 指令所は無音・背景なしの専用画面 */
@@ -9894,6 +9905,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       btnBackFromDispatch.addEventListener('click', () => {
         viewDispatch.classList.add('hide');
         document.body.classList.remove('disp-monitor');
+        const _wrap2=document.querySelector('#home .wrap'); if(_wrap2)_wrap2.classList.remove('disp-wide');
         if (window.__DISP) { window.__DISP.on = false; window.__DISP.sel = null; window.__DISP.focusS = null; window.__DISP.camOn = false; }
         dispHideWorld(false);
         dispSetSound(true);
