@@ -9610,6 +9610,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
           dispTargetLabel.textContent = '対象列車：未選択';
           renderDispatchThread(null);
           if (window.__DISP) { window.__DISP.sel = null; window.__DISP.focusS = null; }
+          if (dispLineId === 'loop' && !window.__DISP_MONITOR && typeof window.__ensureMonitorWorld === 'function') window.__ensureMonitorWorld();
           refreshDispatchDrivers();
         });
       });
@@ -9631,10 +9632,10 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       ctx.strokeStyle = 'rgba(56,189,248,0.055)'; ctx.lineWidth = 1;
       for (let x = 0; x < W; x += 32){ ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
       for (let y = 0; y < H; y += 32){ ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-      const padL = 66, padR = 26, padT = 58;
+      const padL = 66, padR = 26, padT = 44;
       const span = W - padL - padR;
       const X = s => padL + (((s % L) + L) % L) / L * span;
-      const laneUp = padT + 30, laneDn = padT + 138;
+      const laneUp = padT + 46, laneDn = padT + 132;
       /* 路線名 */
       ctx.fillStyle = '#e6f2ff'; ctx.font = '800 15px ' + FONT; ctx.textAlign = 'left';
       ctx.fillText(def.name + '　在線状況', padL - 40, 30);
@@ -9665,7 +9666,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         const showName = !many || major;
         if (showName){
           ctx.save();
-          ctx.translate(x, H - 34);
+          ctx.translate(x, H - 26);
           ctx.rotate(-Math.PI / 4);
           ctx.fillStyle = major ? '#ffd76b' : '#8fa8c4';
           ctx.font = (major ? '700 11px ' : '10px ') + FONT;
@@ -9796,6 +9797,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       if (sig === _lastDispSig && rows.length) return;
       _lastDispSig = sig;
       let html = '';
+      if (dispLineId === 'loop' && !window.__DISP_MONITOR){
+        html += '<div style="color:#fca5a5;font-size:11.5px;line-height:1.5;padding:7px 9px;border:1px solid rgba(248,113,113,0.35);border-radius:8px;background:rgba(70,10,10,0.35);">本線のAI列車の在線は3Dモニターの起動が必要です。この端末では3Dモニターを起動できませんでした（WebGLが使えない状態）。ほかの路線の監視・指令はそのまま使えます。</div>';
+      }
       for (const r of rows){
         const sel = dispSelectedId === r.pid;
         const cls = 'disp-drv-row' + (sel ? ' on' : '');

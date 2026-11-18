@@ -548,7 +548,7 @@ body.disp-monitor #gl{display:none!important}
       <div class="tid-grid">
         <section class="tid-panel tid-board">
           <div class="tid-panelhead"><span>◆ 在線表示盤（路線別）</span><span class="tid-mono" id="tidBoardInfo"></span></div>
-          <canvas id="dispMapCanvas" width="1280" height="400"></canvas>
+          <canvas id="dispMapCanvas" width="1280" height="320"></canvas>
           <div class="tid-legend">
             <span><i class="lg lg-run"></i>走行中</span>
             <span><i class="lg lg-dwell"></i>停車中</span>
@@ -1393,7 +1393,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=93', function() {});
+      loadScript('assets/js/game.js?v=94', function() {});
     });
   });
 })();
