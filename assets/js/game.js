@@ -9833,8 +9833,19 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         else { tidAlarmEl.textContent = '全線 平常運転'; tidAlarmEl.style.color = '#7dd3fc'; if (tidLampEl) tidLampEl.classList.remove('warn'); }
       }
       renderLineTabs();
-      const sig = dispLineId + '|' + dispSelectedId + '|' + rows.map(r => r.pid + ':' + Math.round(r.v*10) + ':' + r.state + ':' + r.kind + ':' + Math.round((r.s%100000))).join(',');
-      if (sig === _lastDispSig && rows.length) return;
+      /* v1.9.7：列車の顔ぶれが変わったときだけ一覧を作り直す（毎回作り直すとタップが取りこぼされる） */
+      const sig = dispLineId + '|' + dispSelectedId + '|' + rows.map(r => r.pid + ':' + r.kind).join(',');
+      if (sig === _lastDispSig && rows.length){
+        for (const r of rows){
+          const el = dispDriversList.querySelector('[data-pid="' + r.pid + '"]');
+          if (!el) continue;
+          const mv = el.querySelector('.disp-mv');
+          if (mv) mv.textContent = (r.dir > 0 ? '上り' : '下り') + '・' + (r.state === 'dwell' ? '停車中' : Math.round(r.v * 3.6) + 'km/h');
+          const ps = el.querySelector('.disp-pos');
+          if (ps) ps.textContent = String(Math.round(((r.s % 100000) + 100000) % 100000)).padStart(5, '0');
+        }
+        return;
+      }
       _lastDispSig = sig;
       let html = '';
       if (dispLineId === 'loop' && !window.__DISP_MONITOR){
@@ -9848,8 +9859,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         const stTxt = r.state === 'dwell' ? '停車中' : Math.round(r.v * 3.6) + 'km/h';
         const dly = r.delay > 0 ? '<span style="color:#fcd34d;font-size:10px;margin-left:4px;">+' + Math.max(1, Math.round(r.delay/60)) + '分</span>' : '';
         html += '<button class="'+cls+'" data-pid="'+r.pid+'"><span>'+mark+' '+escapeHtml(r.name)+dly
-             + '<small style="color:#7d94b0"> （'+dirTxt+'・'+stTxt+'）</small></span>'
-             + '<span style="font-family:\'DotGothic16\',monospace;font-size:10.5px;color:#7dd3fc">'+String(Math.round(((r.s%100000)+100000)%100000)).padStart(5,'0')+'</span></button>';
+             + '<small class="disp-mv" style="color:#7d94b0"> （'+dirTxt+'・'+stTxt+'）</small></span>'
+             + '<span class="disp-pos" style="font-family:\'DotGothic16\',monospace;font-size:10.5px;color:#7dd3fc">'+String(Math.round(((r.s%100000)+100000)%100000)).padStart(5,'0')+'</span></button>';
       }
       if (!html) html = '<div style="color:#64748b;font-size:12px;padding:8px;">この路線に在線中の列車はありません</div>';
       dispDriversList.innerHTML = html;
