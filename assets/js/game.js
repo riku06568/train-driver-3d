@@ -1817,8 +1817,7 @@ function boardingMarks(c,st,k,isSiding){if(!serves(st,k))return;const T=TK[k];if
     if(!IGEO[key])continue;
     for(const dz of (green?GDOORZ:DOORZ)){
       const ds=flip?fr+CARHALF+q*CARL+dz:fr-CARHALF-q*CARL-dz;
-      inst(c,key,ds,off,PH+1.66,0.80,0.55,1,0,Math.PI/2);
-      inst(c,key,ds,off,PH+1.66,0.80,0.55,1,0,-Math.PI/2);
+      for(const rt of [0,Math.PI/2,Math.PI,-Math.PI/2])inst(c,key,ds,off,PH+1.66,0.80,0.55,1,0,rt); /* 4方向から読める */
       inst(c,'mpost',ds,off,PH+0.92,1,1,1);
     }
   }
