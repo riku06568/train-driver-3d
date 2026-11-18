@@ -2899,6 +2899,11 @@ function updRemotePassengers(dt){
     }
   }
 }
+function copyPersonLook(dst,src){
+  if(!dst||!src||!dst.userData||!src.userData)return;
+  const su=src.userData,du=dst.userData;if(su.staff)return;
+  du.child=!!su.child;du.vi=su.vi;du.mode='';dst.scale.copy(src.scale);personPose(dst,'walk');
+}
 function makePerson(kind){const child=kind==='child',staff=kind==='staff';const g=new THREE.Group();const vi=irand(0,(child?NVARC:NVAR)-1);
   const mesh=new THREE.Mesh(staff?SSTANDG[vi]:child?CSTANDG[vi]:STANDG[vi],upperMat);g.add(mesh);
   const sc=child?rand(0.60,0.80):rand(0.90,1.06);g.scale.set(sc,sc,sc);
@@ -3579,11 +3584,19 @@ function startFlows(st,k,frontS,train){
   const T=TK[k],isShTr=!BRANCH&&st.i===0&&(train==='OWN'||(train&&train.p)),sd=isShTr?-T.side(st):T.side(st),base=isShTr?ownTrackOff(k,st.s):T.off(st.s),gc=greenCarsFor(k),NC=carsFor(k),doors=doorList(frontS,T.dir<0,gc,NC),own=train==='OWN',ls=own?(G.door.local||sd*G.dir)*(ownTrain.rev?-1:1):train?sd*trSgn(train.tr):0;
   const last=G.list&&k===G.key&&stOf(G.list.length-1)===st,lastAI=BRANCH&&train&&train!=='OWN'&&((train.dir>0&&st.i===NST-1)||(train.dir<0&&st.i===0));
   const major=isMajorStation(st);
+  const camS=PAX?(RIDE?RIDE.a.s:W.s):G.s;
+  if(train&&train!=='OWN'&&train.tr&&train.tr.cars&&Math.abs(sdiff(camS,st.s))<480){
+    const unpop=[];for(let ci=0;ci<train.tr.cars.length;ci++)if(!isPop(train,ci))unpop.push(ci);
+    if(unpop.length){if(train.load==null||train.load<carsFor(train.key||'A')*5)train.load=trainLoadFor(train.key||'A');populateCars(train,unpop);}
+  }
   /* 主要駅では乗車が多く降車は控えめ、それ以外の駅では降車する人が多い */
   const rawA=major?crowd(irand(5,10)*(isRushHour()?1.35:1)):crowd(irand(6,13)*(isRushHour()?1.6:1.2));
   const aN=(last||lastAI)?Math.min(120,Math.max(1,Math.round(own?(G.load||0):(train.load||0)))):Math.min(isRushHour()?64:42,rawA),ac={};let nb=0;
   for(let i=0;i<aN;i++){const j=irand(0,doors.length-1);ac[j]=(ac[j]||0);const [ex,eo]=exitPt(st,k),[car,dz]=doorCarOf(j,gc,NC),ds0=doors[j];
-    const mk=(vis)=>{const p=getPerson();p.st=st.i;p.kind='alight';p.flow=k;p.trackO=base;p.doorS=ds0;p.s=ds0+rand(-0.45,0.45);p.o=base+sd*0.35;p.delay=vis?0:0.15+ac[j]*0.22+rand(0,0.15);p.g.visible=!!vis;
+    const mk=(vis,srcG)=>{const p=getPerson();p.st=st.i;p.kind='alight';p.flow=k;p.trackO=base;p.doorS=ds0;
+      if(srcG)copyPersonLook(p.g,srcG);
+      p.s=vis?ds0:ds0+rand(-0.25,0.25);p.o=vis?base+sd*1.25:base+sd*0.15;
+      p.delay=vis?0:0.15+ac[j]*0.22+rand(0,0.15);p.g.visible=!!vis;
       const tk=transferKey(st,k),xr=Math.random(),bigSt=st.big||st.cls==='M'||st.cls==='X';
       const others=KEYS.filter(k2=>k2!==k&&k2!==tk&&serves(st,k2));
       if(others.length&&xr>=0.6&&xr<0.6+(bigSt?0.25:0.12)){ // 乗り換え：階段を通って別のホームへ（階段の奥まで歩く）
@@ -3595,8 +3608,8 @@ function startFlows(st,k,frontS,train){
         p.path=[[ds0+rand(-0.4,0.4),base+sd*2.4],[doors2[j2]+(q2%2?1:-1)*(0.8+0.12*Math.floor(q2/2)),clamp(base2+sd2*(2.7+0.55*Math.floor(q2/2)),oMin2,oMax2)]];
         p.speed=rand(1.2,1.6);p.end=null;p.kind='wait';p.flow=tk;p.j=j2;p.q=q2;p.face=-sd2;p.trackO=base2;list2.push(p);return;}
       p.path=[[ds0+rand(-0.3,0.3),base+sd*2.6],[ex,eo],[ex+(ex>=st.s-75?1.8:-1.8),eo]];p.speed=rand(1.3,1.8);p.end='free';};
-    if(own&&car===(CONDV?carsFor(G.key)-1:0)&&SAL.on){const dl=0.3+ac[j]*0.5+rand(0,0.3);JOBS.push({t:dl,fn:()=>salAlight(dz*SIDEINV*(ownTrain.rev?-1:1),(G.door.local||sd*G.dir)*SIDEINV,()=>mk(true))});}
-    else if(train&&(train!=='OWN'?isPop(train,car):(OWNAI&&isPop(OWNAI,car)))){const ia=train==='OWN'?OWNAI:train,dl=0.3+ac[j]*0.5+rand(0,0.3);JOBS.push({t:dl,fn:()=>{if(isPop(ia,car))alightInside(ia,car,dz,ls,()=>mk(true));else mk(true);}});}
+    if(own&&car===(CONDV?carsFor(G.key)-1:0)&&SAL.on){const dl=0.3+ac[j]*0.5+rand(0,0.3);JOBS.push({t:dl,fn:()=>salAlight(dz*SIDEINV*(ownTrain.rev?-1:1),(G.door.local||sd*G.dir)*SIDEINV,sg=>mk(true,sg))});}
+    else if(train&&(train!=='OWN'?isPop(train,car):(OWNAI&&isPop(OWNAI,car)))){const ia=train==='OWN'?OWNAI:train,dl=0.3+ac[j]*0.5+rand(0,0.3);JOBS.push({t:dl,fn:()=>{if(isPop(ia,car))alightInside(ia,car,dz,ls,sg=>mk(true,sg));else mk(false);}});}
     else mk(false);ac[j]++;}
   const list=st.wait[k]||[];
   for(const p of list){if(p.kind!=='wait')continue;
@@ -3604,7 +3617,7 @@ function startFlows(st,k,frontS,train){
     p.kind='board';p.doorS=ds;p.face=-sd;p.trackO=base;
     /* 待たずにすぐ乗り込む */
     p.delay=rand(0,0.08)+Math.min(0.35,(ac[p.j]||0)*0.05);
-    p.path=[[ds+(p.s>ds?0.2:-0.2)+rand(-0.25,0.25),base+sd*1.8],[ds+rand(-0.35,0.35),base+sd*0.35]];
+    p.path=[[ds+(p.s>ds?0.2:-0.2)+rand(-0.25,0.25),base+sd*1.8],[ds+rand(-0.18,0.18),base+sd*1.12]];
     p.speed=rand(1.55,2.1);p.end='board';nb++;
     p.train=train||null;{const cd=doorCarOf(p.j,gc,NC);p.car=cd[0];p.dz=cd[1];}p.ls=ls;ac[p.j]=(ac[p.j]||0)+1;}
   list.length=0;
@@ -3746,11 +3759,11 @@ function sweepStranded(){if(PAX||G.v<1.2||G.atStation!==null)return;
 function boardIntoTrain(p){
   if(!p||!p.train)return;
   if(p.train==='OWN'){
-    if(p.car===(CONDV?carsFor(G.key)-1:0)&&SAL.on)salBoard(p.dz*SIDEINV*(ownTrain.rev?-1:1),p.ls*SIDEINV*(ownTrain.rev?-1:1));
+    if(p.car===(CONDV?carsFor(G.key)-1:0)&&SAL.on)salBoard(p.dz*SIDEINV*(ownTrain.rev?-1:1),p.ls*SIDEINV*(ownTrain.rev?-1:1),p.g);
     const o=ownAI();
     if(o&&(G.walkOn||monStation())){
       if(!isPop(o,p.car))populateCars(o,[p.car]);
-      if(isPop(o,p.car))boardInside(o,p.car,p.dz,p.ls);
+      if(isPop(o,p.car))boardInside(o,p.car,p.dz,p.ls,p.g);
     }
     if(p.forceIn)G.load=Math.min(maxLoadFor(G.key),(G.load||0)+1);
   }else if(p.train&&p.train.tr){
@@ -3759,7 +3772,7 @@ function boardIntoTrain(p){
       if(p.train.load==null||p.train.load<carsFor(p.train.key||'A')*5)p.train.load=trainLoadFor(p.train.key||'A');
       populateCars(p.train,[p.car]);
     }
-    if(isPop(p.train,p.car))boardInside(p.train,p.car,p.dz,p.ls);
+    if(isPop(p.train,p.car))boardInside(p.train,p.car,p.dz,p.ls,p.g);
   }
 }
 function updPeople(dt){sweepStranded();
@@ -3771,7 +3784,7 @@ function updPeople(dt){sweepStranded();
     if(p.kind==='board'&&p.train&&p.end==='board'&&!(p.delay>0)&&!boardOpen(p)){requeue(p);continue;}
     if(p.delay>0){p.delay-=dt;if(p.delay>0){if(p.kind==='alight'||p.hidden){p.g.visible=false;posePerson(p,false);continue;}else{p.g.visible=true;}}else{
       const nearPl=((PAX&&!RIDE)||G.walkOn)&&W.st&&W.st.i===p.st&&Math.hypot(p.s-W.s,p.o-W.o)<1.4;
-      if(nearPl&&(p.kind==='alight'||p.hidden)){p.delay=0.25;p.g.visible=false;posePerson(p,false);continue;}
+      if(nearPl&&p.hidden){p.delay=0.25;p.g.visible=false;posePerson(p,false);continue;}
       p.g.visible=true;p.hidden=false;}}
     let moving=false;
     if(p.path.length){const ts=p.path[0][0],to=p.path[0][1],ds=ts-p.s,dO=to-p.o,dist=Math.hypot(ds,dO),step=p.speed*dt;
@@ -3832,7 +3845,7 @@ function pullWaiters(st,k){const train=trainOpenAt(st,k);if(!train)return 0;
     if(doors[p.j]===undefined)p.j=irand(0,doors.length-1);const ds=doors[p.j]||doors[0];
     p.kind='board';p.doorS=ds;p.face=-sd;p.trackO=base;
     p.delay=rand(0,0.06)+Math.min(0.25,n*0.04);
-    p.path=[[ds+rand(-0.22,0.22),base+sd*1.65],[ds+rand(-0.22,0.22),base+sd*0.35]];p.speed=rand(1.6,2.2);p.end='board';
+    p.path=[[ds+rand(-0.22,0.22),base+sd*1.65],[ds+rand(-0.18,0.18),base+sd*1.12]];p.speed=rand(1.6,2.2);p.end='board';
     p.train=train;const cd=doorCarOf(p.j,gc,NC);p.car=cd[0];p.dz=cd[1];p.ls=ls;n++;}
   list.length=0;
   if(train==='OWN'&&n)G.load=clamp((G.load||0)+0,0,maxLoadFor(G.key)); /* load は乗車完了時に加算 */
@@ -7066,8 +7079,8 @@ function populateCars(a,cars){a.inside=a.inside||[];a.insideSet=a.insideSet||new
       p.g.position.set(c2.x,1.16,c2.z);p.g.rotation.set(0,c2.yaw!=null?c2.yaw:rr()*6.28,0);personPose(p.g,'stand');}
     pbAddMany(car,bl);}}
 // a passenger who just stepped in: take a free seat if there is one, otherwise stand
-function boardInside(a,k,dz,ls){if(a.tr&&a.tr.rev)dz=-dz;const car=a.tr.cars[k];if(!car)return false;const sl=carSlots(a,k),SE=seatsOf(a,k);const p=intPerson();car.add(p.g);p.g.traverse(o2=>o2.layers.mask=car.layers.mask);a.inside.push(p);
-  p.g.position.set(ls*1.25,1.16,dz);p.g.rotation.set(0,0,0);personPose(p.g,'stand');
+function boardInside(a,k,dz,ls,srcG){if(a.tr&&a.tr.rev)dz=-dz;const car=a.tr.cars[k];if(!car)return false;const sl=carSlots(a,k),SE=seatsOf(a,k);const p=intPerson(srcG&&srcG.userData&&srcG.userData.child?'child':null);if(srcG)copyPersonLook(p.g,srcG);car.add(p.g);p.g.traverse(o2=>o2.layers.mask=car.layers.mask);a.inside.push(p);
+  p.g.position.set(ls*1.12,1.16,dz);p.g.rotation.set(0,0,0);personPose(p.g,'stand');
   const free=[];sl.seat.forEach((v,i)=>{if(!v)free.push(i);});free.sort((i1,i2)=>Math.abs(SE[i1].z-dz)-Math.abs(SE[i2].z-dz));
   if(free.length){free.sort((i1,i2)=>Math.abs(SE[i1].z-dz)-Math.abs(SE[i2].z-dz)); /* 近い席優先だが奥へ */
     const deep=free.slice().sort((i1,i2)=>Math.abs(SE[i2].z-dz)-Math.abs(SE[i1].z-dz));
@@ -7115,7 +7128,7 @@ function alightInside(a,k,dz,ls,done){if(a.tr&&a.tr.rev)dz=-dz; /* 折り返し�
       if(!a.tr.cars[k].userData.green){const fs=si;JOBS.push({t:rand(1.2,2.4),fn:()=>seatRefill(a,k,fs)});}}}
   if(!p||!p.used){done();return;}
   pbRemove(p);const g=p.g;personPose(g,'walk');const x0=g.position.x;g.position.y=1.16;g.position.x=x0*0.8;
-  p.path=[[x0*0.4,g.position.z],[ls*0.45,dz],[ls*1.3,dz]];p.sit=null;p.onDone=()=>{releaseOne(a,p);done();};if(!INTW.includes(p))INTW.push(p);}
+  p.path=[[x0*0.4,g.position.z],[ls*0.45,dz],[ls*1.25,dz]];p.sit=null;p.onDone=()=>{const sg=p.g;releaseOne(a,p);done(sg);};if(!INTW.includes(p))INTW.push(p);}
 function updIntWalkers(dt){
   const walkSet=new Set();
   for(const p of INTW)if(p&&p.g)walkSet.add(p.g);
@@ -7171,7 +7184,7 @@ function updInterior(){const want=new Map();
       if(near.length)want.set(o,near);else{for(let i=0;i<o.tr.cars.length;i++)near.push(i);want.set(o,near);}}
     else if(G.phase==='play'&&monStation()){const all=[];for(let i=0;i<o.tr.cars.length;i++)all.push(i);want.set(o,all);} /* ホームカメラに映る車内 */
     else if(o.insideSet)releaseInterior(o);}
-  if(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars){const k=RIDE.k,NC=RIDE.a.tr.cars.length;want.set(RIDE.a,[k-1,k,k+1].filter(x=>x>=0&&x<NC));}
+  if(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars){const k=RIDE.k,NC=RIDE.a.tr.cars.length;want.set(RIDE.a,RIDE.a.state==='dwell'?Array.from({length:NC},(_,i)=>i):[k-1,k,k+1].filter(x=>x>=0&&x<NC));}
   const camS=PAX?(RIDE?RIDE.a.s:W.s):G.s;
   const allTrains = [...OT];
   if(IS_ONLINE && window.ONLINE_PLAYERS){
@@ -7216,8 +7229,9 @@ function salFill(n){n=Math.min(n,SALSEAT.length+standCap()-6);SAL.on=true;for(co
     if(!c2)c2={x:rand(-0.3,0.3),z:rand(3.2,18.6)};
     p.g.position.set(c2.x,1.16,c2.z);p.g.rotation.set(0,c2.yaw!=null?c2.yaw:rand(0,6.28),0);personPose(p.g,'stand');}
   pbAddMany(cab,SAL.people.filter(q=>q.used&&!(q.path&&q.path.length)));}
-function salBoard(dz,ls){const p=salPerson(),z0=9.75+dz;
-  p.g.position.set(ls*1.25,1.16,z0);p.g.rotation.set(0,0,0);personPose(p.g,'stand');
+function salBoard(dz,ls,srcG){const p=salPerson(srcG&&srcG.userData&&srcG.userData.child?'child':null),z0=9.75+dz;
+  if(srcG)copyPersonLook(p.g,srcG);
+  p.g.position.set(ls*1.12,1.16,z0);p.g.rotation.set(0,0,0);personPose(p.g,'stand');
   const free=[];SAL.seat.forEach((v,i)=>{if(!v)free.push(i);});free.sort((a,b)=>Math.abs(SALSEAT[a].z-z0)-Math.abs(SALSEAT[b].z-z0));
   if(free.length){const deep=free.slice().sort((a,b)=>Math.abs(SALSEAT[b].z-z0)-Math.abs(SALSEAT[a].z-z0));
     const si=(Math.random()<0.6)?deep[0]:free[Math.floor(Math.random()*Math.min(3,free.length))];
@@ -7237,7 +7251,7 @@ function salAlight(dz,ls,done){const z0=9.75+dz;let p=null,si=-1;
       JOBS.push({t:rand(1.2,2.4),fn:()=>{if(SAL.on&&!SAL.seat[fs])sitFromStand(SAL.stand,SAL.strap,SAL.seat,fs,SALSEAT[fs]);}});}}
   if(!p||!p.used){done();return;}
   pbRemove(p);const g=p.g;personPose(g,'walk');g.position.y=1.16;g.position.x*=0.8;
-  p.path=[[g.position.x*0.4,g.position.z],[ls*0.45,z0],[ls*1.3,z0]];p.sit=null;p.onDone=()=>{salFree(p);done();};if(!INTW.includes(p))INTW.push(p);}
+  p.path=[[g.position.x*0.4,g.position.z],[ls*0.45,z0],[ls*1.25,z0]];p.sit=null;p.onDone=()=>{const sg=p.g;salFree(p);done(sg);};if(!INTW.includes(p))INTW.push(p);}
 function fitText(x,t,cx,cy,maxW,size,weight,align){let sz=size;x.textAlign=align||'left';
   for(let i=0;i<14;i++){x.font=(weight||'700')+' '+sz+'px '+FONT;if(x.measureText(t).width<=maxW||sz<=11)break;sz-=2;}
   x.fillText(t,cx,cy);return sz;}
