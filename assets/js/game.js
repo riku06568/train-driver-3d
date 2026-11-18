@@ -1328,7 +1328,7 @@ const __WORLD_ABORT=typeof AbortController!=='undefined'?new AbortController():n
 window.__WORLD_ABORT=__WORLD_ABORT;
 const __SIG=__WORLD_ABORT?__WORLD_ABORT.signal:undefined;
 const _on=(t,ev,fn,opt)=>{if(!t)return;const o=typeof opt==='boolean'?{capture:opt}:Object.assign({},opt);if(__SIG)o.signal=__SIG;t.addEventListener(ev,fn,o);};
-if(window.__WORLD_RENDERER){try{window.__WORLD_RENDERER.dispose();}catch(e){}}
+if(window.__WORLD_RENDERER){try{window.__WORLD_RENDERER.dispose();if(window.__WORLD_RENDERER.forceContextLoss)window.__WORLD_RENDERER.forceContextLoss();}catch(e){}}  /* v1.9.7：WebGLコンテキストを確実に解放（指令所→乗務の切替で失敗しないように） */
 if(window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){const p=ONLINE_PLAYERS[pid];if(p){if(p.tr){try{disposeTrain(p.tr);}catch(e){}}p.tr=null;p.ai=null;p.paxG=null;}}}
 if(window.__WORLD_BUILT){ try{const og=document.getElementById('gl'); if(og&&og.parentNode) og.parentNode.removeChild(og);}catch(e){} }
 window.__WORLD_BUILT=true; window.__DISP_MONITOR=false;
@@ -9964,6 +9964,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         if (window.__DISP) { window.__DISP.on = false; window.__DISP.sel = null; window.__DISP.focusS = null; window.__DISP.camOn = false; }
         dispHideWorld(false);
         dispSetSound(true);
+        /* モニター世界はタイトル裏で動き続けるので、そこだけは無音のままにする（次の乗務で新しく作り直される） */
+        if (window.__DISP_MONITOR && window.__T && window.__T.G) window.__T.G.sound = false;
         const vd = document.getElementById('viewDutySelect');
         if (vd) vd.classList.remove('hide');
         if (dispatchHB) { clearInterval(dispatchHB); dispatchHB = null; }
@@ -10008,7 +10010,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         publishDispatchMsg({ from: 'dispatch', targetId: dispSelectedId, targetName: p ? p.name : null, cmd, text: label + 'の指令を受信しました' });
       });
     };
-    bindDispCmd('dispCmdStop', 'stop', '緊急停止');
+    bindDispCmd('dispCmdStop', 'stop', '運転抑止');
     bindDispCmd('dispCmdResume', 'resume', '運転再開');
     bindDispCmd('dispCmdPrev', 'prevStation', '一駅前まで移動');
     bindDispCmd('dispCmdNext', 'nextStation', '一駅先まで運転再開');
