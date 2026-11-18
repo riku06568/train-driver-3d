@@ -723,6 +723,7 @@ body.disp-monitor #gl{display:none!important}
             <li><b>戸締め時は車内の案内画面が赤く点滅</b>：ドアが閉まるあいだ、車内の案内用LCDが赤い背景で点滅し、「ドアが閉まります／Doors are closing」を大きく表示。閉扉後は通常の次駅案内に戻ります</li>
             <li><b>車内LCDの広告を一新</b>：縦スライド＋フェードの切り替え、カテゴリータグ・大きな見出し・進行バーを備えた新しいデザインに刷新し、掲載内容も新しい12本に入れ替えました</li>
             <li><b>駅の乗車位置案内を新設</b>：各駅ホームのドア位置に「○号車／乗車位置」の標識を設置。グリーン車の乗車口は緑の標識で、号車番号と実際のドア位置が一致するよう修正しました</li>
+            <li><b>ラッシュ時の人数＆AI乗客の動き改善</b>：階段付近の混雑を和らげ、乗客同士がぶつかって振動・スタックしたり突然現れたり消えたりする不具合を修正しました</li>
             <li><b>現代的ホームドア＆一体型乗車位置案内</b>：ホームドアをガラス戸・横長フルカラー液晶・開閉状態LEDランプ付きの最新型に刷新し、号車・グリーン車乗車位置案内をホームドアへ一体化しました（ホームドアのない駅は足元ステッカー表示）</li>
             <li><b>スタート時のAI列車安全間隔</b>：プレイ開始時に同じ線路の至近距離へAI列車が重なって衝突・貫通する不具合を修正し、開始駅から十分な安全距離を空けて配置するようにしました</li>
             <li><b>広告放送を追加</b>：今回のアップデート内容を案内する新しい広告放送（v1.9.8）を追加。従来どおり放送の割り込みなく最後まで再生します</li>
@@ -1412,10 +1413,23 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=107', function() {});
+      loadScript('assets/js/game.js?v=108', function() {});
     });
   });
 })();
 </script>
+<div id="tripNoticeModal" class="hide" style="position:fixed;inset:0;z-index:99999;background:rgba(6,12,24,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="max-width:460px;width:100%;background:linear-gradient(180deg,#111d35,#0b1324);border:1px solid rgba(56,189,248,0.45);border-radius:18px;padding:24px 22px;box-shadow:0 20px 50px rgba(0,0,0,0.65);color:#f1f5f9;font-family:sans-serif;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;">📢 お知らせ</span>
+      <span style="font-size:12px;color:#94a3b8;">2026年11月19日・20日</span>
+    </div>
+    <p style="font-size:15.5px;line-height:1.75;margin:0 0 18px;color:#e2e8f0;white-space:pre-line;">学校の宿泊学習があるため19日と20日はバグの修正等の対応ができません。帰ったら必ず読むのでバグを見つけた場合はホーム画面にあるご意見箱で送ってください。お手数をおかけしますがよろしくお願いします。</p>
+    <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;">
+      <button id="btnTripNoticeAudio" type="button" style="background:rgba(30,41,59,0.9);border:1px solid rgba(148,163,184,0.35);color:#cbd5e1;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">🔊 音声をもう一度聞く</button>
+      <button id="btnTripNoticeOk" type="button" style="background:linear-gradient(135deg,#0ea5e9,#2563eb);border:none;color:#fff;padding:11px 26px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(14,165,233,0.4);">OK</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
