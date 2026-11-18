@@ -6557,14 +6557,14 @@ function showTripNoticeIfNeeded(){
   const mod=document.getElementById('tripNoticeModal');
   if(!mod)return;
   window.__TRIP_NOTICE_OPEN=true;
-  mod.classList.remove('hide');
+  mod.style.display='flex';
   playTripNoticeAudio();
   const btnOk=document.getElementById('btnTripNoticeOk');
   const btnAud=document.getElementById('btnTripNoticeAudio');
   if(btnAud&&!btnAud._bound){btnAud._bound=true;btnAud.onclick=()=>playTripNoticeAudio();}
   if(btnOk&&!btnOk._bound){
     btnOk._bound=true;
-    btnOk.onclick=()=>{stopTripNoticeAudio();mod.classList.add('hide');window.__TRIP_NOTICE_OPEN=false;};
+    btnOk.onclick=()=>{stopTripNoticeAudio();mod.style.display='none';window.__TRIP_NOTICE_OPEN=false;};
   }
 }
 function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{preloadGuides();}catch(e){}if(R.kind==='staff'){startPassenger(si);return;}
