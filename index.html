@@ -723,6 +723,7 @@ body.disp-monitor #gl{display:none!important}
             <li><b>戸締め時は車内の案内画面が赤く点滅</b>：ドアが閉まるあいだ、車内の案内用LCDが赤い背景で点滅し、「ドアが閉まります／Doors are closing」を大きく表示。閉扉後は通常の次駅案内に戻ります</li>
             <li><b>車内LCDの広告を一新</b>：縦スライド＋フェードの切り替え、カテゴリータグ・大きな見出し・進行バーを備えた新しいデザインに刷新し、掲載内容も新しい12本に入れ替えました</li>
             <li><b>駅の乗車位置案内を新設</b>：各駅ホームのドア位置に「○号車／乗車位置」の標識を設置。グリーン車の乗車口は緑の標識で、号車番号と実際のドア位置が一致するよう修正しました</li>
+            <li><b>現代的ホームドア＆一体型乗車位置案内</b>：ホームドアをガラス戸・横長フルカラー液晶・開閉状態LEDランプ付きの最新型に刷新し、号車・グリーン車乗車位置案内をホームドアへ一体化しました（ホームドアのない駅は足元ステッカー表示）</li>
             <li><b>スタート時のAI列車安全間隔</b>：プレイ開始時に同じ線路の至近距離へAI列車が重なって衝突・貫通する不具合を修正し、開始駅から十分な安全距離を空けて配置するようにしました</li>
             <li><b>広告放送を追加</b>：今回のアップデート内容を案内する新しい広告放送（v1.9.8）を追加。従来どおり放送の割り込みなく最後まで再生します</li>
           </ul>
@@ -1411,7 +1412,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=106', function() {});
+      loadScript('assets/js/game.js?v=107', function() {});
     });
   });
 })();

@@ -1580,14 +1580,14 @@ const MATS={
 const fenceTex=canvasTex(128,128,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#c9ced4';x.fillRect(0,0,w,12);x.fillRect(0,h-10,w,10);x.fillRect(0,0,8,h);x.fillRect(w-8,0,8,h);
   for(let i=16;i<w-8;i+=14)x.fillRect(i,10,4,h-18);x.fillRect(0,h*0.52,w,5);});
 const IMATS={sleeper:lam(0x4a3b30),pole:lam(0x7a7f86),pillar:lam(0xe2ded2),stair:lam(0xc3c8bf),tree:lam(0x3f5a34),conc:lam(0x9b9a94),
-  tlamp:new THREE.MeshBasicMaterial({color:0xe8f6ff}),hdp:new THREE.MeshLambertMaterial({color:0xdfe7ee,transparent:true,opacity:0.55}),hdpost:lam(0xf2f2ee),
+  tlamp:new THREE.MeshBasicMaterial({color:0xe8f6ff}),hdp:lam(0x252c36),hdpost:lam(0x161b22),hdcap:lam(0x94a3b8),
   fence:new THREE.MeshLambertMaterial({map:fenceTex,alphaTest:0.4,side:DS}),fpost:lam(0xb9bec4),melo:lam(0xe0a21a),bumper:lam(0xc8322b),
   bldA:new THREE.MeshLambertMaterial({map:winTexA,emissive:0xffaa55,emissiveMap:winTexA,emissiveIntensity:0.1}),
   bldB:new THREE.MeshLambertMaterial({map:winTexB,emissive:0xffcc77,emissiveMap:winTexB,emissiveIntensity:0.1})};
 const IGEO={sleeper:boxGeo(2.0,0.1,0.22),post:boxGeo(0.3,7.2,0.3),beam:boxGeo(1,0.35,0.35),pillar:new THREE.CylinderGeometry(0.15,0.15,1,8),
   stair:boxGeo(1,1,1),bldA:boxGeo(1,1,1),bldB:boxGeo(1,1,1),tree:new THREE.ConeGeometry(1.8,6,7),pier:boxGeo(1,1,1),pcap:boxGeo(1,1,1),tlamp:boxGeo(0.12,0.12,1.2),
-  hdp:boxGeo(1,1,1),hdpost:boxGeo(1,1,1),lightTower:boxGeo(1,1,1),fence:boxGeo(1,1,1),fpost:boxGeo(1,1,1),melo:boxGeo(1,1,1),bumper:boxGeo(1,1,1)};
-const IMATKEY={sleeper:'sleeper',post:'pole',beam:'pole',pillar:'pillar',stair:'stair',bldA:'bldA',bldB:'bldB',tree:'tree',pier:'conc',pcap:'conc',tlamp:'tlamp',hdp:'hdp',hdpost:'hdpost',lightTower:'pole',fence:'fence',fpost:'fpost',melo:'melo',bumper:'bumper'};
+  hdp:boxGeo(1,1,1),hdpost:boxGeo(1,1,1),hdcap:boxGeo(1,1,1),lightTower:boxGeo(1,1,1),fence:boxGeo(1,1,1),fpost:boxGeo(1,1,1),melo:boxGeo(1,1,1),bumper:boxGeo(1,1,1)};
+const IMATKEY={sleeper:'sleeper',post:'pole',beam:'pole',pillar:'pillar',stair:'stair',bldA:'bldA',bldB:'bldB',tree:'tree',pier:'conc',pcap:'conc',tlamp:'tlamp',hdp:'hdp',hdpost:'hdpost',hdcap:'hdcap',lightTower:'pole',fence:'fence',fpost:'fpost',melo:'melo',bumper:'bumper'};
 const roofGeo=(()=>{const sh=new THREE.Shape();sh.moveTo(-0.5,0);sh.lineTo(0.5,0);sh.lineTo(0,1);sh.lineTo(-0.5,0);const g=new THREE.ExtrudeGeometry(sh,{depth:1,bevelEnabled:false});g.translate(0,0,-0.5);return g;})();
 Object.assign(IGEO,{house:boxGeo(1,1,1),roof:roofGeo,field:boxGeo(1,1,1),trunk:new THREE.CylinderGeometry(0.18,0.25,1,6),leaf:new THREE.SphereGeometry(1,8,6)});
 Object.assign(IMATS,{house:lam(0xffffff),roof:lam(0xffffff),field:lam(0xffffff),trunk:lam(0x5a4030),leaf:lam(0x4d7a3a)});
@@ -1622,7 +1622,7 @@ function finalizeChunk(c){const ch=CHUNKS[c];
   ch.b=null;ch.inst=null;}
 let GLOBALM=null;
 function globalMats(){if(GLOBALM)return GLOBALM;GLOBALM=new Set();const add=o=>{if(!o)return;for(const k in o){const m=o[k];if(m&&m.isMaterial)GLOBALM.add(m);}};
-  add(MATS);add(IMATS);add(TM);add(CM);add(OLDI);for(const m of [clockMat,upperMat,SLED_OFF,OLDBODY])if(m)GLOBALM.add(m);return GLOBALM;}
+  add(MATS);add(IMATS);add(TM);add(CM);add(OLDI);for(const m of [clockMat,upperMat,SLED_OFF,OLDBODY,hdGlassMat,hdFrameMat,hdWarnMat,...Object.values(HD_LCD_MATS),...Object.values(HD_LAMP_MATS)])if(m)GLOBALM.add(m);return GLOBALM;}
 function disposeChunk(c){const ch=CHUNKS[c];if(!ch.built)return;scene.remove(ch.g);ch.ibox=null;ch.sph=undefined;
   const GM=globalMats(),seenM=new Set();
   ch.g.traverse(o=>{if(o.geometry&&!SHARED.has(o.geometry))o.geometry.dispose();if(o.isInstancedMesh&&o.dispose)o.dispose();
@@ -1661,14 +1661,19 @@ const stopTexN={};
 function stopTexFor(n){return stopTexN[n]||(stopTexN[n]=canvasTex(128,160,(x,w,h)=>{x.fillStyle='#fff';x.fillRect(0,0,w,h);x.strokeStyle='#d8261d';x.lineWidth=10;x.strokeRect(5,5,w-10,h-10);
   x.fillStyle='#111';x.textAlign='center';x.textBaseline='middle';x.font='700 86px '+FONT;x.fillText(String(n),w/2,70);x.font='700 20px '+FONT;x.fillText('停止位置',w/2,132);}));}
 const stopTex=stopTexFor(NCAR);
-/* v1.9.8：ホームの乗車位置案内（号車番号・グリーン車乗車口）の標識 */
-function boardMarkTex(n,green){return canvasTex(192,132,(x,w,h)=>{
-  const bg=green?'#0d6b3f':'#123a6b', fg=green?'#d9f2e4':'#dcebfb';
-  x.fillStyle=bg;x.fillRect(0,0,w,h);x.fillStyle=fg;x.fillRect(5,5,w-10,h-10);
-  x.fillStyle=bg;x.textAlign='center';x.textBaseline='middle';
-  x.font='700 64px '+FONT;x.fillText(String(n),w/2,52);
-  x.font='700 20px '+FONT;x.fillText('号車',w/2,90);
-  x.font='500 15px '+FONT;x.fillText(green?'グリーン車乗車口':'乗車位置',w/2,115);});}
+/* v1.9.8：ホームドア一体型＆床面用 乗車位置案内（号車番号・グリーン車乗車口） */
+function boardMarkTex(n,green){return canvasTex(256,112,(x,w,h)=>{
+  const bg=green?'#0b5e38':'#0f294a', accent=green?'#22c55e':'#38bdf8', fg='#f8fafc';
+  x.fillStyle=bg;x.fillRect(0,0,w,h);
+  x.fillStyle=accent;x.fillRect(0,0,w,8);
+  x.strokeStyle='rgba(255,255,255,0.22)';x.lineWidth=3;x.strokeRect(2,2,w-4,h-4);
+  x.fillStyle=fg;x.textAlign='left';x.textBaseline='middle';
+  x.font='800 54px '+FONT;x.fillText(String(n),18,58);
+  x.font='700 22px '+FONT;x.fillText('号車',n>=10?84:56,64);
+  x.fillStyle=green?'#86efac':'#bae6fd';x.font='700 18px '+FONT;
+  x.fillText(green?'グリーン車乗車口':'乗車位置',18,95);
+  x.fillStyle='rgba(255,255,255,0.75)';x.font='600 13px '+FONT;x.textAlign='right';
+  x.fillText(green?'GREEN CAR':'BOARDING',w-14,95);});}
 const BOARDMAT={};
 for(let i2=1;i2<=12;i2++)for(const g2 of [0,1]){
   const key2='bm'+(g2?'g':'n')+i2;
@@ -1676,7 +1681,6 @@ for(let i2=1;i2<=12;i2++)for(const g2 of [0,1]){
   IMATS[key2]=BOARDMAT[key2]=new THREE.MeshBasicMaterial({map:boardMarkTex(i2,!!g2),side:THREE.FrontSide});
   IMATKEY[key2]=key2;
 }
-IGEO.mpost=boxGeo(0.05,1.8,0.05);IMATS.mpost=lam(0x7f858c);IMATKEY.mpost='mpost';SHARED.add(IGEO.mpost);
 function limitTex(v){return canvasTex(128,128,(x,w,h)=>{
   x.fillStyle=v?'#f2cf3a':'#f6f4ee';x.fillRect(0,0,w,h);x.strokeStyle='#111';x.lineWidth=6;x.strokeRect(3,3,w-6,h-6);
   x.fillStyle='#111';x.textAlign='center';x.textBaseline='middle';
@@ -1744,16 +1748,83 @@ function stationBuilding(c,sb,lo,hi,h0,h1,big,ground){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h1-h0,d),mats);m.position.copy((ground?offsG:offs)(sb,(lo+hi)/2,(h0+h1)/2));m.rotation.y=-t;CHUNKS[c].g.add(m);
   if(!ground){const r=new THREE.Mesh(boxGeo(1,1,1),lam(0x55595f));r.scale.set(w+1.5,0.5,d+1.5);r.position.copy(offs(sb,(lo+hi)/2,h1+0.25));r.rotation.y=-t;CHUNKS[c].g.add(r);}
 }
-// platform doors (built for some stations; animated in the game loop)
-const hdLeafGeo=boxGeo(0.07,1.3,1.46),hdLeafMat=new THREE.MeshLambertMaterial({color:0xf4f6f8,emissive:0x222222});
+// platform doors (みなとみらい線風：ガラス戸＋横長フルカラー液晶＋状態LED＋一体型乗車位置表示)
+const hdGlassGeo=boxGeo(0.025,1.02,1.34),hdGlassMat=new THREE.MeshLambertMaterial({color:0xd8ecfc,transparent:true,opacity:0.30,depthWrite:false});
+const hdFrameMat=lam(0x94a3b8),hdWarnMat=new THREE.MeshBasicMaterial({color:0xf59e0b});
+const hdTopGeo=boxGeo(0.075,0.09,1.46),hdBotGeo=boxGeo(0.075,0.16,1.46),hdEdgeGeo=boxGeo(0.075,1.04,0.06),hdStileGeo=boxGeo(0.075,1.04,0.06);
+const hdLcdGeo=UNIT_PLANE,hdLampGeo=boxGeo(0.12,0.045,0.26);
+SHARED.add(hdGlassGeo);SHARED.add(hdTopGeo);SHARED.add(hdBotGeo);SHARED.add(hdEdgeGeo);SHARED.add(hdStileGeo);SHARED.add(hdLampGeo);
+function mkHdLcdTex(title,sub,bg,accent,alert){return canvasTex(384,112,(x,w,h)=>{
+  x.fillStyle=bg;x.fillRect(0,0,w,h);
+  x.fillStyle=accent;x.fillRect(0,0,w,10);
+  if(alert){x.fillStyle='rgba(255,255,255,0.12)';for(let i=-h;i<w+h;i+=28){x.beginPath();x.moveTo(i,h);x.lineTo(i+12,h);x.lineTo(i+h+12,0);x.lineTo(i+h,0);x.closePath();x.fill();}}
+  x.fillStyle='#ffffff';x.textAlign='center';x.textBaseline='middle';
+  x.font='800 38px '+FONT;x.fillText(title,w/2,48);
+  x.fillStyle='rgba(255,255,255,0.88)';x.font='600 20px '+FONT;x.fillText(sub,w/2,88);
+});}
+const HD_LCD_MATS={
+  wait:new THREE.MeshBasicMaterial({map:mkHdLcdTex('列車をお待ちください','Please stand behind the yellow line','#0b1628','#38bdf8',false)}),
+  open:new THREE.MeshBasicMaterial({map:mkHdLcdTex('ドアが開きます','Doors opening · 足元にご注意','#092b1e','#22c55e',false)}),
+  closing:new THREE.MeshBasicMaterial({map:mkHdLcdTex('ドアが閉まります','Doors closing · ご注意ください','#8f1111','#ef4444',true)})
+};
+const HD_LAMP_MATS={
+  wait:new THREE.MeshBasicMaterial({color:0x38bdf8}),
+  open:new THREE.MeshBasicMaterial({color:0x22c55e}),
+  closing:new THREE.MeshBasicMaterial({color:0xef4444})
+};
+function mkHdLeafMesh(q){
+  const g=new THREE.Group();
+  const gl=new THREE.Mesh(hdGlassGeo,hdGlassMat);gl.position.set(0,0.03,0);g.add(gl);
+  const top=new THREE.Mesh(hdTopGeo,hdFrameMat);top.position.set(0,0.58,0);g.add(top);
+  const bot=new THREE.Mesh(hdBotGeo,hdFrameMat);bot.position.set(0,-0.54,0);g.add(bot);
+  const edge=new THREE.Mesh(hdEdgeGeo,hdWarnMat);edge.position.set(0,0.03,-q*0.70);g.add(edge);
+  const stile=new THREE.Mesh(hdStileGeo,hdFrameMat);stile.position.set(0,0.03,q*0.70);g.add(stile);
+  return g;
+}
 function buildHomeDoors(c,st,k,isSiding){
   const T=TK[k],sd=isSiding?-T.side(st):T.side(st),base=isSiding?ownTrackOff(k,st.s):T.off(st.s),line=base+sd*(1.72+0.55);
-  const flip=T.dir<0,fr=st.s+T.so,doors=[];const NC=carsFor(k),GCs=greenCarsFor(k);for(let q=0;q<NC;q++){const cc=flip?fr+CARHALF+q*CARL:fr-CARHALF-q*CARL;for(const dz of (GCs.indexOf(q)>=0?GDOORZ:DOORZ))doors.push(flip?cc+dz:cc-dz);}
+  const flip=T.dir<0,fr=st.s+T.so,doors=[];const NC=carsFor(k),GCs=greenCarsFor(k);
+  const doorMeta=[];
+  for(let q=0;q<NC;q++){
+    const green=GCs.indexOf(q)>=0,cc=flip?fr+CARHALF+q*CARL:fr-CARHALF-q*CARL;
+    for(const dz of (green?GDOORZ:DOORZ)){const ds=flip?cc+dz:cc-dz;doors.push(ds);doorMeta.push({ds,q,green});}
+  }
   doors.sort((a,b)=>a-b);const leaves=[];const edges=[st.s-PBof(st)+2,...doors.flatMap(d=>[d-1.45,d+1.45]),st.s+PF-2];
-  for(let q=0;q<edges.length;q+=2){const a=edges[q],b=edges[q+1];if(b-a>0.2){inst(c,'hdp',(a+b)/2,line,PH+0.65,0.05,1.25,b-a);inst(c,'hdpost',a,line,PH+0.68,0.16,1.36,0.16);inst(c,'hdpost',b,line,PH+0.68,0.16,1.36,0.16);}}
-  for(const d of doors)for(const q of [-1,1]){const m=new THREE.Mesh(hdLeafGeo,hdLeafMat);CHUNKS[c].g.add(m);leaves.push({m,d,q});}
+  const lcdMeshes=[],lampMeshes=[];
+  const rotPlat=sd>0?Math.PI/2:-Math.PI/2,rotTrk=-rotPlat;
+  for(let q=0;q<edges.length;q+=2){
+    const a=edges[q],b=edges[q+1],w=b-a;
+    if(w>0.2){
+      const mid=(a+b)/2;
+      inst(c,'hdp',mid,line,PH+0.63,0.11,1.26,w);
+      inst(c,'hdcap',mid,line,PH+1.27,0.13,0.05,w+0.04);
+      inst(c,'hdpost',a,line,PH+0.65,0.15,1.30,0.14);
+      inst(c,'hdpost',b,line,PH+0.65,0.15,1.30,0.14);
+      /* 戸袋にみなとみらい線風の横長フルカラーLCDと開閉状態LEDランプを内蔵 */
+      if(w>=1.7){
+        const lcd=new THREE.Mesh(hdLcdGeo,HD_LCD_MATS.wait);
+        lcd.scale.set(1.12,0.32,1);
+        lcd.position.copy(offs(mid,line+sd*0.068,PH+1.02));
+        lcd.rotation.y=faceSide(mid,sd);
+        CHUNKS[c].g.add(lcd);lcdMeshes.push(lcd);
+        const lamp=new THREE.Mesh(hdLampGeo,HD_LAMP_MATS.wait);
+        lamp.position.copy(offs(mid,line,PH+1.31));
+        lamp.rotation.y=-P(mid)[2];
+        CHUNKS[c].g.add(lamp);lampMeshes.push(lamp);
+      }
+    }
+  }
+  /* ホームドア一体型の号車・乗車位置案内（ドア脇の戸袋上部に表裏平行で配置） */
+  for(const dm of doorMeta){
+    const key='bm'+(dm.green?'g':'n')+(dm.q+1);
+    if(!IGEO[key])continue;
+    const ms=dm.ds+1.88;
+    inst(c,key,ms,line+sd*0.072,PH+1.02,0.72,0.32,1,0,rotPlat);
+    inst(c,key,ms,line-sd*0.072,PH+1.02,0.72,0.32,1,0,rotTrk);
+  }
+  for(const d of doors)for(const q of [-1,1]){const m=mkHdLeafMesh(q);CHUNKS[c].g.add(m);leaves.push({m,d,q});}
   const hdk=isSiding?('S'+k):k;
-  const hd={leaves,line,sd,frac:-1,tgt:0,st,k:hdk};(st.hd||(st.hd={}))[hdk]=hd;setHD(hd,0);
+  const hd={leaves,lcdMeshes,lampMeshes,lcdState:'wait',line,sd,frac:-1,tgt:0,st,k:hdk};(st.hd||(st.hd={}))[hdk]=hd;setHD(hd,0);
 }
 function setHD(hd,f){if(Math.abs(hd.frac-f)<0.002)return;hd.frac=f;for(const l of hd.leaves){const s=l.d+l.q*(0.73+f*1.35); /* 閉：中央でぴったり、端は戸袋に重なる */l.m.position.copy(offs(s,hd.line,PH+0.65));l.m.rotation.y=-P(s)[2];}}
 /* ホームドア当たり：開いていない区間は線路側へ出られない */
@@ -1806,19 +1877,22 @@ function setAspect(sg,a){if(sg.asp===a)return;sg.asp=a;if(!sg.lamps)return;const
 const stLights=[new THREE.PointLight(0xfff0d8,0,110,1.6),new THREE.PointLight(0xfff0d8,0,110,1.6)];stLights.forEach(l=>scene.add(l));
 const LEDS=[];
 const ledIdle=canvasTex(1024,288,(x,w,h)=>{const bg=x.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#0e1b30');bg.addColorStop(1,'#09111f');x.fillStyle=bg;x.fillRect(0,0,w,h);x.fillStyle=BRANCH?'#2e8b57':'#1a6fd4';x.fillRect(0,0,w,8);x.fillStyle='#eef5ff';x.font='700 44px '+FONT;x.textAlign='center';x.textBaseline='middle';x.fillText(BRANCH?(LINE_ID==='branch2'?'紫雲地下線':LINE_ID==='branch3'?'天宮高架線':LINE_ID==='branch4'?'港見支線':'白峰支線'):'汐見環状線',w/2,h/2-10);x.fillStyle='#8fb4e8';x.font='500 22px '+FONT;x.fillText('LCD 発車案内システム',w/2,h/2+38);});SHARED.add(ledIdle);
-/* v1.9.8：各ホームのドア位置に「乗車位置」標識（号車番号・グリーン車は緑）を立てる。
-   標識は線路と平行に置き、表裏それぞれ正向きの板を1枚ずつ（裏文字にならない）。
-   グリーン車は専用ドア位置（GDOORZ）に合わせるので、号車とドア位置がずれない。 */
-function boardingMarks(c,st,k,isSiding){if(!serves(st,k))return;const T=TK[k];if(!T)return;
+/* ホームドアがない駅のみ足元に水平な乗車位置ステッカーを貼る（ホームドアがある駅はホームドアに一体化済み） */
+function boardingMarks(c,st,k,isSiding){if(!serves(st,k)||HOMEDOOR.has(st.i))return;const T=TK[k];if(!T)return;
   const sd=isSiding?-T.side(st):T.side(st),base=isSiding?ownTrackOff(k,st.s):T.off(st.s),flip=T.dir<0,fr=st.s+T.so;
-  const NC=carsFor(k),GC=greenCarsFor(k),off=base+sd*2.55;
+  const NC=carsFor(k),GC=greenCarsFor(k),off=base+sd*2.32;
   for(let q=0;q<NC;q++){
     const green=GC.indexOf(q)>=0,key='bm'+(green?'g':'n')+(q+1);
-    if(!IGEO[key])continue;
+    if(!BOARDMAT[key])continue;
     for(const dz of (green?GDOORZ:DOORZ)){
       const ds=flip?fr+CARHALF+q*CARL+dz:fr-CARHALF-q*CARL-dz;
-      for(const rt of [0,Math.PI/2,Math.PI,-Math.PI/2])inst(c,key,ds,off,PH+1.66,0.80,0.55,1,0,rt); /* 4方向から読める */
-      inst(c,'mpost',ds,off,PH+0.69,1,0.75,1); /* 柱は板の下端まで（号車番号を隠さない） */
+      const m=new THREE.Mesh(UNIT_PLANE,BOARDMAT[key]);
+      m.scale.set(0.95,0.42,1);
+      m.position.copy(offs(ds,off,PH+0.015));
+      m.rotation.order='YXZ';
+      m.rotation.y=faceSide(ds,sd);
+      m.rotation.x=-Math.PI/2;
+      CHUNKS[c].g.add(m);
     }
   }
 }
@@ -5276,6 +5350,12 @@ function updHomeDoors(dt){
       }
       const tgt=Math.min(1,f*1.15);const cur=hd.frac<0?0:hd.frac,nf=cur+clamp(tgt-cur,-dt/2.2,dt/2.0);
       const was=hdPrev.get(hd)||0,dir=Math.sign(nf-cur);if(dir!==0&&was!==dir){playAt(offs(st.s-60,hd.line,1.5),d=>hdSnd(dir>0,d));}hdPrev.set(hd,dir||was&&0);
+      const ns=(dir<0&&nf>0.03)?'closing':(nf>0.25||dir>0)?'open':'wait';
+      if(hd.lcdState!==ns){
+        hd.lcdState=ns;
+        if(hd.lcdMeshes)for(const m of hd.lcdMeshes)m.material=HD_LCD_MATS[ns];
+        if(hd.lampMeshes)for(const m of hd.lampMeshes)m.material=HD_LAMP_MATS[ns];
+      }
       setHD(hd,nf);}}
 }
 function lineJa(){return ROUTES[G.route].name.replace('　','');}
