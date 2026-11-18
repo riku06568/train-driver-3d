@@ -671,12 +671,15 @@ function playRemoteTrainSound(p, type, opt) {
   const _AC = A.AC, _master = A.master, _camera = A.camera;
   if (_AC.state === 'suspended') { try { _AC.resume(); } catch(e) {} }
   try {
+    /* v1.9.8：位置は「線路上の実座標」を優先する。3Dモデルの位置は遠方で
+       プール・間引きされることがあり、遠くの列車が近くにいるように誤判定されて
+       警笛が聞こえてしまっていた。 */
     let pos = null;
-    if (p.tr && p.tr.cars && p.tr.cars[0]) {
-      pos = p.tr.cars[0].position;
-    } else if (p.s != null && typeof A.offsG === 'function') {
-      const o = (A.TK && p.key && A.TK[p.key]) ? A.TK[p.key].off(p.s) : 0;
+    if (p.s != null && isFinite(p.s) && typeof A.offsG === 'function' && A.TK && p.key && A.TK[p.key]) {
+      const o = (typeof A.TK[p.key].off === 'function') ? A.TK[p.key].off(p.s) : 0;
       pos = A.offsG(p.s, o, 1.5);
+    } else if (p.tr && p.tr.cars && p.tr.cars[0]) {
+      pos = p.tr.cars[0].position;
     }
     if (!pos || !_camera) return;
     const cw = _camera.getWorldPosition(new THREE.Vector3());
@@ -684,16 +687,19 @@ function playRemoteTrainSound(p, type, opt) {
     if (!isFinite(d)) return;
 
     const isHorn = (type === 'horn' || type === 'mhorn');
-    const maxD = isHorn ? 1600 : 650;
+    /* 警笛は車内にいても300m、ホームでも360mまで。それ以上は絶対に鳴らさない */
+    const sealed = (typeof A.listenerSealed === 'function') ? A.listenerSealed() : false;
+    const maxD = isHorn ? (sealed ? 300 : 380) : (type === 'promo' ? 240 : 200);
     if (d > maxD) return;
+    if (p.isPax || p.state === 'passenger' || p.state === 'title' || p.state === 'dispatch') return;
 
     // 運転室内・客室内にいる場合の音響減衰（窓ガラス越しにリアルに響かせる）
     const inCab = (typeof A.listenerSealed === 'function') ? A.listenerSealed() : false;
     const cabFilter = inCab ? 3400 : 18000;
     const cabVolMult = inCab ? (isHorn ? 0.65 : 0.48) : 1.0;
 
-    const refD = isHorn ? 110 : 55;
-    const distGain = Math.min(3.8, 5.0 / (1 + Math.pow(d / refD, 1.35)));
+    const refD = isHorn ? 70 : 45;
+    const distGain = Math.min(3.8, 4.6 / (1 + Math.pow(d / refD, 1.6))) * clamp(1 - Math.pow(d / maxD, 2), 0, 1);
     const totalGain = distGain * cabVolMult;
 
     const g = _AC.createGain();
@@ -762,7 +768,7 @@ function playRemoteTrainSound(p, type, opt) {
       A.doorOpenSnd(out);
     } else if (type === 'doorClose' && typeof A.doorCloseSnd === 'function') {
       A.doorCloseSnd(out);
-      if (d < 220 && typeof A.playGuide === 'function') {
+      if (d < (sealed ? 90 : 140) && typeof A.playGuide === 'function') {
         A.playGuide('tab_doors', out, 1.0);
       }
     }
@@ -1655,8 +1661,22 @@ const stopTexN={};
 function stopTexFor(n){return stopTexN[n]||(stopTexN[n]=canvasTex(128,160,(x,w,h)=>{x.fillStyle='#fff';x.fillRect(0,0,w,h);x.strokeStyle='#d8261d';x.lineWidth=10;x.strokeRect(5,5,w-10,h-10);
   x.fillStyle='#111';x.textAlign='center';x.textBaseline='middle';x.font='700 86px '+FONT;x.fillText(String(n),w/2,70);x.font='700 20px '+FONT;x.fillText('停止位置',w/2,132);}));}
 const stopTex=stopTexFor(NCAR);
-const greenMarkTex=canvasTex(256,128,(x,w,h)=>{x.fillStyle='#1f7a4a';x.fillRect(0,0,w,h);x.fillStyle='#d8f0e2';x.fillRect(6,6,w-12,h-12);
-  x.fillStyle='#14532d';x.textAlign='center';x.textBaseline='middle';x.font='700 44px '+FONT;x.fillText('グリーン車',w/2,44);x.font='700 30px '+FONT;x.fillText('乗車口',w/2,92);});
+/* v1.9.8：ホームの乗車位置案内（号車番号・グリーン車乗車口）の標識 */
+function boardMarkTex(n,green){return canvasTex(192,132,(x,w,h)=>{
+  const bg=green?'#0d6b3f':'#123a6b', fg=green?'#d9f2e4':'#dcebfb';
+  x.fillStyle=bg;x.fillRect(0,0,w,h);x.fillStyle=fg;x.fillRect(5,5,w-10,h-10);
+  x.fillStyle=bg;x.textAlign='center';x.textBaseline='middle';
+  x.font='700 64px '+FONT;x.fillText(String(n),w/2,52);
+  x.font='700 20px '+FONT;x.fillText('号車',w/2,90);
+  x.font='500 15px '+FONT;x.fillText(green?'グリーン車乗車口':'乗車位置',w/2,115);});}
+const BOARDMAT={};
+for(let i2=1;i2<=12;i2++)for(const g2 of [0,1]){
+  const key2='bm'+(g2?'g':'n')+i2;
+  IGEO[key2]=UNIT_PLANE;
+  IMATS[key2]=BOARDMAT[key2]=new THREE.MeshBasicMaterial({map:boardMarkTex(i2,!!g2),side:THREE.FrontSide});
+  IMATKEY[key2]=key2;
+}
+IGEO.mpost=boxGeo(0.05,1.8,0.05);IMATS.mpost=lam(0x7f858c);IMATKEY.mpost='mpost';SHARED.add(IGEO.mpost);
 function limitTex(v){return canvasTex(128,128,(x,w,h)=>{
   x.fillStyle=v?'#f2cf3a':'#f6f4ee';x.fillRect(0,0,w,h);x.strokeStyle='#111';x.lineWidth=6;x.strokeRect(3,3,w-6,h-6);
   x.fillStyle='#111';x.textAlign='center';x.textBaseline='middle';
@@ -1786,11 +1806,23 @@ function setAspect(sg,a){if(sg.asp===a)return;sg.asp=a;if(!sg.lamps)return;const
 const stLights=[new THREE.PointLight(0xfff0d8,0,110,1.6),new THREE.PointLight(0xfff0d8,0,110,1.6)];stLights.forEach(l=>scene.add(l));
 const LEDS=[];
 const ledIdle=canvasTex(1024,288,(x,w,h)=>{const bg=x.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#0e1b30');bg.addColorStop(1,'#09111f');x.fillStyle=bg;x.fillRect(0,0,w,h);x.fillStyle=BRANCH?'#2e8b57':'#1a6fd4';x.fillRect(0,0,w,8);x.fillStyle='#eef5ff';x.font='700 44px '+FONT;x.textAlign='center';x.textBaseline='middle';x.fillText(BRANCH?(LINE_ID==='branch2'?'紫雲地下線':LINE_ID==='branch3'?'天宮高架線':LINE_ID==='branch4'?'港見支線':'白峰支線'):'汐見環状線',w/2,h/2-10);x.fillStyle='#8fb4e8';x.font='500 22px '+FONT;x.fillText('LCD 発車案内システム',w/2,h/2+38);});SHARED.add(ledIdle);
-function greenMarks(c,st,k,isSiding){if(BRANCH||greenCarsFor(k).length===0||!serves(st,k))return;
-  const T=TK[k],sd=isSiding?-T.side(st):T.side(st),base=isSiding?ownTrackOff(k,st.s):T.off(st.s),flip=T.dir<0,fr=st.s+T.so,mat=cmat(c,new THREE.MeshLambertMaterial({map:greenMarkTex}));
-  for(const q of greenCarsFor(k))for(const dz of GDOORZ){const ds=flip?fr+CARHALF+q*CARL+dz:fr-CARHALF-q*CARL-dz,t=P(ds)[2];
-    const m=new THREE.Mesh(UNIT_PLANE,mat);m.scale.set(0.95,1.7,1);m.position.copy(offs(ds,ov(base+sd*(1.72+1.15),ds),PH+0.015));
-    m.rotation.set(-Math.PI/2,0,-t+Math.PI/2);addTo(c,m);}}
+/* v1.9.8：各ホームのドア位置に「乗車位置」標識（号車番号・グリーン車は緑）を立てる。
+   標識は線路と平行に置き、表裏それぞれ正向きの板を1枚ずつ（裏文字にならない）。
+   グリーン車は専用ドア位置（GDOORZ）に合わせるので、号車とドア位置がずれない。 */
+function boardingMarks(c,st,k,isSiding){if(!serves(st,k))return;const T=TK[k];if(!T)return;
+  const sd=isSiding?-T.side(st):T.side(st),base=isSiding?ownTrackOff(k,st.s):T.off(st.s),flip=T.dir<0,fr=st.s+T.so;
+  const NC=carsFor(k),GC=greenCarsFor(k),off=base+sd*2.55;
+  for(let q=0;q<NC;q++){
+    const green=GC.indexOf(q)>=0,key='bm'+(green?'g':'n')+(q+1);
+    if(!IGEO[key])continue;
+    for(const dz of (green?GDOORZ:DOORZ)){
+      const ds=flip?fr+CARHALF+q*CARL+dz:fr-CARHALF-q*CARL-dz;
+      inst(c,key,ds,off,PH+1.62,0.62,0.43,1,0,Math.PI/2);
+      inst(c,key,ds,off,PH+1.62,0.62,0.43,1,0,-Math.PI/2);
+      inst(c,'mpost',ds,off,PH+0.90,1,1,1);
+    }
+  }
+}
 const gateTex=canvasTex(128,64,(x,w,h)=>{x.fillStyle='#0d1626';x.fillRect(0,0,w,h);x.fillStyle='#14c07a';x.font='700 26px '+FONT;x.textAlign='center';x.textBaseline='middle';x.fillText('IC',w/2,h/2);});
 const cSign=(txt,bg,fg)=>canvasTex(256,64,(x,w,h)=>{x.fillStyle=bg;x.fillRect(0,0,w,h);x.fillStyle=fg;x.font='700 34px '+FONT;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,h/2);});
 const TEX_MIRROR=cSign('　','#cfe0ea','#cfe0ea');
@@ -1871,8 +1903,7 @@ function buildStation(st,c){
     addLEDs(c,st,mid(-1.0),TK[keyL].dir,[keyL],KIND[keyL]);addLEDs(c,st,mid(1.0),TK[keyR].dir,[keyR],KIND[keyR]);return mid;};
   if(!BRANCH&&i===0){ /* 汐見駅：6面12線（各線路の右側=AI列車、左側=プレイヤー退避線） */
     const pl=(k,sd)=>island(s=>TK[k].off(s)+(sd<0?-8.6:0)+1.72,s=>TK[k].off(s)+(sd<0?0:8.6)-1.72,k,k);
-    for(const k of KEYS)pl(k,-TK[k].dir);
-    greenMarks(c,st,'E');greenMarks(c,st,'F');greenMarks(c,st,'E',true);greenMarks(c,st,'F',true);}
+    for(const k of KEYS)pl(k,-TK[k].dir);}
   else if(BRANCH&&st.cls==='Q'){ /* 2面4線：副本線｜島｜本線｜本線｜島｜副本線 */
     island(s=>-sidDev(s)+1.72,-1.72,'A','C');island(s=>sepB(s)+1.72,s=>sepB(s)+sidDev(s)-1.72,'D','B');}
   else if(BRANCH&&st.cls==='T'){ /* 通過線：外側の副本線に相対式ホーム、真ん中を快速が通過 */
@@ -1896,11 +1927,13 @@ function buildStation(st,c){
     boards(c,st,s0,s1,eA(5.3),1,pv,nx);boards(c,st,s0,s1,eB(5.3),-1,nx,pv);
     inst(c,'stair',sb,eA(3.4),PH+stairH/2,2.6,stairH,9);inst(c,'stair',sb,eB(3.4),PH+stairH/2,2.6,stairH,9);
     addLEDs(c,st,-4.2,1,['A'],'local');addLEDs(c,st,s=>sepB(s)+4.2,-1,['B'],'local');
-    island(s=>offC(s)+1.72,s=>offE(s)-1.72,'C','E');island(s=>offF(s)+1.72,s=>offD(s)-1.72,'F','D');greenMarks(c,st,'E');greenMarks(c,st,'F');}
+    island(s=>offC(s)+1.72,s=>offE(s)-1.72,'C','E');island(s=>offF(s)+1.72,s=>offD(s)-1.72,'F','D');}
   else{island(1.72,s=>offC(s)-1.72,'A','C');island(s=>offD(s)+1.72,s=>sepB(s)-1.72,'D','B');
-    if(st.cls!=='R'){island(s=>offE(s)+1.72,s=>offF(s)-1.72,'E','F');greenMarks(c,st,'E');greenMarks(c,st,'F');}}
+    if(st.cls!=='R'){island(s=>offE(s)+1.72,s=>offF(s)-1.72,'E','F');}}
   for(const ex of st.extra){const mid=islandPlat(c,s0,s1,ex.lo,ex.hi,true);
     boards(c,st,s0+5,s1,mid(-0.06),-1,'','',ex.line[0]);boards(c,st,s0+5,s1,mid(0.06),1,'','',ex.line[0]);inst(c,'stair',sb,mid(0),PH+3.15,2.6,6.3,9);}
+  /* v1.9.8：全ホームに乗車位置案内（号車・グリーン車）を設置 */
+  for(const k of KEYS)if(serves(st,k)&&!physDup(st,k)){boardingMarks(c,st,k,false);if(!BRANCH&&i===0)boardingMarks(c,st,k,true);}
   if(HOMEDOOR.has(i))for(const k of KEYS)if(serves(st,k)&&!physDup(st,k)){buildHomeDoors(c,st,k,false);if(!BRANCH&&i===0)buildHomeDoors(c,st,k,true);}
   for(const k of KEYS)if(serves(st,k)&&!physDup(st,k)){const F=edgeFence(st,k,false);for(const [za,zb] of F.zones)fenceRun(c,za,zb,F.line);if(!BRANCH&&i===0){const Fs=edgeFence(st,k,true);for(const [za,zb] of Fs.zones)fenceRun(c,za,zb,Fs.line);}} /* ドアの来ない線路側 */
   if(BRANCH&&(i===0||i===NST-1)){const sb2=i===0?TRK0+3:TRK1-3;for(const o of [0,sepB(sb2)]){inst(c,'bumper',sb2,o,0.75,2.4,0.9,0.7);inst(c,'bumper',sb2+(i===0?-0.6:0.6),o,0.45,2.6,0.25,0.5);}} /* 車止め */
@@ -2195,8 +2228,9 @@ function updChunks(s,force){const pc=chunkOf(s);const want=[];for(let d=0;d<=3;d
 const doorTex=canvasTex(64,128,(x,w,h)=>{x.fillStyle='#b9bec4';x.fillRect(0,0,w,h);x.clearRect(12,10,40,50);x.strokeStyle='#8d9298';x.lineWidth=3;x.strokeRect(1,1,w-2,h-2);});
 const TM={
   body:new THREE.MeshPhongMaterial({color:0xc9cdd3,specular:0x777777,shininess:35}),
-  glass:new THREE.MeshPhongMaterial({color:0x2a3a48,emissive:0x000000,specular:0xcfd8e0,shininess:80,transparent:true,opacity:0.14,depthWrite:false,side:DS}),
-  glassF:new THREE.MeshBasicMaterial({color:0x9fb8cc,transparent:true,opacity:0.08,depthWrite:false,side:DS}),
+  glass:new THREE.MeshPhongMaterial({color:0x2f4457,emissive:0x000000,specular:0xdde8f2,shininess:90,transparent:true,opacity:0.11,depthWrite:false,side:DS}),
+  glassF:new THREE.MeshBasicMaterial({color:0xe2eef8,transparent:true,opacity:0.028,depthWrite:false,side:DS,fog:false}),
+  glassC:new THREE.MeshBasicMaterial({color:0xeef7fd,transparent:true,opacity:0.04,depthWrite:false,side:DS,fog:false}),
   doorway:new THREE.MeshLambertMaterial({color:0x6b645a,emissive:0xfff1d6,emissiveIntensity:0.25,side:DS}),
   dark:lam(0x26282b),mid:lam(0x4a4e54),
   face:new THREE.MeshPhongMaterial({color:0xe6e8ea,shininess:40,side:DS}),
@@ -2379,7 +2413,7 @@ function carTemplate(front,rear,panto,staticDoors,green,old){
       if(cabE){ /* 運転台：仕切り＋乗務員扉、机と運転席（客室の座席は置かない） */
         const rz=dir<0?0:Math.PI; /* 仕切り：腰から下と上は壁、目の高さは窓（客室から乗務員室と前面が見える） */
         put('iwall',UNIT_PLANE,0,1.48,ZP,0,rz,0,2.72,0.64,1);put('iwall',UNIT_PLANE,0,3.16,ZP,0,rz,0,2.72,0.5,1); /* 窓を大きく（1.8〜2.9m） */
-        for(const sx of [-1,1]){put('iwall',UNIT_PLANE,sx*1.33,2.35,ZP,0,rz,0,0.06,1.1,1);put('glass',UNIT_PLANE,sx*0.86,2.35,ZP-dir*0.01,0,rz,0,0.9,1.1,1);}
+        for(const sx of [-1,1]){put('iwall',UNIT_PLANE,sx*1.33,2.35,ZP,0,rz,0,0.06,1.1,1);put('glassC',UNIT_PLANE,sx*0.86,2.35,ZP-dir*0.01,0,rz,0,0.9,1.1,1);}
         box('door',0.8,1.85,0.05,0,2.125,ZP-dir*0.03);
         }
       else box('door',0.9,1.9,0.07,0,2.1,dir*9.67);}} /* 貫通扉 */
@@ -2813,7 +2847,7 @@ const CM={shell:lam(0xd6d9dc),desk:lam(0x22262c),top:lam(0x2c3138),frame:lam(0x0
   matBlack:lam(0x111317),
   accent:new THREE.MeshBasicMaterial({color:0x2fd0ff}),
   accentDim:new THREE.MeshBasicMaterial({color:0x0d5c78}),
-  glass:new THREE.MeshBasicMaterial({color:0xa9c0d4,transparent:true,opacity:0.05,depthWrite:false,fog:false,side:DS}),
+  glass:new THREE.MeshBasicMaterial({color:0xeaf4fb,transparent:true,opacity:0.026,depthWrite:false,fog:false,side:DS}),
   visor:new THREE.MeshBasicMaterial({color:0x1d2b38,transparent:true,opacity:0.6,depthWrite:false,fog:false,side:DS}),
   hit:new THREE.MeshBasicMaterial({visible:false})};
 function cbox(w,h,d,mat,x,y,z,parent){const m=new THREE.Mesh(boxGeo(w,h,d),mat);m.position.set(x,y,z);(parent||cab).add(m);return m;}
@@ -3784,7 +3818,7 @@ function aiTurn(a,st){const ok=a.key,nk={A:'B',B:'A',C:'D',D:'C'}[ok]||ok;a.key=
     /* v1.9.7：折り返しで号車の並びが反転するので、乗っている人の号車と位置も反転させる */
     if(typeof RIDE!=='undefined'&&RIDE&&RIDE.a===a){RIDE.k=nC-1-RIDE.k;RIDE.lz=-RIDE.lz;RIDE.lx=-RIDE.lx;RIDE.fl='deck';if(RIDE.seat!=null)RIDE.seat=null;
       try{if(a.tr.cars[RIDE.k]){if(camera.parent)camera.parent.remove(camera);a.tr.cars[RIDE.k].add(camera);}}catch(e){}}}else if(a.insideSet){releaseInterior(a);}
-  a.s=st.s+TK[nk].so;a.state='dwell';a.v=0;a.t=a.doors?26:22;a.last=st.i;a.side=TK[nk].side(st);a.flowed=false;a.sndF={};a.hold=0;a.pa={};
+  a.s=st.s+TK[nk].so;a.state='dwell';a.v=0;a.t=dwellSec(a,st);a.dwellTot=a.t;a.last=st.i;a.side=TK[nk].side(st);a.flowed=false;a.sndF={};a.hold=0;a.pa={};
   if(POOL[ok]&&POOL[nk]){const i=POOL[ok].indexOf(a);if(i>=0){POOL[ok].splice(i,1);POOL[nk].push(a);}}}
 /* 天宮支線の快速：待避駅より手前で前の各停に追いつかないよう、待避駅に着くのが各停より少し後になる速さで走る */
 function rapidPace(a){let P=null,dP=1e9;for(const st of STATIONS){if(!isPassSt(st))continue;const D=a.dir*sdiff(a.s,st.s);if(D>30&&D<dP){dP=D;P=st;}}
@@ -3799,6 +3833,8 @@ function oppComing(st,dir,self){const chk=(k,s2,d)=>{if(d===dir)return false;con
   for(const o of OT)if(o!==self&&o.state!=='off'&&o.key&&chk(o.key,o.s,o.dir))return true;if(!PAX&&G.phase==='play'&&self!=='OWN'&&chk(G.key,G.s,G.dir))return true;return false;}
 function miniHold(){if(!MINI||PAX)return false;const v=G.atStation!==null?G.atStation:G.depCheck;if(v==null)return false;const st=stOf(v);return st.cls==='I'&&oppComing(st,G.dir,'OWN');}
 /* 他の電車：まだ乗り降りしている人がいるか */
+/* v1.9.8：AI列車の停車時間（ドア扱いあり14秒／なし10秒、主要駅+3秒） */
+function dwellSec(a,st){const s=st||(a&&a.stSt);return ((a&&a.doors)?14:10)+((s&&isMajorStation(s))?3:0);}
 function aiBusy(a){for(const p of active){if(p.train===a&&(p.kind==='board'||p.kind==='jam'))return true;if(p.kind==='alight'&&p.st===(a.stSt&&a.stSt.i)&&p.flow===a.key&&p.path&&p.path.length>1&&p.delay<=0)return true;}return false;}
 /* 汐見駅の分単位ダイヤ（外回り/内回り 各停・快速・快特） */
 const SHIOMI_TT={
@@ -3859,7 +3895,7 @@ function aiRun(a,dt){
       a._emerGap=(clearGap<=45);
       a._hardStop=(clearGap<=22);
     }
-    if(nx&&nx.D<0.2&&a.v<0.6){a.state='dwell';a.v=0;a.t=a.doors?26:22;a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;
+    if(nx&&nx.D<0.2&&a.v<0.6){a.state='dwell';a.v=0;a.t=dwellSec(a,nx.st);a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;
       if(!BRANCH&&nx.st.i===0&&SHIOMI_TT[a.key]){const depMs=nextShiomiDepMs(a.key,nowMs()+12000);a.shiomiDepMs=depMs;a.t=clamp((depMs-nowMs())/1000,14,180);a.dwellTot=a.t;}}
     else{const maxDec=a._emerGap?-4.5:-2.4;a.v+=clamp((vt-a.v)*2,maxDec,0.8)*dt;a.v=a._hardStop?0:Math.max(0,a.v);a.s+=a.dir*a.v*dt;}}
   else if(a.state==='dwell'){a.t-=dt;
@@ -3867,9 +3903,9 @@ function aiRun(a,dt){
     if(!BRANCH&&a.stSt&&a.stSt.i===0&&a.yieldToPlayer){if(!PAX&&G.phase==='play'&&G.key===a.key&&Math.abs(sdiff(G.s,STATIONS[0].s))<180)a.t=Math.max(a.t,6);else a.yieldToPlayer=false;}
     if(B3&&a.doors&&KIND[a.key]!=='rapid'&&isPassSt(a.stSt)&&a.t<10&&(a.hold||0)<240&&rapidComing(a)){a.t=10;a.hold=(a.hold||0)+dt;} /* 待避 */
     if(MINI&&a.stSt&&a.stSt.cls==='I'&&a.t<10&&(a.hold||0)<900&&oppComing(a.stSt,a.dir,a)){a.t=10;a.hold=(a.hold||0)+dt;} /* 単線：対向列車を待って行き違い */
-    if(a.doors&&a.t<(BRANCH?8.3:5.0)&&a.t>(BRANCH?8.0:4.7)&&(a.boardHold||0)<30&&aiBusy(a)){a.t=(BRANCH?8.3:5.0);a.boardHold=(a.boardHold||0)+dt;} /* 乗り降りが終わるまで待つ */
-    const tot=a.dwellTot||(a.doors?26:22),el=Math.max(0,tot-a.t);
-    if(a.doors){a.frac=clamp(Math.min(el/2.4,(a.t-0.4)/2.6),0,1);
+    if(a.doors&&a.t<9.4&&a.t>9.1&&(a.boardHold||0)<30&&aiBusy(a)){a.t=9.4;a.boardHold=(a.boardHold||0)+dt;} /* 乗り降りが終わるまで待つ（戸閉前に余裕を取る） */
+    const tot=a.dwellTot||dwellSec(a),el=Math.max(0,tot-a.t);
+    if(a.doors){a.frac=clamp(Math.min(el/2.4,(a.t-1.4)/2.6),0,1);
       if(!a.flowed&&a.frac>=1){a.flowed=true;const term=BRANCH&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0));
         if(term&&RIDE&&RIDE.a===a){toast('終点です。全員お降りください','warn');setTimeout(()=>{if(RIDE&&RIDE.a===a)alightTrain();},2600);} /* 乗客モードでも終点では降りる */
         if(Math.abs(sdiff(G.s,a.stSt.s))<1400){const r=startFlows(a.stSt,a.key,a.stSt.s+T.so,a);a.load=term?r.b:clamp(a.load-Math.min(r.a,a.load)+r.b,0,maxLoadFor(a.key));}else if(term)a.load=0;else a.load=clamp(a.load+irand(-6,10),Math.round(trainLoadFor(a.key)*0.55),maxLoadFor(a.key));}}
@@ -3881,14 +3917,18 @@ function aiRun(a,dt){
 function aiSounds(a,el,tot){
   if(!a.vis||!a.doors||!a.stSt||!a.tr||!a.tr.cars||!a.tr.cars[2])return;
   const d=a.tr.cars[2].position.distanceTo(camera.getWorldPosition(camW));if(d>320)return;
-  if(!a.sndF.v&&a.t<(BRANCH?7.5:4.2)){a.sndF.v=1;if(d<(PAX?90:(G.v<3?65:0))&&!(typeof listenerSealed==='function'&&listenerSealed()))playGuide('tab_doors',getExtBus()||master,clamp(1.2/(1+Math.pow(d/60,2)),0.35,1.2));}
+  if(!a.sndF.v&&a.t<6.6){a.sndF.v=1;if(d<(PAX?90:(G.v<3?65:0))&&!(typeof listenerSealed==='function'&&listenerSealed()))playGuide('tab_doors',getExtBus()||master,clamp(1.2/(1+Math.pow(d/60,2)),0.35,1.2));}
   if(!AC)return;if(AC.state==='suspended'){try{AC.resume();}catch(e){}}
   if(!a.sndF.o&&el>0.1){a.sndF.o=1;playAt(a.tr.cars[1].position,doorOpenSnd);}
-  if(a.sndF.mStart==null)a.sndF.mStart=(a.doors?26:22)-rand(3,10);                                     /* ドアが開いてから少しして */
-  if(a.t<a.sndF.mStart&&a.t>(BRANCH?8.2:4.9)){const now=AC.currentTime;if(!a.sndF.mEnd||now>a.sndF.mEnd){const kd=BRANCH?'branch':KIND[a.key];let dur=6;      /* 終わったらまた流す */
+  /* v1.9.8：ドアが開いてすぐ乗降促進メロディを1回鳴らし、鳴り終わり→戸締め放送→戸閉 の順で進める */
+  if(a.sndF.mStart==null)a.sndF.mStart=(a.dwellTot||dwellSec(a))-1.2;
+  if(!a.sndF.m0&&a.t<=a.sndF.mStart&&a.t>6.6)a.sndF.m0=1;
+  if(a.sndF.m0&&a.t>6.6){const now=AC.currentTime;
+    if((!a.sndF.mEnd||now>a.sndF.mEnd)&&(a.sndF.mLastM==null||now-a.sndF.mLastM>11)){
+      const kd=BRANCH?'branch':KIND[a.key];let dur=6;
       playAt(a.tr.cars[1].position,dest=>{dur=kd==='branch'?playSong(branchSong(a.stSt.i),dest,0.85):kd==='rapid'?playSong(SONG_A,dest,0.85):kd==='ltd'?playSong(SONG_B,dest,0.85):melody(dest,0.85);return dur;});
-      a.sndF.mEnd=now+Math.max(2,dur||6)+0.25;}}
-  if(!a.sndF.c&&a.t<3.2){a.sndF.c=1;playAt(a.tr.cars[1].position,doorCloseSnd);}}
+      a.sndF.mLastM=now;a.sndF.mEnd=now+Math.max(2,dur||6)+0.25;}}
+  if(!a.sndF.c&&a.t<4.1){a.sndF.c=1;playAt(a.tr.cars[1].position,doorCloseSnd);}}
 /* station PA: simple approach announcement for the platform the player is on */
 let paCool=0;
 function paStation(){if(PAX)return RIDE?null:W.st;if(G.atStation!==null||G.depCheck!==null){const st=stOf(G.atStation!==null?G.atStation:G.depCheck);return Math.abs(stopDist(G.atStation!==null?G.atStation:G.depCheck))<30?st:null;}return null;}
@@ -4190,6 +4230,18 @@ const GUIDE_URI = {
   tab_manners: "assets/audio/ann/guide_tab_manners.mp3"
 };
 let guideAudio=null,guideTimer=0;
+/* v1.9.8：戸締め放送（「ドアが閉まります」）の再生終了時刻。放送が終わったらすぐ戸閉する／液晶を赤点滅させるのに使う */
+let doorAnnUntil=0,doorWarnT=0;
+function doorAnnBusy(){return nowMs()<doorAnnUntil;}
+function doorWarnOn(){
+  if(typeof G==='undefined'||!G||G.phase!=='play')return false;
+  if(typeof RIDE!=='undefined'&&RIDE&&RIDE.a){const a=RIDE.a;
+    if(a.state==='dwell'&&a.stSt)return (a.t>1.0&&a.t<7.4);          /* 他車：戸締め放送〜閉扉まで */
+    return false;}
+  if(PAX||G.walkOn)return false;
+  if(G.door&&G.door.state==='closing')return true;
+  return nowMs()<doorAnnUntil;
+}
 const guideEls={};let guideReady=false;
 function preloadGuides(){if(guideReady)return;guideReady=true;
   for(const k of Object.keys(GUIDE_URI)){try{const a=new Audio();a.preload='auto';a.src=GUIDE_URI[k];a.volume=1;a.load();guideEls[k]=a;}catch(e){}}}
@@ -4204,12 +4256,15 @@ function playGuide(kind,dest,gainVal){const src=GUIDE_URI[kind];if(!src)return;
         s.buffer=buf;s.connect(g);
         if(dest){g.connect(dest);}else{g.connect(AC.destination);}
         s.start(0);
+        if(kind==='tab_doors'){doorAnnUntil=nowMs()+(buf.duration||3)*1000+220;doorWarnT=nowMs();}
       };
       if(guideBufCache[kind]){playBuf(guideBufCache[kind]);return;}
       fetch(src).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(buf=>{
         guideBufCache[kind]=buf;playBuf(buf);
       }).catch(()=>{
-        try{const a=new Audio(src);a.volume=1;a.play().catch(()=>{});}catch(e2){}
+        try{const a=new Audio(src);a.volume=1;a.play().catch(()=>{});
+          if(kind==='tab_doors'){doorAnnUntil=nowMs()+((a.duration&&isFinite(a.duration))?a.duration*1000:3200)+220;doorWarnT=nowMs();}
+        }catch(e2){}
       });
       return;
     }
@@ -4217,6 +4272,7 @@ function playGuide(kind,dest,gainVal){const src=GUIDE_URI[kind];if(!src)return;
     let a=guideEls[kind];if(!a){a=new Audio(src);a.volume=1;guideEls[kind]=a;}
     a.volume=1;a.muted=false;try{a.currentTime=0;}catch(e){}
     a.play().catch(()=>{});
+    if(kind==='tab_doors'){doorAnnUntil=nowMs()+((a.duration&&isFinite(a.duration)&&a.duration>0)?a.duration*1000:3200)+220;doorWarnT=nowMs();}
   }catch(e){console.warn(e);}}
 function scheduleGuide(kind,delayMs){if(!kind)return;preloadGuides();clearTimeout(guideTimer);
   guideTimer=setTimeout(function(){playGuide(kind);},Math.max(300,delayMs|0));}
@@ -5025,7 +5081,7 @@ function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new mel
     if(p.kind==='board'||p.kind==='alight'||p.kind==='runner'){p.speed*=1.5;p.delay*=0.5;}
     if(p.kind==='jam')pushInJam(p);}
   if(G.runnerPlanned&&!G.runnerSpawned)G.runnerT=Math.min(G.runnerT,1.2);
-  const voice=()=>{G.promoOn=false;playGuide('tab_doors');if(LIVE&&liveAvail())liveSay('ドアが閉まります。ご注意ください。');};
+  const voice=()=>{G.promoOn=false;doorWarnT=nowMs();playGuide('tab_doors');if(LIVE&&liveAvail())liveSay('ドアが閉まります。ご注意ください。');};
   const bSt=BRANCH&&G.atStation!==null?stOf(G.atStation):null;
   const cSt=n==='st'&&G.atStation!==null?stOf(G.atStation):null;
   if(n===1){toast(PROMO_NAMES[1],'info');voice();return;}
@@ -5047,7 +5103,7 @@ function promoAbort(){if(!G.promoOn)return;clearTimeout(promoVoiceT);promoCut();
 function boardOpen(p){
   if(p.train==='OWN')return !PAX&&G.atStation!==null&&(G.door.state==='open'||G.door.state==='opening');
   const a=p.train;if(!a)return false;
-  if(a.stSt!==undefined)return a.state==='dwell'&&a.frac>0.3&&a.t>2.8;
+  if(a.stSt!==undefined)return a.state==='dwell'&&a.frac>0.3&&a.t>3.9;
   if(a.s!=null&&a.key&&STATIONS[p.st]){
     const st=STATIONS[p.st];
     const d=Math.abs(sdiff(a.smoothS!=null?a.smoothS:a.s,st.s+(TK[a.key]?TK[a.key].so:0)));
@@ -5804,8 +5860,8 @@ function preloadStationAnnounce(st){
   loadAnnBuffer(stPartJa(st)).catch(()=>{});
   loadAnnBuffer(stPartEn(st)).catch(()=>{});
 }
-const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v197.mp3';
-const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。バージョン1.9.7では、乗客モードで電車に乗ったまま車内を歩いたり、好きな駅で降りたりできるようになりました。AIの列車やお客さまの列車の動きも、なめらかになりました。車内放送と広告放送は、継ぎ目なく流れるようになりました。総合指令所は、本線と四つの支線の運行状況を監視できる、新しい指令卓になりました。白峰支線、紫雲地下線、天宮高架線、港見支線は、どなたでも最初から遊べます。';
+const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v198.mp3';
+const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。バージョン1.9.8では、ドアが閉まるときに、車内の案内画面が赤く点滅して、ドアが閉まりますと、大きくお知らせするようになりました。車内の広告画面は、デザインも表示のしかたも新しくなりました。駅のホームには、号車ごとの乗車位置案内を設置し、グリーン車の乗車口も分かりやすくしました。運転台と前面ガラスは、外から見ても、お客さまから見ても、運転士と同じ姿で、くもりのないクリアな見え方になりました。発車のタイミングも改善し、乗降促進と戸締め放送が終わると、すぐにドアが閉まります。汐見環状線を、これからもよろしくお願いいたします。';
 const RANDOM_ADS=[
   {file:LATEST_UPDATE_AD_FILE,text:LATEST_UPDATE_AD_TEXT},
   {file:'assets/audio/ann/parts/ad_random_2.mp3',text:'汐見環状線より、車内マナーのお願いです。お年寄りや体の不自由なお客様には席をお譲りください。また、歩きながらのスマートフォン操作はおやめください。'},
@@ -5967,24 +6023,26 @@ function updAuto(dt){if(!G.auto||G.phase!=='play'||G.waiting||G.walkOn)return;G.
     const curSt=stOf(G.atStation);
     const isMajor=isMajorStation(curSt);
     G.dwellT=(G.dwellT||0)+dt;
-    if(G.autoMel==null) G.autoMel=isMajor?rand(2.0,3.5):rand(0.5,1.2);
+    if(G.autoMel==null) G.autoMel=isMajor?rand(1.6,2.6):rand(0.4,0.9);
     if(!G.promoted[G.atStation]){if(G.dwellT>=G.autoMel){promote(defaultPromo());G.autoT=0;}return;}
     const busy=pending()||jamCount()>0, melT=G.promoLoop?(nowMs()-G.promoLoop.t0)/1000:0;
     const pDur=(G.promoLoop&&G.promoLoop.onePhraseDur)?G.promoLoop.onePhraseDur:8.0;
     if(G.promoLoop){
-      const targetMelT=isMajor?(pDur*1.8):(pDur*0.95);
-      if((!busy&&melT>=targetMelT)||melT>(isMajor?45:16)||G.dwellT>(isMajor?75:28)){promote(defaultPromo());G.autoT=0;}
+      /* v1.9.8：メロディは1回鳴らし切ったら止める（主要駅でも繰り返さない） */
+      const targetMelT=pDur+0.3;
+      if((!busy&&melT>=targetMelT)||melT>18||G.dwellT>(isMajor?45:30)){promote(defaultPromo());G.autoT=0;}
       return;
     }
     if(G.promoOn){G.autoT=0;return;}
-    if(busy&&G.dwellT<75){G.autoT=0;return;}
-    const closeDelay=isMajor?3.2:1.8;
-    if(G.autoT>closeDelay&&!G.closeWait){closeDoor(D.local);G.autoT=0;}return;}
+    if(busy&&G.dwellT<45){G.autoT=0;return;}
+    /* v1.9.8：戸締め放送「ドアが閉まります」が終わったら間を置かずに戸閉する */
+    if(doorAnnBusy()){G.autoT=0;return;}
+    if(!G.closeWait&&G.autoT>0.15){closeDoor(D.local);G.autoT=0;}return;}
   if(D.state==='closed'&&G.depCheck!==null&&!G.ato&&G.v===0){
     const depSt=stOf(G.depCheck);
     const isMajor=isMajorStation(depSt);
     if(G.autoPh!=='dep'){G.autoPh='dep';G.autoT=0;}
-    const depDelay=isMajor?2.5:0.8;
+    const depDelay=isMajor?1.2:0.4;   /* v1.9.8：戸閉完了後すぐ発車 */
     if(G.autoT>depDelay){toggleATO();G.autoPh='';}
   }
 }
@@ -7018,7 +7076,29 @@ function updDoorLamps(){if(!BRANCH)return;let side=0,on=false; /* 車両の左�
   else if(!PAX&&G.phase==='play'){const d=stopDist(G.nv),st=G.atStation!==null?stOf(G.atStation):(d<700&&d>-5?stOf(G.nv):null);
     if(st){side=localSide(st);on=true;}}
   const lit=0xff3b1f,off=0x3a0e0a;TM.ilampL.color.setHex(on&&side<0?lit:off);TM.ilampR.color.setHex(on&&side>0?lit:off);}
+/* v1.9.8：戸締め放送のあいだ、車内LCDを赤背景の点滅表示にする */
+function drawDoorWarn(cv,txt){const x=cv.x,W=cv.w||512,H=cv.h||274,nowp=performance.now(),on=(nowp%620)<400;
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,on?'#e01b12':'#8d0d08');g.addColorStop(1,on?'#9c0f09':'#5c0603');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.save();x.globalAlpha=on?0.13:0.07;x.fillStyle='#ffffff';
+  const off=(nowp*0.04)%64;
+  for(let q=-H-64;q<W+64;q+=64){x.beginPath();x.moveTo(q+off,0);x.lineTo(q+26+off,0);x.lineTo(q+26+H+off,H);x.lineTo(q+H+off,H);x.closePath();x.fill();}
+  x.restore();
+  const cx=W/2,cy=H*0.27,iw=Math.min(W,H)*0.15;
+  x.strokeStyle='#ffffff';x.lineWidth=Math.max(3,W*0.009);
+  x.strokeRect(cx-iw*0.62,cy-iw*0.62,iw*0.54,iw*1.24);
+  x.strokeRect(cx+iw*0.08,cy-iw*0.62,iw*0.54,iw*1.24);
+  x.fillStyle='#ffffff';x.beginPath();x.moveTo(cx-iw*0.30,cy);x.lineTo(cx-iw*0.08,cy-iw*0.22);x.lineTo(cx-iw*0.08,cy+iw*0.22);x.closePath();x.fill();
+  x.beginPath();x.moveTo(cx+iw*0.30,cy);x.lineTo(cx+iw*0.08,cy-iw*0.22);x.lineTo(cx+iw*0.08,cy+iw*0.22);x.closePath();x.fill();
+  x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle='#ffffff';fitText(x,txt||'ドアが閉まります',W/2,H*0.60,W-30,H*0.19,'700','center');
+  x.fillStyle=on?'#ffe08a':'#ffc24a';fitText(x,'Doors are closing',W/2,H*0.79,W-40,H*0.10,'700','center');
+  x.fillStyle='rgba(255,255,255,.88)';fitText(x,'ご注意ください',W/2,H*0.91,W-40,H*0.075,'500','center');
+  cv.tex.needsUpdate=true;}
+
 function drawInfoPanel(){const x=DLED.x,W=512,H=274,inf=curTrainInfo();
+  if(doorWarnOn()){drawDoorWarn(DLED,'ドアが閉まります');drawDoorWarn(DLED_R,'ドアが閉まります');return;}
   x.fillStyle='#0a1422';x.fillRect(0,0,W,H);
   const line=BRANCH?(LINE_ID==='branch2'?'紫雲地下線':LINE_ID==='branch3'?'天宮高架線':LINE_ID==='branch4'?'港見支線':'白峰支線'):'汐見環状線',kind=inf?inf.kind:'',col=inf?'#'+inf.col.toString(16).padStart(6,'0'):'#14935f';
   const tm=RIDE?!!(RIDE.a&&RIDE.a.twoMan):(!PAX&&!!G.twoMan);
@@ -7084,6 +7164,7 @@ function drawInfoPanel(){const x=DLED.x,W=512,H=274,inf=curTrainInfo();
 DLED.tex.needsUpdate=true;}
 /* 新形車両：ドア上のワイド画面（トレインビジョン・640×240） */
 function drawWidePanel(){const x=DLED2.x,W=640,H=240,inf=curTrainInfo();
+  if(doorWarnOn()){drawDoorWarn(DLED2,'ドアが閉まります');return;}
   x.fillStyle='#071120';x.fillRect(0,0,W,H);x.textBaseline='middle';
   const line=BRANCH?(LINE_ID==='branch2'?'紫雲地下線':LINE_ID==='branch3'?'天宮高架線':LINE_ID==='branch4'?'港見支線':'白峰支線'):'汐見環状線';
   const kind=inf?inf.kind:'',col=inf?'#'+inf.col.toString(16).padStart(6,'0'):'#14935f';
@@ -7128,7 +7209,7 @@ function sledInfoOwn(){const si=G.atStation!==null?G.atStation:(G.depCheck!==nul
   return inf;}
 function sledInfoAI(a){const dir=TK[a.key].dir,inf={v:a.v*3.6,key:a.key,at:null,stops:[],term:false,promo:false,dest:null};
   if(BRANCH)inf.dest=dir>0?STATIONS[NST-1]:STATIONS[0];
-  if(a.state==='dwell'&&a.stSt){inf.at=a.stSt;inf.promo=a.doors&&a.t<9.5&&a.t>3.0;inf.stops=sledStops(a.stSt,a.key,dir,5);inf.term=!inf.stops.length;}
+  if(a.state==='dwell'&&a.stSt){inf.at=a.stSt;inf.promo=a.doors&&a.t<13.5&&a.t>4.1;inf.stops=sledStops(a.stSt,a.key,dir,5);inf.term=!inf.stops.length;}
   return inf;}
 function sledSegs(inf){const K=SLED_KIND[KIND[inf.key]||'local']||SLED_KIND.local,AMB='#ffb347',WH='#f4efe0',DIM='#9ad7ff';
   const dir=TK[inf.key].dir,dest=inf.dest||(BRANCH?(dir>0?STATIONS[NST-1]:STATIONS[0]):null);
@@ -7204,73 +7285,73 @@ const ADEX=[{g:['#f7d9e3','#f2a7bf'],t:'桜まつり開催',s:'汐見公園 ラ�
   {g:['#1a1d3a','#0a0b18'],t:'プラネタリウム',s:'星降る夜の物語',n:'汐見科学館',ic:'star',fg:'#e8e0ff'},{g:['#fde2e2','#f7b5b5'],t:'港見海岸 花火大会',s:'8月15日 臨時列車運転',n:'混雑が予想されます',ic:'firework',fg:'#7a1f1f'},
   {g:['#eeeeee','#bdbdbd'],t:'スマホ修理 即日',s:'画面割れ 最短30分',n:'蒼海中央駅 地下街',ic:'phone',fg:'#222'},{g:['#0d3b2e','#062018'],t:'港前ゴルフ練習場',s:'早朝6時から営業',n:'港前駅から送迎あり',ic:'ball',fg:'#d8f5e6'},
   {g:['#2a2a72','#009ffd'],t:'汐見ウォーターパーク',s:'夏はプールへ！',n:'7月オープン',ic:'wave',fg:'#ffffff'}];
-function adIcon(x,ic,t,cx,cy,fg){x.save();x.translate(cx,cy);x.fillStyle=fg;x.strokeStyle=fg;x.lineWidth=5;
-  if(ic==='petal'){for(let k=0;k<7;k++){const a=t*0.7+k*0.9,r=50+((k*13)%30);x.fillStyle='rgba(255,255,255,0.85)';x.beginPath();x.ellipse(Math.cos(a)*r,((t*40+k*30)%160)-80,9,5,a,0,7);x.fill();}x.fillStyle='#e8789a';x.beginPath();x.arc(0,0,26,0,7);x.fill();}
-  else if(ic==='wave'){for(let k=0;k<3;k++){x.beginPath();for(let q=-80;q<=80;q+=8)x.lineTo(q,k*22-20+Math.sin(q/18+t*3+k)*7);x.stroke();}}
-  else if(ic==='train'){const o=((t*60)%220)-110;x.fillRect(o-50,-20,100,40);x.fillStyle='#fff';for(let k=0;k<4;k++)x.fillRect(o-42+k*22,-12,15,12);x.fillStyle=fg;x.fillRect(-90,26,180,5);}
-  else if(ic==='bubble'){x.beginPath();x.ellipse(-12,-10,48,30,0,0,7);x.fill();x.fillStyle='#fff';x.font='700 24px sans-serif';x.textAlign='center';x.fillText(Math.floor(t)%2?'Hello!':'Hi!',-12,-2);x.fillStyle=fg;x.beginPath();x.moveTo(10,15);x.lineTo(30,40);x.lineTo(-6,18);x.fill();}
-  else if(ic==='tooth'){x.beginPath();x.moveTo(-34,-30);x.quadraticCurveTo(0,-50,34,-30);x.lineTo(24,36);x.lineTo(8,10);x.lineTo(-8,10);x.lineTo(-24,36);x.closePath();x.fill();if(Math.sin(t*4)>0){x.fillStyle='#ffd23f';x.fillRect(30,-50,6,6);x.fillRect(42,-38,5,5);}}
-  else if(ic==='fire'){for(let k=0;k<5;k++){const h2=30+Math.sin(t*6+k)*10;x.fillStyle=k%2?'#ff9d2e':'#ffd23f';x.beginPath();x.moveTo(-40+k*20,30);x.quadraticCurveTo(-30+k*20,30-h2,-20+k*20,30);x.fill();}x.fillStyle='#8a5a2b';x.fillRect(-60,30,120,8);}
-  else if(ic==='up'){const h2=40+Math.sin(t*2)*10;for(let k=0;k<4;k++){x.fillRect(-48+k*26,30-(k+1)*14-(k===3?h2-40:0),18,(k+1)*14+(k===3?h2-40:0));}}
-  else if(ic==='film'){x.strokeRect(-50,-34,100,68);for(let k=0;k<5;k++){x.fillRect(-46+k*22,-30,8,8);x.fillRect(-46+k*22,22,8,8);}x.beginPath();x.moveTo(-10,-14);x.lineTo(16,0);x.lineTo(-10,14);x.fill();}
-  else if(ic==='bread'){x.fillStyle='#e0a860';x.beginPath();x.ellipse(0,0,56,36,0,0,7);x.fill();x.strokeStyle='#8a5a2b';for(let k=-1;k<=1;k++){x.beginPath();x.moveTo(k*18-10,-20);x.lineTo(k*18+10,20);x.stroke();}}
-  else if(ic==='paw'){x.beginPath();x.ellipse(0,14,24,20,0,0,7);x.fill();for(let k=0;k<4;k++){x.beginPath();x.arc(-27+k*18,-16-(k%3?8:0)+Math.sin(t*3+k)*2,8,0,7);x.fill();}}
-  else if(ic==='star'){for(let k=0;k<12;k++){const a=k*0.52,r=(k%3+1)*18,tw=0.5+0.5*Math.sin(t*3+k);x.globalAlpha=tw;x.fillRect(Math.cos(a)*r,Math.sin(a)*r,4,4);}x.globalAlpha=1;}
-  else if(ic==='firework'){const ph=(t*0.8)%1;for(let k=0;k<16;k++){const a=k/16*6.283;x.fillRect(Math.cos(a)*ph*60,Math.sin(a)*ph*60,4,4);}}
-  else if(ic==='phone'){x.strokeRect(-22,-40,44,80);x.beginPath();x.moveTo(-20,-10);x.lineTo(20,8);x.stroke();if(Math.sin(t*5)>0){x.fillStyle='#2e9f5b';x.fillRect(30,-6,12,12);}}
-  else if(ic==='ball'){x.beginPath();x.arc(0,Math.abs(Math.sin(t*3))*-30,16,0,7);x.fill();x.fillRect(-60,30,120,4);}
+/* ===== v1.9.8：車内LCDの広告を一新（汐見メトロ・サイネージ／縦スライド＋フェード＋ティッカー） ===== */
+const ADSYS=[
+  {tag:'お知らせ',h1:'アプリでもっと',h2:'便利に',sub:'走行位置・混雑・グリーン車予約',brand:'しおみアプリ',c1:'#062a42',c2:'#010b14',ac:'#3fd0ff',art:'phone'},
+  {tag:'新型車両',h1:'快速特急',h2:'グラン汐見',sub:'12両編成・グリーン車連結',brand:'汐見メトロ',c1:'#08281f',c2:'#020d0a',ac:'#f0c25a',art:'train'},
+  {tag:'イベント',h1:'港見海岸',h2:'花火大会',sub:'8月15日 臨時列車を運転します',brand:'港見観光協会',c1:'#101a45',c2:'#05060f',ac:'#ff7a9c',art:'fire'},
+  {tag:'クリニック',h1:'歯のクリーニング',h2:'予約受付中',sub:'月見ヶ丘駅 東口すぐ',brand:'しおみデンタル',c1:'#0b3140',c2:'#04141c',ac:'#7fe3d0',art:'ring'},
+  {tag:'ベーカリー',h1:'焼きたてを',h2:'毎朝7時に',sub:'もちもち食パン 好評です',brand:'こむぎ',c1:'#3a2410',c2:'#150c04',ac:'#ffbe63',art:'sun'},
+  {tag:'音楽',h1:'汐見ミュージック',h2:'フェス 10.3',sub:'碧浜アリーナ 開場17時',brand:'汐見ミュージック',c1:'#2c1246',c2:'#100520',ac:'#c99bff',art:'sound'},
+  {tag:'求人',h1:'あなたに合う',h2:'仕事が見つかる',sub:'登録無料・駅から5分',brand:'シオミキャリア',c1:'#06303a',c2:'#021114',ac:'#4be2b0',art:'arrow'},
+  {tag:'カフェ',h1:'一冊と、',h2:'一杯のコーヒー',sub:'各駅ビル 2階',brand:'ブックカフェ灯台',c1:'#33200f',c2:'#140b04',ac:'#e0a860',art:'book'},
+  {tag:'動物園',h1:'赤ちゃんパンダ',h2:'公開中',sub:'動物園前駅から徒歩3分',brand:'汐見動物園',c1:'#0d3320',c2:'#03110a',ac:'#8ce89a',art:'dots'},
+  {tag:'グルメ',h1:'こだわりの',h2:'一杯',sub:'朱雀台駅 西口すぐ',brand:'らーめん 汐波',c1:'#3a1010',c2:'#150404',ac:'#ff9d6b',art:'wave'},
+  {tag:'エコ',h1:'省エネ運転に',h2:'ご協力ください',sub:'こまめな力行・早めの制動',brand:'汐見メトロ 運転部',c1:'#0a3326',c2:'#03110c',ac:'#7ee0a8',art:'leaf'},
+  {tag:'きっぷ',h1:'汐見一日',h2:'乗車券',sub:'環状線と4支線が1日乗り放題',brand:'汐見メトロ',c1:'#122a4a',c2:'#050d18',ac:'#8fd6ff',art:'ticket'}
+];
+function _adRGBA(hex,a){const h=hex.replace('#','');const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return 'rgba('+r+','+g+','+b+','+a+')';}
+function adArt(x,kind,cx,cy,r,ac,t){x.save();x.translate(cx,cy);x.lineCap='round';x.lineJoin='round';
+  x.strokeStyle=ac;x.fillStyle=ac;
+  if(kind==='phone'){x.lineWidth=5;x.strokeRect(-r*0.38,-r*0.78,r*0.76,r*1.56);x.globalAlpha=0.5;x.fillRect(-r*0.30,-r*0.60,r*0.60,r*0.90);x.globalAlpha=0.9;
+    for(let k=0;k<3;k++){const yy=r*0.30+k*r*0.13;x.fillRect(-r*0.26,yy,r*(0.30+0.14*Math.sin(t*1.6+k)),r*0.05);}}
+  else if(kind==='train'){x.lineWidth=5;x.beginPath();x.moveTo(-r*0.85,r*0.25);x.lineTo(r*0.85,r*0.25);x.lineTo(r*0.70,r*-0.35);x.lineTo(-r*0.70,r*-0.35);x.closePath();x.stroke();
+    x.globalAlpha=0.75;for(let k=-1;k<=1;k++)x.fillRect(k*r*0.30-r*0.10,r*-0.22,r*0.20,r*0.16);x.globalAlpha=1;
+    x.lineWidth=4;x.beginPath();x.moveTo(-r*1.0,r*0.48);x.lineTo(r*1.0,r*0.48);x.stroke();x.beginPath();x.moveTo(-r*0.7,r*0.62);x.lineTo(r*0.7,r*0.62);x.stroke();}
+  else if(kind==='fire'){const ph=(t*0.8)%1;x.lineWidth=4;for(let k=0;k<14;k++){const a2=k/14*6.283+r*0.0;const rr=r*(0.25+ph*0.7);
+      x.globalAlpha=1-ph;x.beginPath();x.moveTo(Math.cos(a2)*rr*0.5,Math.sin(a2)*rr*0.5);x.lineTo(Math.cos(a2)*rr,Math.sin(a2)*rr);x.stroke();}
+    x.globalAlpha=1;x.beginPath();x.arc(0,0,r*0.13,0,7);x.fill();}
+  else if(kind==='ring'){x.lineWidth=6;x.beginPath();x.arc(0,0,r*0.72,0,7);x.stroke();x.globalAlpha=0.55;x.beginPath();x.arc(0,0,r*0.46,0,7);x.stroke();x.globalAlpha=1;
+    const a2=t*1.2;x.beginPath();x.moveTo(Math.cos(a2)*r*0.72,Math.sin(a2)*r*0.72);x.lineTo(Math.cos(a2)*r*0.46,Math.sin(a2)*r*0.46);x.stroke();}
+  else if(kind==='sun'){x.beginPath();x.arc(0,0,r*0.36,0,7);x.fill();
+    for(let k=0;k<10;k++){const a2=k/10*6.283+t*0.3;x.globalAlpha=0.6;x.lineWidth=4;x.beginPath();x.moveTo(Math.cos(a2)*r*0.52,Math.sin(a2)*r*0.52);x.lineTo(Math.cos(a2)*r*0.78,Math.sin(a2)*r*0.78);x.stroke();}x.globalAlpha=1;}
+  else if(kind==='sound'){for(let k=0;k<7;k++){const hh=r*(0.22+0.55*Math.abs(Math.sin(t*2.2+k*0.7)));x.globalAlpha=0.55+0.45*Math.sin(k*0.9);x.fillRect(-r*0.78+k*r*0.24,-hh/2,r*0.13,hh);}x.globalAlpha=1;}
+  else if(kind==='arrow'){x.lineWidth=7;for(let k=0;k<3;k++){const o=(t*0.9+k*0.33)%1;x.globalAlpha=1-o*0.7;x.beginPath();x.moveTo(-r*0.5+o*r*0.7,r*0.45);x.lineTo(r*0.1+o*r*0.7,0);x.lineTo(-r*0.5+o*r*0.7,-r*0.45);x.stroke();}x.globalAlpha=1;}
+  else if(kind==='book'){x.lineWidth=5;x.strokeRect(-r*0.62,-r*0.62,r*0.56,r*1.24);x.strokeRect(r*0.06,-r*0.62,r*0.56,r*1.24);x.globalAlpha=0.6;
+    for(let k=0;k<4;k++){const yy=-r*0.38+k*r*0.24;x.beginPath();x.moveTo(-r*0.50,yy);x.lineTo(-r*0.18,yy);x.stroke();x.beginPath();x.moveTo(r*0.18,yy);x.lineTo(r*0.50,yy);x.stroke();}x.globalAlpha=1;}
+  else if(kind==='dots'){for(let gy=-1;gy<=1;gy++)for(let gx=-2;gx<=2;gx++){const d=Math.sin(t*2+gx*0.6+gy*0.9)*0.5+0.5;x.globalAlpha=0.35+0.6*d;x.beginPath();x.arc(gx*r*0.30,gy*r*0.30,r*0.055+r*0.03*d,0,7);x.fill();}x.globalAlpha=1;}
+  else if(kind==='wave'){x.lineWidth=5;for(let k=0;k<3;k++){x.globalAlpha=0.45+k*0.25;x.beginPath();for(let q=-r;q<=r;q+=6){const yy=k*r*0.26-r*0.26+Math.sin(q/r*3+t*2.4+k)*r*0.12;q===-r?x.moveTo(q,yy):x.lineTo(q,yy);}x.stroke();}x.globalAlpha=1;}
+  else if(kind==='leaf'){x.beginPath();x.ellipse(0,0,r*0.45,r*0.72,Math.PI/5,0,7);x.fill();x.strokeStyle='#03110c';x.lineWidth=4;x.beginPath();x.moveTo(-r*0.30,r*0.42);x.lineTo(r*0.30,-r*0.42);x.stroke();}
+  else{x.lineWidth=4;x.setLineDash([9,7]);x.strokeRect(-r*0.82,-r*0.42,r*1.64,r*0.84);x.setLineDash([]);x.globalAlpha=0.7;x.fillRect(-r*0.60,-r*0.12,r*0.55,r*0.24);x.globalAlpha=1;}
   x.restore();}
-function adEx(x,k,t,W,H){const A=ADEX[k%ADEX.length],g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,A.g[0]);g.addColorStop(1,A.g[1]);x.fillStyle=g;x.fillRect(0,0,W,H);
-  adIcon(x,A.ic,t,120,H/2,A.fg);x.fillStyle=A.fg;fitText(x,A.t,236,96,258,34,'700');fitText(x,A.s,236,146,258,24,'700');x.globalAlpha=0.75;fitText(x,A.n,236,192,258,20,'500');x.globalAlpha=1;}
-function drawAds(){const x=ADS.x,W=512,H=274,now=performance.now()/1000,SC=6,i=Math.floor(now/SC)%ADN,p=(now%SC)/SC,t=now;
-  x.save();x.beginPath();x.rect(0,0,W,H);x.clip();
-  const slide=p<0.08?(1-p/0.08)*W:p>0.95?-(p-0.95)/0.05*W:0;x.translate(slide,0);
-  if(i>=9)adEx(x,i-9,t,W,H);
-  else if(i===0){const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#3b2a20');g.addColorStop(1,'#1d1410');x.fillStyle=g;x.fillRect(0,0,W,H);
-    x.fillStyle='#e8d7be';x.beginPath();x.ellipse(150,190,70,22,0,0,Math.PI*2);x.fill();
-    x.fillStyle='#f3ece0';x.beginPath();x.moveTo(90,120);x.lineTo(210,120);x.lineTo(196,190);x.lineTo(104,190);x.closePath();x.fill();
-    x.fillStyle='#5a3a24';x.beginPath();x.ellipse(150,124,58,12,0,0,Math.PI*2);x.fill();
-    for(let k=0;k<3;k++){const ph=(t*0.6+k*0.33)%1;x.strokeStyle='rgba(255,255,255,'+((1-ph)*0.5).toFixed(2)+')';x.lineWidth=5;x.beginPath();
-      for(let q=0;q<=10;q++){const yy=118-ph*70-q*5,xx=120+k*30+Math.sin(q*0.9+t*3+k)*7;q?x.lineTo(xx,yy):x.moveTo(xx,yy);}x.stroke();}
-    x.fillStyle='#f6e7cf';fitText(x,'朝の一杯を、ゆっくり。',248,116,248,34,'700');x.fillStyle='#d8be96';fitText(x,'CAFÉ SHIOMI',248,162,248,26,'700');fitText(x,'各駅に出店中',248,196,248,22,'500');}
-  else if(i===1){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#7fc8e8');g.addColorStop(1,'#e8f4fb');x.fillStyle=g;x.fillRect(0,0,W,H);
-    x.fillStyle='#ffe9a8';x.beginPath();x.arc(430,60,34,0,Math.PI*2);x.fill();
-    const off=(t*40)%W;x.fillStyle='#4f8f6a';for(const k of [0,1]){x.beginPath();x.moveTo(-off+k*W,H);for(let q=0;q<=W;q+=16)x.lineTo(-off+k*W+q,180-Math.sin(q/60+k)*28);x.lineTo(-off+k*W+W,H);x.closePath();x.fill();}
-    x.fillStyle='#2f6f8f';const tx=((t*90)%(W+260))-130;x.fillRect(tx,196,150,34);x.fillStyle='#cfe8f5';for(let q=0;q<5;q++)x.fillRect(tx+12+q*28,204,18,14);
-    x.fillStyle='#123';fitText(x,'海辺へ、週末の小旅行',26,62,458,40,'700');fitText(x,'汐見トラベル　往復きっぷ発売中',26,106,458,24,'500');}
-  else if(i===2){x.fillStyle='#b3202a';x.fillRect(0,0,W,H);x.save();x.globalAlpha=0.18;x.fillStyle='#fff';
-    for(let q=-H;q<W;q+=54){const o=(t*60)%54;x.beginPath();x.moveTo(q+o,0);x.lineTo(q+26+o,0);x.lineTo(q+26+H+o,H);x.lineTo(q+H+o,H);x.closePath();x.fill();}x.restore();
-    const pz=1+Math.sin(t*4)*0.05;x.save();x.translate(W/2,110);x.scale(pz,pz);x.fillStyle='#fff';fitText(x,'SALE 50%OFF',0,0,(W-60)/pz,70,'700','center');x.restore();
-    x.fillStyle='#ffe08a';fitText(x,'蒼海ショッピングモール',W/2,180,W-40,34,'700','center');x.fillStyle='#fff';fitText(x,'今週末まで　蒼海中央駅 直結',W/2,222,W-40,24,'500','center');}
-  else if(i===3){x.fillStyle='#10243f';x.fillRect(0,0,W,H);x.fillStyle='#1d3f7a';x.fillRect(0,0,W,58);
-    x.fillStyle='#fff';fitText(x,'お願い',18,34,200,30,'700');
-    const bl=Math.sin(t*5)>0;x.fillStyle=bl?'#ffd23f':'#44506a';x.fillRect(40,90,90,140);x.fillRect(150,90,90,140);x.fillStyle='#10243f';x.fillRect(128,90,24,140);
-    x.fillStyle='#fff';fitText(x,'駆け込み乗車は',264,128,236,34,'700');fitText(x,'おやめください',264,174,236,34,'700');x.fillStyle='#9fb0c8';fitText(x,'汐見電鉄',264,218,236,22,'500');}
-  else if(i===4){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#2b1b14');g.addColorStop(1,'#120b08');x.fillStyle=g;x.fillRect(0,0,W,H);
-    x.fillStyle='#e3ded2';x.beginPath();x.ellipse(140,150,86,58,0,0,Math.PI*2);x.fill();x.fillStyle='#c98b3a';x.beginPath();x.ellipse(140,146,74,46,0,0,Math.PI*2);x.fill();
-    x.strokeStyle='#f6e6c8';x.lineWidth=7;x.lineCap='round';for(let k=0;k<5;k++){x.beginPath();const yy=128+k*9+Math.sin(t*2+k)*3;x.moveTo(90,yy);x.bezierCurveTo(120,yy-10,160,yy+10,192,yy);x.stroke();}
-    x.fillStyle='#2e7d4f';x.beginPath();x.arc(120,120,12,0,Math.PI*2);x.fill();
-    x.fillStyle='#ffe9c2';fitText(x,'こだわりの一杯',252,108,246,36,'700');x.fillStyle='#d9b98a';fitText(x,'らーめん 汐波',252,156,246,28,'700');fitText(x,'朱雀台駅 西口すぐ',252,196,246,22,'500');}
-  else if(i===5){x.fillStyle='#0e1524';x.fillRect(0,0,W,H);
-    for(let k=0;k<26;k++){const xx=(k*97+t*22)%W,yy=(k*53)%H,r2=1.5+((k*7)%3);x.fillStyle='rgba(120,190,255,'+(0.25+((k%4)*0.15)).toFixed(2)+')';x.beginPath();x.arc(xx,yy,r2,0,Math.PI*2);x.fill();}
-    const ph=(t*0.7)%1;x.save();x.translate(120,H/2);x.fillStyle='#1b2b48';x.fillRect(-46,-78,92,156);x.fillStyle='#3f7fd8';x.globalAlpha=0.35+0.3*Math.sin(t*3);x.fillRect(-40,-70,80,140);x.globalAlpha=1;
-    x.fillStyle='#8fd6ff';x.fillRect(-30,-54+ph*100,60,8);x.restore();
-    x.fillStyle='#fff';fitText(x,'指先で、次の一歩を',216,104,278,34,'700');x.fillStyle='#8fd6ff';fitText(x,'しおみアプリ',216,150,278,28,'700');x.fillStyle='#9fb0c8';fitText(x,'定期も予約もこれ一つ',216,192,278,22,'500');}
-  else if(i===6){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#22406b');g.addColorStop(1,'#0e1c33');x.fillStyle=g;x.fillRect(0,0,W,H);
-    x.fillStyle='#d8e8f5';for(let k=0;k<4;k++){const hh=60+k*28,ww=52;x.fillRect(30+k*58,H-hh-30,ww,hh);}
-    x.fillStyle='#ffd98a';for(let k=0;k<26;k++){const wx=34+((k*37)%228),wy=H-120+((k*23)%80);if((Math.floor(t*2)+k)%5)x.fillRect(wx,wy,9,11);}
-    x.fillStyle='#fff';fitText(x,'駅近、はじまる暮らし',274,98,222,30,'700');x.fillStyle='#ffd23f';fitText(x,'汐見レジデンス',274,142,222,28,'700');x.fillStyle='#b9c8dc';fitText(x,'紫雲新都 徒歩3分',274,184,222,22,'500');}
-  else if(i===7){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#7a3fa0');g.addColorStop(1,'#2a1340');x.fillStyle=g;x.fillRect(0,0,W,H);
-    for(let k=0;k<7;k++){const a=t*2+k;x.save();x.translate(110,150);x.rotate(Math.sin(a)*0.5+k*0.9);x.fillStyle='rgba(255,220,120,'+(0.25+0.2*Math.sin(a*1.3)).toFixed(2)+')';x.fillRect(-4,-120,8,120);x.restore();}
-    x.fillStyle='#ffd23f';x.beginPath();x.arc(110,150,26,0,Math.PI*2);x.fill();
-    x.fillStyle='#fff';fitText(x,'今夜、音楽の街へ',210,100,282,34,'700');x.fillStyle='#ffd6f2';fitText(x,'汐見ミュージックフェス',210,148,282,26,'700');x.fillStyle='#e0c8f0';fitText(x,'碧浜アリーナ　10月3日',210,190,282,22,'500');}
-  else{const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#123a2e');g.addColorStop(1,'#061a14');x.fillStyle=g;x.fillRect(0,0,W,H);
-    x.fillStyle='#cfe8d8';x.beginPath();x.ellipse(120,196,92,28,0,0,Math.PI*2);x.fill();
-    x.fillStyle='#8fd0b0';x.beginPath();x.ellipse(120,190,80,22,0,0,Math.PI*2);x.fill();
-    for(let k=0;k<4;k++){const ph=(t*0.5+k*0.25)%1;x.strokeStyle='rgba(255,255,255,'+((1-ph)*0.45).toFixed(2)+')';x.lineWidth=4;x.beginPath();
-      for(let q=0;q<=8;q++){const yy=186-ph*86-q*6,xx=80+k*28+Math.sin(q*0.8+t*2.4+k)*8;q?x.lineTo(xx,yy):x.moveTo(xx,yy);}x.stroke();}
-    x.fillStyle='#eaf6ef';fitText(x,'ひと駅先の、湯けむり',238,104,252,32,'700');x.fillStyle='#9fe0c0';fitText(x,'奥峰温泉',238,150,252,28,'700');x.fillStyle='#bcd8cc';fitText(x,'白峰支線でのんびり40分',238,192,252,22,'500');}
-  x.restore();ADS.tex.needsUpdate=true;}
+function drawAds(){const x=ADS.x,W=512,H=274,now=performance.now()/1000;
+  const SC=6.4,idx=Math.floor(now/SC)%ADSYS.length,p=(now%SC)/SC,A=ADSYS[idx];
+  const g=x.createLinearGradient(0,0,W*0.6,H);g.addColorStop(0,A.c1);g.addColorStop(1,A.c2);x.fillStyle=g;x.fillRect(0,0,W,H);
+  const rg=x.createRadialGradient(W*0.78,H*0.44,6,W*0.78,H*0.44,W*0.70);
+  rg.addColorStop(0,_adRGBA(A.ac,0.34));rg.addColorStop(0.55,_adRGBA(A.ac,0.08));rg.addColorStop(1,_adRGBA(A.ac,0));
+  x.fillStyle=rg;x.fillRect(0,0,W,H);
+  adArt(x,A.art,W*0.775,H*0.40,H*0.28,A.ac,now);
+  x.fillStyle=_adRGBA('#ffffff',0.10);x.fillRect(W*0.56,H*0.12,1.5,H*0.62);
+  const ease=v=>1-Math.pow(1-Math.max(0,Math.min(1,v)),3);
+  const aIn=ease(p/0.12),aOut=ease((1-p)/0.09),al=Math.min(aIn,aOut);
+  x.save();x.globalAlpha=al;x.translate(0,(1-aIn)*12-(1-aOut)*12);
+  x.textBaseline='middle';x.textAlign='left';
+  x.fillStyle=_adRGBA(A.ac,0.22);x.fillRect(10,H*0.20,4,H*0.60);
+  x.fillStyle=_adRGBA(A.ac,0.95);x.beginPath();if(x.roundRect){x.roundRect(24,H*0.11,106,24,6);x.fill();}else{x.fillRect(24,H*0.11,106,24);}
+  x.fillStyle=A.c2;x.font='700 15px '+FONT;x.textAlign='center';x.fillText(A.tag,77,H*0.11+12.5);x.textAlign='left';
+  x.fillStyle='#ffffff';fitText(x,A.h1,26,H*0.36,W*0.52,40,'700');
+  x.fillStyle=A.ac;fitText(x,A.h2,26,H*0.55,W*0.52,40,'700');
+  x.fillStyle=_adRGBA('#ffffff',0.72);fitText(x,A.sub,26,H*0.72,W*0.52,18,'500');
+  x.fillStyle=_adRGBA(A.ac,0.85);x.fillRect(26,H*0.835,18,2.5);
+  x.fillStyle=_adRGBA('#ffffff',0.85);fitText(x,A.brand,50,H*0.845,W*0.44,15,'700');
+  x.restore();
+  /* 常時表示のフッター（汐見メトロ サイネージ）＋進行バー */
+  x.fillStyle=_adRGBA('#000000',0.42);x.fillRect(0,H-22,W,22);
+  x.fillStyle=_adRGBA(A.ac,0.9);x.font='700 12px '+FONT;x.textAlign='left';x.fillText('汐見メトロ　CHANNEL',12,H-11);
+  x.textAlign='right';x.fillStyle=_adRGBA('#ffffff',0.55);x.fillText((idx+1)+' / '+ADSYS.length, W-12, H-11);
+  x.textAlign='left';x.fillStyle=_adRGBA(A.ac,0.95);x.fillRect(0,H-3,W*p,3);
+  x.fillStyle=_adRGBA('#ffffff',0.12);x.fillRect(W*p,H-3,W-W*p,3);
+  ADS.tex.needsUpdate=true;}
 
 _on(document.getElementById('paxSit'),'click',()=>{if(RIDE&&RIDE.seat!=null)standUp();else sitDown();});
 function goFloor(f){if(!RIDE)return;standUp();RIDE.fl=f;RIDE.lz=f==='deck'?(RIDE.lz>=0?6.3:-6.3):(RIDE.lz>=0?4.6:-4.6);RIDE.lx=f==='up'?-0.4:f==='down'?0.4:0.2;
@@ -7964,20 +8045,20 @@ function frame(now){if(window.__FRAME_TOKEN!==TOKEN)return;requestAnimationFrame
   if(now-LOOPERR.t>60000){LOOPERR.n=0;LOOPERR.t=0;}}
 /* ===== 運転台の模型：運転モードの運転台（机・モニター・計器・ボタン・椅子）をまとめて1つの形にし、近くの電車の先頭・最後尾に取り付ける ===== */
 let CABMODEL=null;const CABPOOL=[],CABATT=new Map();
-function buildCabModel(){if(CABMODEL)return;const MONG=new Set(Object.values(MON).map(m=>m&&m.g).filter(Boolean));cab.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(cab.matrixWorld).invert(),groups=new Map(),skip=new Set([CM.shell,CM.floor,CM.glass,CM.hit]),tmp=new THREE.Vector3();
+function buildCabModel(){if(CABMODEL)return;const MONG=new Set(Object.values(MON).map(m=>m&&m.g).filter(Boolean));cab.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(cab.matrixWorld).invert(),groups=new Map(),skip=new Set([CM.shell,CM.floor,CM.hit]),tmp=new THREE.Vector3();
   const pbm=cab.userData.pb&&cab.userData.pb.mesh;
   cab.traverse(o=>{if(!o.isMesh||!o.geometry||!o.material||Array.isArray(o.material)||o===pbm||o.material===upperMat)return;const m=o.material;if(skip.has(m)||m.visible===false||m.transparent&&m.opacity<0.2)return;
     let q=o;while(q&&q!==cab){if(q.userData&&q.userData.legs)return;q=q.parent;}if(o.userData&&o.userData.act&&m===CM.hit)return;
     o.getWorldPosition(tmp);cab.worldToLocal(tmp);if(tmp.z>2.55||tmp.z<-0.4)return;           /* 運転台の範囲だけ（後ろの客室は除く） */
     const g=o.geometry;if(!g.attributes.position||!g.attributes.normal)return;
     const M=new THREE.Matrix4().multiplyMatrices(inv,o.matrixWorld);
-    let q2=o;while(q2&&q2!==cab){if(MONG.has(q2)){M.premultiply(new THREE.Matrix4().makeTranslation(0,-0.24,0.1));break;}q2=q2.parent;} /* モニターは前面が見えるよう低めに */
+    /* 運転士が見ているのと同じ位置・同じ大きさで複製する（モニターの位置補正はしない） */
     if(!groups.has(m))groups.set(m,[]);groups.get(m).push([g,M]);});
   CABMODEL=[];for(const [m,list] of groups){try{const ok=list.filter(([g])=>g.attributes.uv);if(!ok.length)continue;CABMODEL.push({geo:mergeGeos(ok),mat:m});}catch(e){}}}
 function cabInst(){let g=CABPOOL.pop();if(g)return g;g=new THREE.Group();for(const c of CABMODEL){const ms=new THREE.Mesh(c.geo,c.mat);ms.matrixAutoUpdate=false;g.add(ms);}return g;}
 function updCabModels(){if(!CABMODEL){try{buildCabModel();}catch(e){CABMODEL=[];}}if(!CABMODEL.length)return;
   const camP=camera.getWorldPosition(new THREE.Vector3()),want=new Set();
-  const trs=[];for(const a of OT)if(a.vis&&a.state!=='off'&&a.tr&&a.tr.leds&&a.tr.leds.length)trs.push(a.tr);if(G.walkOn&&!PAX)trs.push(ownTrain);
+  const trs=[];for(const a of OT)if(a.vis&&a.state!=='off'&&a.tr&&a.tr.leds&&a.tr.leds.length)trs.push(a.tr); /* 自列車は本物の運転台があるので複製しない */
   for(const tr of trs){const c0=tr.cars[0],cl=tr.cars[tr.cars.length-1];if(Math.min(c0.position.distanceTo(camP),cl.position.distanceTo(camP))<220)want.add(tr);}
   for(const [tr,gs] of CABATT)if(!want.has(tr)){for(const g of gs){if(g.parent)g.parent.remove(g);CABPOOL.push(g);}CABATT.delete(tr);}
   for(const tr of want){if(CABATT.has(tr))continue;const gs=[];

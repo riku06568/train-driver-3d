@@ -440,7 +440,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.9.7)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.9.8)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -468,7 +468,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.9.7 更新情報・修正内容一覧</span>
+            <span class="m-desc">v1.9.8 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -666,7 +666,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.9.7)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.9.8)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -711,7 +711,24 @@ body.disp-monitor #gl{display:none!important}
       <div class="credits-box" style="text-align:left;line-height:1.7;">
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.7</span>
+            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.8</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.8 (2026.11.18)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">前面ガラスと運転台のクリア化、戸締め時の赤点滅表示、車内広告の刷新、駅の乗車位置案内、スムーズ発車、遠方列車の音の遮断</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>運転台の前面ガラスをクリアに</b>：外から見ても、車内（客室）から見ても、運転席から見ても、くもりのない透明なガラスに修正。客室と運転台を仕切る窓もクリアにし、客室から運転席の計器類がはっきり見えます</li>
+            <li><b>運転台をどの視点でも同じに</b>：AI列車・他プレイヤー列車の運転台も、運転士が見ているのと同じ造形・同じ計器（モニターの位置・大きさ）で表示されるよう統一。運転台のガラス・側面の計器も省略せずに描画します</li>
+            <li><b>遠くの列車の音が聞こえないように修正</b>：他プレイヤー列車の音は線路上の実際の位置で距離を判定し、警笛は車内にいるとき300m・ホームでも380m、走行音・ドア音・放送・乗降促進は200〜240mより遠い列車では鳴らさないようにしました</li>
+            <li><b>発車をスムーズに</b>：完全オートとAI列車の停車時間・待ち時間を短縮し、乗降促進メロディが鳴り終わり、続く戸締め放送「ドアが閉まります」が終わったら、間を置かずにドアを閉めて発車します（主要駅でもメロディを繰り返さない）</li>
+            <li><b>戸締め時は車内の案内画面が赤く点滅</b>：ドアが閉まるあいだ、車内の案内用LCDが赤い背景で点滅し、「ドアが閉まります／Doors are closing」を大きく表示。閉扉後は通常の次駅案内に戻ります</li>
+            <li><b>車内LCDの広告を一新</b>：縦スライド＋フェードの切り替え、カテゴリータグ・大きな見出し・進行バーを備えた新しいデザインに刷新し、掲載内容も新しい12本に入れ替えました</li>
+            <li><b>駅の乗車位置案内を新設</b>：各駅ホームのドア位置に「○号車／乗車位置」の標識を設置。グリーン車の乗車口は緑の標識で、号車番号と実際のドア位置が一致するよう修正しました</li>
+            <li><b>広告放送を追加</b>：今回のアップデート内容を案内する新しい広告放送（v1.9.8）を追加。従来どおり放送の割り込みなく最後まで再生します</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.7</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.7 (2026.11.18)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">乗客モードの乗車修正、AI・他プレイヤー列車のカクつき解消、放送を継ぎ目なく流暢に、総合指令所を刷新、支線の解放条件を撤廃</div>
@@ -1320,7 +1337,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.7)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.8)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1393,7 +1410,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=101', function() {});
+      loadScript('assets/js/game.js?v=102', function() {});
     });
   });
 })();
