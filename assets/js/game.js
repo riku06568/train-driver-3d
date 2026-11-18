@@ -6557,6 +6557,7 @@ function showTripNoticeIfNeeded(){
   const mod=document.getElementById('tripNoticeModal');
   if(!mod)return;
   window.__TRIP_NOTICE_OPEN=true;
+  window.__TRIP_NOTICE_RENDERED=false;
   mod.style.display='flex';
   playTripNoticeAudio();
   const btnOk=document.getElementById('btnTripNoticeOk');
@@ -7987,7 +7988,7 @@ function dispCamFrame(now){ const D=window.__DISP; if(!D||!D.on||D.camOn===false
   return true;
 }
 function frameBody(now){
-  if(window.__TRIP_NOTICE_OPEN){last=now;try{if(typeof renderer!=='undefined'&&renderer&&scene&&camera)renderer.render(scene,camera);}catch(e){}return;}
+  if(window.__TRIP_NOTICE_OPEN){last=now;if(!window.__TRIP_NOTICE_RENDERED){window.__TRIP_NOTICE_RENDERED=true;try{if(typeof renderer!=='undefined'&&renderer&&scene&&camera)renderer.render(scene,camera);}catch(e){}}return;}
   updQuality(now-last);
   const dt=Math.min(0.05,(now-last)/1000);last=now;frameN++;
   try{update(dt,now);}catch(e){LOOPERR.n++;console.error('update error',e);if(now-LOOPERR.shown>20000){LOOPERR.shown=now;try{toast('一時的な不具合を自動で回復しました','warn');}catch(_){}}} /* 更新で失敗しても描画は続ける */
