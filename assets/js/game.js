@@ -9657,6 +9657,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       /* 駅 */
       const many = sts.length > 22;
       let labRow = 0;
+      const stationLabels = [];
       ctx.textAlign = 'center';
       for (const st of sts){
         const x = X(st.s);
@@ -9668,14 +9669,19 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         }
         const showName = !many || major;
         if (showName){
-          ctx.save();
-          ctx.translate(x, H - 24 - (labRow++ % 2) * 16);
-          ctx.rotate(-Math.PI / 4);
-          ctx.fillStyle = major ? '#ffd76b' : '#8fa8c4';
           ctx.font = (major ? '700 11px ' : '10px ') + FONT;
-          ctx.textAlign = 'left';
-          ctx.fillText(st.name, 0, 0);
-          ctx.restore();
+          const nw = ctx.measureText(st.name).width;
+          let lx = Math.min(W - nw - 4, Math.max(4, x - nw / 2));
+          let ly = H - 14 - (labRow % 2) * 15;
+          let bad = false;
+          for (const t of stationLabels){ if (Math.abs(t.y - ly) < 13 && lx < t.x + t.w && lx + nw > t.x){ bad = true; break; } }
+          if (!bad){
+            stationLabels.push({ x:lx, y:ly, w:nw });
+            ctx.fillStyle = major ? '#ffd76b' : '#8fa8c4';
+            ctx.textAlign = 'left';
+            ctx.fillText(st.name, lx, ly);
+            labRow++;
+          }
         }
       }
       ctx.textAlign = 'left';
@@ -9702,7 +9708,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
           const xa = Math.min(x, x2), xb = Math.max(x, x2);
           ctx.fillRect(xa, lane - 11, Math.max(1, xb - xa), 22);
         }
-        const col = tr.kind === 'hold' ? '#f87171' : tr.kind === 'player' ? '#fbbf24' : tr.state === 'dwell' ? '#34d399' : (def.col || '#38bdf8');
+        const SVCCOL = { A:'#14935f', B:'#14935f', C:'#e8731e', D:'#e8731e', E:'#c8322b', F:'#c8322b' };
+        const col = tr.kind === 'hold' ? '#f87171' : tr.kind === 'player' ? '#fbbf24' : (def.id === 'loop' ? (SVCCOL[tr.key] || def.col) : (def.col || '#38bdf8'));
         ctx.fillStyle = col;
         const x0 = tr.dir > 0 ? x : x - wPx;
         ctx.beginPath();
