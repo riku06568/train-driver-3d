@@ -3772,7 +3772,7 @@ function setLook(tr,key){const [col,nm]=SVCLOOK[key];tr.mats.liv1.color.setHex(c
   if(tr.old){const d=TK[key].dir>0?STATIONS[NST-1]:STATIONS[0];drawDestRoll(tr.dk,(MINI?'ワンマン　':'普通　')+d.name);if(MINI){tr.mats.liv1.color.setHex(0xf0e6c8);tr.mats.liv2.color.setHex(0xf0e6c8);}}else if(BRANCH){const d=TK[key].dir>0?STATIONS[NST-1]:STATIONS[0];drawDest(tr.dk,(KIND[key]==='rapid'?'快速 ':'普通 ')+d.name+'行');}else drawDest(tr.dk,nm+' '+(TK[key].dir>0?'外回り':'内回り'));}
 function aiStop(a){let best=null,bd=1e9;const so=TK[a.key].so;
   for(const st of STATIONS){if(!serves(st,a.key))continue;if(st.i===a.last)continue;const stop=st.s+so,D=a.dir*sdiff(a.s,stop);if(D>-0.5&&D<bd){bd=D;best={st,D};}}return best;}
-function aiSpawn(a,s,v){const base=trainLoadFor(a.key);a.load=Math.round(base*(KIND[a.key]==='ltd'?1.08:KIND[a.key]==='rapid'?1.04:1)*rand(0.9,1.08));a.pa={};a.s=s;a.v=v===undefined?a.vmax*0.8:v;a.state='run';a.last=-1;a.frac=0;if(a.tr)a.tr.lastFrac=-1;a.flowed=false;a.sndF={};a.vis=true;}
+function aiSpawn(a,s,v){if(!isFinite(a.t))a.t=0;if(!isFinite(a.frac))a.frac=0;const base=trainLoadFor(a.key);a.load=Math.round(base*(KIND[a.key]==='ltd'?1.08:KIND[a.key]==='rapid'?1.04:1)*rand(0.9,1.08));a.pa={};a.s=s;a.v=v===undefined?a.vmax*0.8:v;a.state='run';a.last=-1;a.frac=0;if(a.tr)a.tr.lastFrac=-1;a.flowed=false;a.sndF={};a.vis=true;}
 function aiHide(a,wait){a.state='off';a.vis=false;if(a.tr)a.tr.grp.visible=false;a.timer=wait;}
 /* 前の電車と同じ線路か：支線は同じ方向なら同じ線路。ただし待避駅の中では各停（副本線）と快速（本線）は別の線路 */
 function sameTrack(a,k2,s2,d2){if(!BRANCH)return k2===a.key;if(d2!==a.dir)return false;const la=KIND[a.key]!=='rapid',lb=KIND[k2]!=='rapid';return !(la!==lb&&sidDev(s2)>0.3);}
@@ -4024,7 +4024,7 @@ window.handleAiPacket=(topic,ap)=>{
       else{a._syncErr=err;}
       if(t.st!==a.state){a.state=t.st;if(Math.abs((t.v||0)-(a.v||0))>4)a.v=t.v;}
       else if(Math.abs(a.v-t.v)>1.0){a.v+=(t.v-a.v)*0.18;}
-      a.dir=t.d;a.side=t.sd;a.frac=t.f;a.dispHold=!!t.dh;a.slowMode=t.sm||null;a.troubleActive=!!t.tb;a.t=t.t;
+      a.dir=t.d;a.side=t.sd;a.frac=(t.f!=null?t.f:a.frac);a.dispHold=!!t.dh;a.slowMode=t.sm||null;a.troubleActive=!!t.tb;if(t.t!=null&&isFinite(t.t))a.t=t.t;
       if(t.st==='dwell'){a.stSt=stationNear(a.s);if(a.stSt)a.last=a.stSt.i;}else{a.stSt=null;}
     }
   }
@@ -4049,7 +4049,9 @@ function updPools(dt){const on=G.phase==='play'||window.__DISP_MONITOR;
     if(_aiSyncT>=0.7){
       _aiSyncT=0;
       if(ONLINE_CLIENT&&ONLINE_CLIENT.connected&&isAiSyncLeader()){
-        const trains=OT.filter(a=>a&&a.state!=='off').map(a=>({n:a.name,k:a.key,s:+a.s.toFixed(1),v:+a.v.toFixed(2),st:a.state,d:a.dir,sd:a.side,f:+a.frac.toFixed(2),dh:!!a.dispHold,sm:a.slowMode||null,tb:!!a.troubleActive,t:+a.t.toFixed(1)}));
+        /* v1.9.7：数値が欠けた列車があっても同期発信が例外で止まらないように（更新が飛んでカクつく原因） */
+        const N2=x=>{const v=Number(x);return isFinite(v)?v:0;};
+        const trains=OT.filter(a=>a&&a.state!=='off').map(a=>({n:a.name,k:a.key,s:+N2(a.s).toFixed(1),v:+N2(a.v).toFixed(2),st:a.state,d:a.dir,sd:a.side,f:+N2(a.frac).toFixed(2),dh:!!a.dispHold,sm:a.slowMode||null,tb:!!a.troubleActive,t:+N2(a.t).toFixed(1)}));
         try{ONLINE_CLIENT.publish('shiomi3d/v1/ai/state',JSON.stringify({leader:ONLINE_CLIENT_ID,ts:Date.now(),trains}),{qos:0});}catch(e){}
       }
     }
