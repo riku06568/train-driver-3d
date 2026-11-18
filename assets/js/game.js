@@ -4006,6 +4006,30 @@ const POOLT={};
 /* 港見支線：電車は2本だけ。起点と終点から同時に出て、港前で行き違い、終点で折り返す */
 const MINIS={spawned:false};
 function miniSpawn(k,st){const a=POOL[k].find(x=>x.state==='off');if(!a)return;a.key=k;a.dir=TK[k].dir;aiSpawn(a,st.s+TK[k].so,0);a.state='dwell';a.v=0;a.t=34;a.stSt=st;a.last=st.i;a.side=TK[k].side(st);a.flowed=false;a.sndF={};a.hold=0;}
+function isNearPlayerSpawn(a,pos){
+  if(PAX||G.phase!=='play'||!a)return false;
+  if(!BRANCH&&(shiomiBump(G.s)>0.1||(Math.abs(sdiff(G.s,STATIONS[0].s))<160&&G.atStation!==null)))return false;
+  if(!MINI&&!sameTrack(a,G.key,pos,G.dir))return false;
+  const ownLen=(typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars?ownTrain.cars.length:carsFor(G.key))*CARL;
+  const aiLen=carsFor(a.key)*CARL;
+  const dd=G.dir*sdiff(G.s,pos);
+  return dd>-(ownLen+aiLen+650)&&dd<(ownLen+aiLen+450);
+}
+function clearAiAroundPlayerSpawn(){
+  if(PAX||G.phase!=='play')return;
+  const ownLen=(typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars?ownTrain.cars.length:carsFor(G.key))*CARL;
+  for(const a of OT){
+    if(!a||a.state==='off'||a.follower)continue;
+    if(!isNearPlayerSpawn(a,a.s))continue;
+    const aiLen=carsFor(a.key)*CARL;
+    if(BRANCH||MINI){aiHide(a,12);continue;}
+    const dd=G.dir*sdiff(G.s,a.s);
+    const shift=(dd>=0)?(ownLen+aiLen+750):-(ownLen+aiLen+900);
+    a.s=mod(G.s+G.dir*shift,L);a._syncErr=0;
+    if(a.state==='dwell'){a.state='run';a.stSt=null;a.frac=0;a.v=a.vmax*0.7;}
+    if(a.tr)a.tr.grp.visible=false;
+  }
+}
 function initSyncedAiTrains(){
   if(BRANCH||MINI)return;
   for(const k of KEYS){
@@ -4015,8 +4039,11 @@ function initSyncedAiTrains(){
     for(let i=0;i<cnt;i++){
       const a=pool[i];
       if(a.state!=='off')continue;
-      const pos=mod(s0+T.dir*((i*(L/cnt))+(kIdx*420)),L);
-      a.key=k;aiSpawn(a,pos);
+      let pos=mod(s0+T.dir*((i*(L/cnt))+(kIdx*420)),L);
+      a.key=k;
+      if(isNearPlayerSpawn(a,pos))pos=mod(pos+L*0.45,L);
+      if(isNearPlayerSpawn(a,pos))pos=mod(pos+L*0.25,L);
+      aiSpawn(a,pos);
     }
   }
 }
@@ -4056,6 +4083,7 @@ window.handleAiPacket=(topic,ap)=>{
     for(const t of ap.trains){
       const a=OT.find(x=>x&&x.name===t.n);if(!a)continue;
       const predS=mod(t.s+(t.st==='run'?t.d*t.v*latSec:0),L);
+      if(!PAX&&G.phase==='play'&&G.v<0.5&&(nowMs()-(G._spawnMs||0))<12000&&isNearPlayerSpawn(a,predS)){a.vis=false;if(a.tr)a.tr.grp.visible=false;continue;}
       if(a.state==='off'){a.key=t.k;aiSpawn(a,predS,t.v);}
       const err=sdiff(a.s,predS);
       /* v1.9.7：受信位置との差を少しずつ詰める（60mを超えたらワープさせていたのをやめ、600m以上のときだけ合わせる） */
@@ -6442,7 +6470,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   for(const p of active.slice())freePerson(p);for(const s2 of STATIONS){s2.sp={};s2.staff=null;for(const k in s2.wait)s2.wait[k].length=0;}
   spawnWait(st,G.key);updSpawns();
   const loc=localSide(st);G.door={state:'open',frac:1,side:loc*G.dir,local:loc};
-  G.phase='play';G.zoom=null;G.flowV=G.nv;G.asked=false;if(G.load==null||G.load<10)G.load=trainLoadFor(G.key);startFlows(st,G.key,G.s,'OWN');salFill(saloonFromLoad(G.load,carsFor(G.key)));planFrom(nowMs()+30000);
+  G.phase='play';G._spawnMs=nowMs();clearAiAroundPlayerSpawn();G.zoom=null;G.flowV=G.nv;G.asked=false;if(G.load==null||G.load<10)G.load=trainLoadFor(G.key);startFlows(st,G.key,G.s,'OWN');salFill(saloonFromLoad(G.load,carsFor(G.key)));planFrom(nowMs()+30000);
   const b=boundFor(); if(!window.__DISP_MONITOR) setTimeout(()=>sayJE('ご乗車ありがとうございます。この電車は、'+lineJa()+'、'+b.ja+'です。','Thank you for riding the '+R.en+'. This train is '+b.en+'.'),1800);
   toast(R.name+'　'+b.jn+'　乗り降りを見て、促進・戸閉・ATOで出発','info');
   if(!G.list&&(st.cls==='M'||st.i===0))setTimeout(()=>{if(G.atStation===G.nv)askStation(st,true);},2600);}
