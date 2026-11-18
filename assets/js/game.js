@@ -1817,9 +1817,9 @@ function boardingMarks(c,st,k,isSiding){if(!serves(st,k))return;const T=TK[k];if
     if(!IGEO[key])continue;
     for(const dz of (green?GDOORZ:DOORZ)){
       const ds=flip?fr+CARHALF+q*CARL+dz:fr-CARHALF-q*CARL-dz;
-      inst(c,key,ds,off,PH+1.62,0.62,0.43,1,0,Math.PI/2);
-      inst(c,key,ds,off,PH+1.62,0.62,0.43,1,0,-Math.PI/2);
-      inst(c,'mpost',ds,off,PH+0.90,1,1,1);
+      inst(c,key,ds,off,PH+1.66,0.80,0.55,1,0,Math.PI/2);
+      inst(c,key,ds,off,PH+1.66,0.80,0.55,1,0,-Math.PI/2);
+      inst(c,'mpost',ds,off,PH+0.92,1,1,1);
     }
   }
 }
@@ -4238,7 +4238,6 @@ function doorWarnOn(){
   if(typeof RIDE!=='undefined'&&RIDE&&RIDE.a){const a=RIDE.a;
     if(a.state==='dwell'&&a.stSt)return (a.t>1.0&&a.t<7.4);          /* 他車：戸締め放送〜閉扉まで */
     return false;}
-  if(PAX||G.walkOn)return false;
   if(G.door&&G.door.state==='closing')return true;
   return nowMs()<doorAnnUntil;
 }
