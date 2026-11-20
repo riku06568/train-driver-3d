@@ -1469,7 +1469,7 @@ const ALLK=BRANCH?KEYS:KEYS.concat(EXK);            // AI列車プールは特�
 const TRACKS=[];
 for(const k of (MINI?['A']:BRANCH?['A','B']:KEYS))TRACKS.push({k,off:{A:()=>0,B:sepB,C:offC,D:offD,E:offE,F:offF}[k],a:BRANCH?TRK0:null,b:TRK1});
 if(!BRANCH){const s0=STATIONS[0],sa=s0.s-PBof(s0)-460,sb=s0.s+PF+460;for(const k of KEYS)TRACKS.push({k:'S'+k,off:s=>TK[k].off(s)-TK[k].dir*8.6*shiomiBump(s),a:sa,b:sb});} /* 汐見駅：各線路にプレイヤー退避線（左側）を追加し12線化 */
-if(!BRANCH)for(const k of ['I','J'])TRACKS.push({k,off:TK[k].off,a:STATIONS[0].s-PBof(STATIONS[0])-430,b:STATIONS[0].s+PF+430}); /* 汐見駅 13・14番線 */
+if(!BRANCH)for(const k of ['I','J'])TRACKS.push({k,off:s2=>TK[k].off(s2),a:STATIONS[0].s-PBof(STATIONS[0])-430,b:STATIONS[0].s+PF+430}); /* 汐見駅 13・14番線 */
 if(MINI){const st=STATIONS[CFG.mini.loop];TRACKS.push({k:'B',off:sepB,a:st.s-PBof(st)-170,b:st.s+PF+170});} /* 行き違い用の線路 */
 if(B3)for(const st of STATIONS){if(st.cls!=='Q'&&st.cls!=='T')continue;const a=platMid(st)-platHalf(st)-150,b=platMid(st)+platHalf(st)+150; /* 副本線（分岐して戻る） */
   TRACKS.push({k:'SA',off:s=>-sidDev(s),a,b});TRACKS.push({k:'SB',off:s=>sepB(s)+sidDev(s),a,b});}
