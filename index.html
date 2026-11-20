@@ -440,7 +440,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v1.9.8)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.0.0)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -468,7 +468,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v1.9.8 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.0.0 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -666,7 +666,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v1.9.8)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.0.0)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -711,7 +711,26 @@ body.disp-monitor #gl{display:none!important}
       <div class="credits-box" style="text-align:left;line-height:1.7;">
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.8</span>
+            <span style="background:#7c3aed;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.0.0</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.0.0 (2026.11.20)</h3>
+          </div>
+          <div style="font-size:14px;color:#a78bfa;font-weight:700;margin-bottom:6px;">特急の追加・天宮高架線のホームドア修正・汐見駅7面14線・四嶺連絡線・天候/ダイヤ/車庫出庫・改札口</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>天宮高架線のホームドアが開かない不具合を修正</b>：快速と各駅停車が同じホームを使う駅で、到着した列車の種別とホームの番線の対応が取れておらず、ホームドアが開かない・乗車できない状態になっていました。種別とホームの対応を根本から修正し、全駅で開閉することを確認しました</li>
+            <li><b>天宮高架線に乗れない不具合を修正</b>：上記のホームドアが開かないことにより、乗客モードで電車に乗れない状態になっていました。あわせて乗降の判定も見直しています</li>
+            <li><b>新しい種別「特急」を追加</b>：快速特急と同じ中央の線路を最高135km/hで走り、主要駅と快速停車駅の一部に停車します。専用の車体色・前面表示・車内/駅LCD・放送・AI運転に対応</li>
+            <li><b>夕映駅に快速が停車</b>：快速の停車駅・ダイヤ・自動運転・AI列車・放送・LCD表示をすべて整合させました（快速特急は通過）</li>
+            <li><b>運行間隔を1〜3分に</b>：本線の列車（各停・快速・特急・快特）を合わせて1〜3分間隔で運転するようにしました。支線も増発し、朝ラッシュは2.5分間隔です</li>
+            <li><b>汐見駅を7面14線に増設</b>：13・14番線（島式ホーム）を新設。ホームドア・乗車位置案内・発車案内・ホーム見学・列車の進入路まで対応しています</li>
+            <li><b>四嶺連絡線を新設</b>：白峰支線の奥峰・紫雲地下線の深雪・天宮高架線の峰月・港見支線の奥港を結ぶ全7駅の連絡線です。ホーム・放送・路線選択・指令所の監視・AI列車に対応</li>
+            <li><b>改札口・コンコースに行けるように</b>：乗客モードでホームの階段から改札口・コンコースへ歩いて行けます。自動改札機・案内看板・トイレ・売店があり、ホームへ戻るボタンで戻れます</li>
+            <li><b>天候を選べるように</b>：晴れ・曇り・雨・雪・霧から選べます。空と霧、雨・雪の降り方、ブレーキの効き（雨・雪・霧では速度を抑えます）が変わります</li>
+            <li><b>ダイヤを選べるように</b>：通常ダイヤ／臨時・団体列車ダイヤ（臨時列車を増発）／変更ダイヤ（快速と特急の停車駅を入れ替える、いわゆる“逝っとけ”風）を選べます</li>
+            <li><b>車庫からの出庫</b>：汐見車両基地から本線に出て、汐見駅を目指して運転を始められる「車庫から出庫」を追加しました（本線・外回り）</li>
+            <li><b>アナウンスを大幅に追加</b>：特急の車内放送、天候のお知らせ、車庫出庫・本線合流、臨時・団体・変更ダイヤ、車内マナー、乗り換えのご案内を追加しました（すべて事前録音の音声です）</li>
+          </ul>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#334155;color:#94a3b8;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v1.9.8</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v1.9.8 (2026.11.18)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">前面ガラスと運転台のクリア化、戸締め時の赤点滅表示、車内広告の刷新、駅の乗車位置案内、スムーズ発車、遠方列車の音の遮断</div>
@@ -1319,18 +1338,41 @@ body.disp-monitor #gl{display:none!important}
   </div>
 </div>
 
-<!-- トラブル発生モード確認モーダル -->
+<!-- 運転条件（天候・ダイヤ・出庫・トラブル）モーダル -->
 <div id="troubleConfirmModal" class="dt-modal hide">
-  <div class="dt-card" style="width:min(420px,94vw);border-color:#f59e0b;">
-    <div style="font-size:16px;font-weight:800;color:#fbbf24;">⚠️ トラブル発生モードをオンにしますか？</div>
-    <div style="font-size:13px;color:#cbd5e1;line-height:1.6;">
-      オンにすると、走行中に踏切支障・沿線火災・信号異常・人立ち入りなどの自然なトラブルがランダムに発生します。<br>
-      トラブル発生時は自動で急停車して運転士タブレットが開き、指令所の許可が出るまで運転再開できません。
+  <div class="dt-card" style="width:min(560px,94vw);border-color:#38bdf8;max-height:90vh;overflow:auto;">
+    <div style="font-size:16px;font-weight:800;color:#7dd3fc;">🚉 運転条件を選んでください</div>
+    <div style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">
+      天候・ダイヤ・出庫・トラブルの設定ができます。あとから変えたいときは一度タイトルに戻って乗り直してください。
     </div>
-    <div class="dt-grid" style="margin-top:4px;">
+    <div style="font-size:12.5px;color:#93c5fd;font-weight:800;">☀️ 天候</div>
+    <div class="dt-grid" id="wxGrid">
+      <button class="dt-btn wx on" data-w="clear">☀️ 晴れ</button>
+      <button class="dt-btn wx" data-w="cloudy">☁️ 曇り</button>
+      <button class="dt-btn wx" data-w="rain">🌧️ 雨</button>
+      <button class="dt-btn wx" data-w="snow">❄️ 雪</button>
+      <button class="dt-btn wx" data-w="fog">🌫️ 霧</button>
+    </div>
+    <div id="wxDesc" style="font-size:11.5px;color:#94a3b8;line-height:1.55;">晴れ：見通し良好。ブレーキ性能は通常どおりです。</div>
+    <div style="font-size:12.5px;color:#93c5fd;font-weight:800;margin-top:4px;">🗓️ ダイヤ</div>
+    <div class="dt-grid" id="diaGrid">
+      <button class="dt-btn dia on" data-d="normal">通常ダイヤ</button>
+      <button class="dt-btn dia" data-d="extra">臨時・団体</button>
+      <button class="dt-btn dia" data-d="change">変更ダイヤ</button>
+    </div>
+    <div id="diaDesc" style="font-size:11.5px;color:#94a3b8;line-height:1.55;">通常ダイヤ：各駅停車・快速・特急・快速特急が決まった停車駅で運転します。</div>
+    <div style="font-size:12.5px;color:#93c5fd;font-weight:800;margin-top:4px;">🚉 出庫</div>
+    <div class="dt-grid" id="depGrid">
+      <button class="dt-btn dep on" data-p="0">駅から開始</button>
+      <button class="dt-btn dep" data-p="1">車庫から出庫</button>
+    </div>
+    <div id="depDesc" style="font-size:11.5px;color:#94a3b8;line-height:1.55;">駅から開始：選んだ駅のホームから乗務を始めます。</div>
+    <div style="font-size:12.5px;color:#fbbf24;font-weight:800;margin-top:4px;">⚠️ トラブル発生モード</div>
+    <div class="dt-grid">
       <button id="btnTroubleOff" class="dt-btn">オフ（通常運転）</button>
       <button id="btnTroubleOn" class="dt-btn warn">オン（トラブルあり）</button>
     </div>
+    <div style="font-size:11.5px;color:#94a3b8;line-height:1.5;">オンにすると、走行中に踏切支障・沿線火災・信号異常・人立ち入りなどの自然なトラブルがランダムに発生します。</div>
   </div>
 </div>
 
@@ -1340,7 +1382,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v1.9.8)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.0.0)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1413,7 +1455,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=114', function() {});
+      loadScript('assets/js/game.js?v=115', function() {});
     });
   });
 })();
