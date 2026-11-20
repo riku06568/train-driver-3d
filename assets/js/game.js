@@ -1548,7 +1548,9 @@ const WXDEF={
 const WX=Object.assign({id:(window.__WEATHER||'clear')},WXDEF[(window.__WEATHER||'clear')]||WXDEF.clear);
 const DIASH=(window.__DIASH||'normal'); /* normal / extra(臨時・団体) / change(変更ダイヤ) */
 const DEPOT_START=!!window.__DEPOT_START;
-const WXF=WX.trac;let WXPTS=null,WXPOS=null;
+const WXF=WX.trac;
+const LINENAME=BRANCH?(LINE_ID==='branch2'?'紫雲地下線':LINE_ID==='branch3'?'天宮高架線':LINE_ID==='branch4'?'港見支線':LINE_ID==='branch5'?'四嶺連絡線':'白峰支線'):'汐見環状線';
+const LINEEN=BRANCH?(LINE_ID==='branch2'?'Shiun Subway Line':LINE_ID==='branch3'?'Amamiya Elevated Line':LINE_ID==='branch4'?'Minatomi Branch Line':LINE_ID==='branch5'?'Shirei Connection Line':'Shiramine Branch Line'):'Shiomi Loop Line';let WXPTS=null,WXPOS=null;
 scene.fog.color.setHex(WX.fog[0]);scene.fog.near=WX.fog[1];scene.fog.far=WX.fog[2];scene.background.setHex(WX.sky);
 const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.12,3200);camera.rotation.order='YXZ';camera.layers.enable(2);
 const hemi=new THREE.HemisphereLight(0xb9c8e8,0x4a3a30,0.8*WX.amb);scene.add(hemi);
@@ -3285,7 +3287,7 @@ function drawStaf() {
   const rName = (typeof ROUTES !== 'undefined' && ROUTES[G.route]) ? ROUTES[G.route].short : '環状線';
   const dName = (G.list && G.list.length && typeof stOf === 'function') ? stOf(G.list[G.list.length - 1]).name : '汐見';
   const dirLabel = BRANCH ? '' : (G.dir < 0 ? '内回り' : '外回り');
-  const maxSpd = (typeof KIND !== 'undefined' && KIND[G.key] === 'ltd') ? 130 : ((typeof KIND !== 'undefined' && KIND[G.key] === 'rapid') ? 120 : (BRANCH ? 85 : 100));
+  const maxSpd = (typeof KIND !== 'undefined' && KIND[G.key] === 'ltd') ? 130 : (KIND[G.key] === 'exp' ? 135 : (KIND[G.key] === 'rapid' ? 120 : (BRANCH ? 85 : 100)));
   x.fillText('種別: ' + rName + (dirLabel ? ' ' + dirLabel : ''), 12, 53);
   x.fillText('行先: ' + dName + ' 行き', 12, 70);
   x.fillText('最高速度: ' + maxSpd + ' km/h', 12, 87);
@@ -7928,7 +7930,7 @@ function drawLED(led,k){const x=k.x,now=nowMs(),st=led.st,W=1024,H=288,ph=Math.f
         ['　　This is the '+K[1]+' train '+r0.dest.en+'.'+(sE?' Stops: '+sE+'.':'')+(r0.e.dep?' The doors are closing.':''),WH]);}
     else{segs.push(['次の電車は　',AMB],[hms2(r0.t)+'発　'+K[0]+'　'+r0.dest.ja,YEL],['　'+r0.cars+'両編成です。'+(r0.gc.length?'グリーン車は'+r0.gc.map(q=>q+1).join('・')+'号車です。':'')+(sJ?'停車駅：'+sJ+'　':''),AMB],
         ['　　The next train is the '+hms2(r0.t)+' '+K[1]+' '+r0.dest.en+', '+r0.cars+' cars.'+(sE?' Stops: '+sE+'.':''),WH]);}}
-  else segs.push(['本日も'+(BRANCH?'白峰支線':'汐見環状線')+'をご利用いただき、ありがとうございます。',AMB],['　　Thank you for using the '+(BRANCH?'Shiramine Branch Line.':'Shiomi Loop Line.'),WH]);
+  else segs.push(['本日も'+(BRANCH?LINENAME:'汐見環状線')+'をご利用いただき、ありがとうございます。',AMB],['　　Thank you for using the '+(BRANCH?LINEEN+'.':'Shiomi Loop Line.'),WH]);
   if(isRushHour())segs.push(['　　ただいま大変混雑しています。車内の奥までお進みください。',AMB],['　The trains are very crowded. Please move inside the car.',WH]);
   if(hd)segs.push(['　　ホームドアに寄りかからないでください。',AMB]);
   tickerDraw(k,segs);}
