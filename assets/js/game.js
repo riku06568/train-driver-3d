@@ -1239,6 +1239,20 @@ function checkOnlineStationBlocked(st, serviceKey, lineId) {
         return { name: 'AI列車(' + (a.n || serviceKey) + ')', dist: Math.round(d) };
       }
     }
+  } else if (targetLine === 'loop') {
+    const cntMap = { A:8, B:8, C:6, D:6, E:4, F:4 };
+    const allK = ['A','B','C','D','E','F'];
+    const cnt = cntMap[serviceKey] || 0;
+    const kIdx = allK.indexOf(serviceKey);
+    const dir = (serviceKey === 'A' || serviceKey === 'C' || serviceKey === 'E') ? 1 : -1;
+    const s0 = (cfg && cfg.s0 != null) ? cfg.s0 : 2000;
+    for (let i = 0; i < cnt; i++) {
+      const pos = mod(s0 + dir * ((i * (L / cnt)) + (kIdx * 420)), L);
+      const d = Math.abs(mod(pos - stPos + L / 2, L) - L / 2);
+      if (d < 1000) {
+        return { name: 'AI列車(P' + serviceKey + i + ')', dist: Math.round(d) };
+      }
+    }
   }
   return null;
 }
@@ -2596,9 +2610,11 @@ function ruralChunk(c,c0,rnd){ // countryside along the branch: fields, woods an
     if(!clearAt(s2,o,1.5))continue;if(rnd()<0.45){inst(c,'tree',s2,o,3*sc,sc,sc*1.2,sc);}else{inst(c,'trunk',s2,o,1.3*sc,sc,2.6*sc,sc);inst(c,'leaf',s2,o,3.6*sc,2.2*sc,2.0*sc,2.2*sc,LEAFC[(rnd()*LEAFC.length)|0]);}n++;}
 }
 let chunkQueue=[];
-function updChunks(s,force){const pc=chunkOf(s);const want=[];for(let d=0;d<=3;d++){for(const q of d?[pc+d,pc-d]:[pc])want.push(mod(q,NCH));}
-  for(let c=0;c<NCH;c++){if(!CHUNKS[c].built)continue;let d=Math.abs(c-pc);d=Math.min(d,NCH-d);if(d>5)disposeChunk(c);}
-  let n=0;for(const c of want){if(!CHUNKS[c].built){buildChunk(c);n++;if(!force&&n>=1)break;}}}
+function updChunks(s,force){
+  if(force){for(let c=0;c<NCH;c++){if(!CHUNKS[c].built)buildChunk(c);}return;}
+  const pc=chunkOf(s);const want=[];for(let d=0;d<=6;d++){for(const q of d?[pc+d,pc-d]:[pc])want.push(mod(q,NCH));}
+  for(const c of want){if(!CHUNKS[c].built){buildChunk(c);break;}}
+}
 /* ================= trains ================= */
 const doorTex=canvasTex(64,128,(x,w,h)=>{x.fillStyle='#b9bec4';x.fillRect(0,0,w,h);x.clearRect(12,10,40,50);x.strokeStyle='#8d9298';x.lineWidth=3;x.strokeRect(1,1,w-2,h-2);});
 const TM={
@@ -4795,9 +4811,7 @@ function updPools(dt){const on=G.phase==='play'||window.__DISP_MONITOR;
       const dist=Math.abs(sdiff(camS,a.s));
       const isRide=!!(RIDE&&RIDE.a===a);
       const isSel=dispSel===('ai:'+a.name);
-      const near=dist<2650||isRide||isSel;
-      if(near&&!a.tr)acquireAiTr(a);
-      else if(!near&&a.tr)releaseAiTr(a);
+      if(!a.tr)acquireAiTr(a);
       a.vis=!!a.tr&&(dist<2600||isRide||isSel);
       aiRun(a,dt);
     }
@@ -7429,6 +7443,8 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   G.autoAnn = (typeof autoAnnEnabled !== 'undefined') ? autoAnnEnabled : true;
   ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;setLook(ownTrain,G.key);if(G.list)drawOwnDest();
   updChunks(G.s,true);
+  if(!BRANCH&&!MINI){initSyncedAiTrains();for(const k of ALLK)for(const a of POOL[k])if(a.state!=='off'&&!a.tr)acquireAiTr(a);}
+  try{if(typeof buildCabModel==='function')buildCabModel();}catch(e){}
   for(const p of active.slice())freePerson(p);for(const s2 of STATIONS){s2.sp={};s2.staff=null;for(const k in s2.wait)s2.wait[k].length=0;}
   spawnWait(st,G.key);updSpawns();
   const loc=localSide(st);G.door=(DEPOT_START&&!BRANCH&&!PAX&&TK[G.key].dir>0)?{state:'closed',frac:0,side:1,local:1}:{state:'open',frac:1,side:loc*G.dir,local:loc};
@@ -10180,6 +10196,11 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2;
     const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
     curOnlineStList = list;
+    if (!window.__stSelPoll) {
+      window.__stSelPoll = setInterval(() => {
+        if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
+      }, 1500);
+    }
     for(const st of list){
       const bt=document.createElement('button');
       if(st.cls==='M')bt.className='big';
