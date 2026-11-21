@@ -69,9 +69,17 @@ const AV_DEF={female:false,height:170,skin:0,hair:0,hairLong:false,tails:false,t
 let AVATAR=(()=>{try{return Object.assign({},AV_DEF,JSON.parse(localStorage.getItem('td_avatar')||'{}'));}catch(e){return Object.assign({},AV_DEF);}})(); /* 乗客モードの自分の見た目 */
 let CREWSEL=(()=>{try{const v=localStorage.getItem('td_crew');return v==='twoD'||v==='twoC'?v:'one';}catch(e){return 'one';}})(); /* 快速特急の乗務：one=ワンマン twoD=ツーマン（運転士） twoC=ツーマン（車掌） */
 let QMODE=(()=>{try{const v=localStorage.getItem('td_quality');return (v==='extreme'||v==='ultralight'||v==='normal'||v==='heavy')?v:'light';}catch(e){return 'light';}})();
-const rand=(a,b)=>a+Math.random()*(b-a);
+/* 乱数：普段はMath.random。乗客（AI）の生成だけは、全端末で同じ人が同じ場所に出るよう
+   決められた種（シード）の擬似乱数に切り替える（withCrowdSeed）。 */
+let _RNG=Math.random;
+const rand=(a,b)=>a+_RNG()*(b-a);
 const irand=(a,b)=>Math.floor(rand(a,b+1));
-const pick=a=>a[(Math.random()*a.length)|0];
+const pick=a=>a[(_RNG()*a.length)|0];
+function rng01(){return _RNG();}
+function hash32(str){let h=2166136261;str=String(str);for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(a){a=a>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
+let _crowdSeedDepth=0,_crowdSeedPrev=null;
+function withCrowdSeed(key,fn){const prev=_RNG;_RNG=mulberry32(hash32(key));_crowdSeedDepth++;try{return fn();}finally{_crowdSeedDepth--;_RNG=prev;}}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -649,7 +657,7 @@ function handleRemotePlayerUpdate(data) {
     if (promoChanged || promoLoopTick) {
       if (data.promoT) p.lastPromoT = data.promoT;
       p._lastPromoPlayMs = now;
-      playRemoteTrainSound(p, 'promo', { promoN: data.promoN, stName: data.stName });
+      playRemoteTrainSound(p, 'promo', { promoN: data.promoN, stName: data.stName, key: data.key, dir: data.dir });
     }
     // 他プレイヤーのドア開閉音・チャイム再生
     if (data.door && data.door !== p.lastDoor) {
@@ -849,30 +857,51 @@ function playRemoteTrainSound(p, type, opt) {
         curT += dur * 0.55;
       }
     } else if (type === 'promo') {
+      /* 発信側とまったく同じ関数・同じ曲・同じ音色（送られてきた種別・方向・駅で鳴らす） */
       const pn = opt && opt.promoN != null ? opt.promoN : 0;
-      if (pn === 4 && typeof A.ponSnd === 'function') A.ponSnd(out);
-      else if (pn === 1 && typeof A.chime === 'function') A.chime(out);
-      else if (pn === 2 && typeof A.playSong === 'function' && A.SONG_A) A.playSong(A.SONG_A, out, 1.1);
-      else if (pn === 3 && typeof A.playSong === 'function' && A.SONG_B) A.playSong(A.SONG_B, out, 1.1);
-      else if (pn === 'st' && opt && opt.stName && typeof A.ltdSong === 'function' && A.STATIONS) {
-        const found = A.STATIONS.findIndex(s => s.name === opt.stName);
-        A.playSong(A.ltdSong(found >= 0 ? found : 0), out, 1.1);
-      } else if (typeof A.melody === 'function') {
-        A.melody(out, 1.1);
-      }
+      const ctx = {
+        key: (opt && opt.key) || (p && p.key) || 'A',
+        dir: (opt && opt.dir != null) ? opt.dir : ((p && p.dir) || 1),
+        branch: !!(opt && opt.branch),
+        stIdx: (opt && opt.stIdx != null) ? opt.stIdx : -1
+      };
+      if (typeof A.promoRun === 'function') A.promoRun(pn, ctx, out, 1.0);
+      else if (pn === 4 && typeof A.ponSnd === 'function') A.ponSnd(out);
+      else if (typeof A.melody === 'function') A.melody(out, 1.0, undefined, ctx.dir);
+    } else if (type === 'promoVoice' || type === 'snd') {
+      /* 同じ事前録音MP3を、その列車の位置から聞こえる音量で鳴らす（声をチャイムで代用しない） */
+      const file = (opt && opt.file) || 'assets/audio/ann/guide_tab_doors.mp3';
+      const gn = ((opt && opt.gain) != null ? opt.gain : 0.95) * Math.min(1.15, Math.max(0.18, distGain));
+      try {
+        if (typeof A.loadAnnBuffer === 'function') A.loadAnnBuffer(file).then(buf => {
+          if (!buf) return;
+          const src = _AC.createBufferSource(), g2 = _AC.createGain();
+          g2.gain.value = Math.min(1.4, Math.max(0.05, gn));
+          src.buffer = buf; src.connect(g2); g2.connect(out); src.start();
+        }).catch(() => {});
+      } catch (e) {}
     } else if (type === 'doorOpen' && typeof A.doorOpenSnd === 'function') {
       A.doorOpenSnd(out);
     } else if (type === 'doorClose' && typeof A.doorCloseSnd === 'function') {
       A.doorCloseSnd(out);
-      if (d < (sealed ? 90 : 140) && typeof A.playGuide === 'function') {
-        A.playGuide('tab_doors', out, 1.0);
-      }
     }
   } catch(e) {
     console.warn('playRemoteTrainSound err', e);
   }
 }
 
+function broadcastSound(file, gainVal) {
+  if (typeof __remoteSndPlaying !== 'undefined' && __remoteSndPlaying) return;
+  if (!IS_ONLINE || !ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
+  if (!file || !/^assets\/audio\/ann\//.test(file)) return;
+  try {
+    const curG = (typeof G !== 'undefined' ? G : null);
+    ONLINE_CLIENT.publish('shiomi3d/v1/events', JSON.stringify({
+      id: ONLINE_CLIENT_ID, type: 'snd', file: file, gain: (gainVal != null ? gainVal : 0.9),
+      s: (curG && curG.s != null) ? curG.s : null, key: (curG && curG.key) ? curG.key : 'A', t: Date.now()
+    }), { qos: 0 });
+  } catch (e) {}
+}
 function broadcastEvent(type, extra) {
   if (typeof IS_ONLINE !== 'undefined' && IS_ONLINE && typeof ONLINE_CLIENT !== 'undefined' && ONLINE_CLIENT && ONLINE_CLIENT.connected) {
     try {
@@ -1016,7 +1045,11 @@ function handleIncomingEvent(ev) {
     playRemoteTrainSound(p, 'mhorn', { mhornKind: ev.mhornKind || 1 });
   } else if (ev.type === 'promo') {
     if (p) p.lastPromoT = ev.t || Date.now();
-    playRemoteTrainSound(p, 'promo', { promoN: ev.promoN, stName: ev.stName });
+    playRemoteTrainSound(p, 'promo', { promoN: ev.promoN, stName: ev.stName, key: ev.promoKey, dir: ev.promoDir, branch: ev.promoBranch, stIdx: ev.promoSt });
+  } else if (ev.type === 'promoVoice') {
+    playRemoteTrainSound(p, 'promoVoice', { file: ev.file, gain: 0.95 });
+  } else if (ev.type === 'snd') {
+    playRemoteTrainSound(p, 'snd', { file: ev.file, gain: ev.gain });
   }
 }
 
@@ -1271,6 +1304,7 @@ function publishPresence(force) {
     hornKind: (isDriving && curG.hornKind) ? curG.hornKind : 'elec',
     mhornT: (isDriving && curG.mhornT) ? curG.mhornT : 0,
     mhornKind: (isDriving && curG.mhornKind) ? curG.mhornKind : 1,
+    sq: (isDriving && curG.sq) ? (curG.sq|0) : 0,
     promoT: (isDriving && curG.promoLoop) ? curG.promoLoop.t0 : 0,
     promoOn: (isDriving && curG.promoOn) ? true : false,
     promoN: (isDriving && curG.promoLoop) ? curG.promoLoop.n : 0,
@@ -3802,13 +3836,34 @@ function transferText(st){const ls=transferLines(st).map(l=>l[1]);return ls.leng
 function enList(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
 function transferEn(st){const ls=transferLines(st).map(l=>LINE_EN[l[0]]||l[0]);return ls.length?' Please change here for '+enList(ls)+'.':'';}
 const enName=st=>st.kana.replace(/-/g,' ');
+/* 端末をまたいで同じ乗客を出すための「列車の停車ごとのID」。駅に着くたびに1つ増える。 */
+function trainStopSeed(train){
+  if(!train)return 'none';
+  if(train==='OWN')return 'OWN-'+(G.sq||0);
+  if(train.p&&train.p.id)return 'P-'+train.p.id+'-'+(train.p.sq||0);
+  return 'AI-'+(train.name||'T')+'-'+(train.sq||0);
+}
+const CROWD_TZ=1800000; /* 30分ごとのホームの人払い（全端末で同じ時計を使う） */
+function waitCastSeed(st,k){return 'wait|'+LINE_ID+'|'+st.i+'|'+k+'|'+Math.floor(nowMs()/CROWD_TZ);}
 /* ================= passengers ================= */
 const pool=[],active=[];
 function childRate(h){return h<6||h>=22.5?0.01:h<7?0.05:h<9?0.22:h<15?0.13:h<18.5?0.24:h<20.5?0.12:0.04;}
-function pickKind(){return Math.random()<childRate(hourNow())?'child':'adult';}
-function getPerson(body){body=body||pickKind();let idx=-1;for(let i=pool.length-1;i>=0;i--)if(pool[i].body===body){idx=i;break;}
+function pickKind(){return rng01()<childRate(hourNow())?'child':'adult';}
+/* 決められた種のときは、体・顔・背丈も種から決めて作り直す（全端末で同じ見た目の人が出る） */
+function setPersonLook(g,vi,child,sc){
+  const u=g&&g.userData;if(!u||u.staff)return;
+  vi=Math.max(0,Math.min((child?NVARC:NVAR)-1,vi|0));
+  u.vi=vi;u.child=!!child;u.mode='';g.scale.set(sc,sc,sc);
+  if(u.mesh)u.mesh.geometry=child?CSTANDG[vi]:STANDG[vi];
+  if(u.legs&&u.legs.length)for(const l of u.legs)l.geometry=child?CLEGG[vi]:LEGG[vi];
+  personPose(g,'stand');
+}
+function getPerson(body){let det=null;
+  if(_crowdSeedDepth>0&&body!=='staff'){const child=body==='child'?true:(body==='adult'?false:(rng01()<childRate(hourNow())));const vi=Math.floor(rng01()*((child?NVARC:NVAR)));const sc=child?(0.60+rng01()*0.20):(0.90+rng01()*0.16);body=child?'child':'adult';det={vi,child,sc};}
+  body=body||pickKind();let idx=-1;for(let i=pool.length-1;i>=0;i--)if(pool[i].body===body){idx=i;break;}
   let p=idx>=0?pool.splice(idx,1)[0]:null;if(!p){const g=makePerson(body==='child'?'child':body==='staff'?'staff':null);scene.add(g);p={g,body};}
-  p.g.visible=true;Object.assign(p,{path:[],delay:0,speed:1.3,end:null,kind:'wait',flow:'A',doorS:0,face:0,walk:0,st:-1,s:0,o:0,yaw:0,trackO:0,hidden:false,xk:null,train:null,forceIn:false});active.push(p);return p;}
+  if(det)setPersonLook(p.g,det.vi,det.child,det.sc);
+  p.g.visible=true;Object.assign(p,{path:[],delay:0,speed:1.3,end:null,kind:'wait',flow:'A',doorS:0,face:0,walk:0,st:-1,s:0,o:0,yaw:0,trackO:0,hidden:false,xk:null,train:null,forceIn:false,moving:false});active.push(p);return p;}
 function freePerson(p){p.g.visible=false;p.g.rotation.x=0;personPose(p.g,'stand');p.hidden=false;p.delay=0;p.path=[];p.end=null;p.train=null;p.xk=null;p.trackO=0;const i=active.indexOf(p);if(i>=0)active.splice(i,1);pool.push(p);}
 function greenCarsFor(kk){if(BRANCH)return [];
   if(KIND[kk]==='ltd')return [3,4];                                  /* 快速特急：2階建てグリーン車2両 */
@@ -3877,13 +3932,14 @@ function spawnOneWait(st,k,doors,list,q,already,pReuse){ /* already=true: 最初
   p.st=st.i;p.kind='wait';p.flow=k;p.j=j;p.q=qi;p.face=-sd;p.trackO=base;
   const {col,row}=queueSlot(qi);
   /* 前後（線路方向）に列、横に並びきれない分の列 */
-  const tgtS=doors[j]+col*0.72+(row%2?0.08:-0.08);
-  const tgtO=clamp(base+sd*(2.45+row*0.48),oMin,oMax);
+  const tgtS=doors[j]+col*0.92+(row%2?0.14:-0.14);
+  const tgtO=clamp(base+sd*(2.45+row*0.62),oMin,oMax);
   if(already){p.s=tgtS;p.o=tgtO;p.path=[];p.delay=0;}
   else{const [ss,so]=stairPt(st,k);p.s=ss;p.o=so;p.path=[[tgtS,tgtO]];p.speed=rand(1.15,1.55);p.delay=rand(0,0.4);}
   p.end=null;list.push(p);return p;
 }
-function spawnWait(st,k){if(st.sp[k])return;if(physDup(st,k)){st.sp[k]=true;return;} /* 列は各停と共有 */
+function spawnWait(st,k){if(st.sp[k])return;return withCrowdSeed(waitCastSeed(st,k),()=>spawnWaitBody(st,k));}
+function spawnWaitBody(st,k){if(st.sp[k])return;if(physDup(st,k)){st.sp[k]=true;return;} /* 列は各停と共有 */
   const T=TK[k],doors=doorList(st.s+T.so,T.dir<0,greenCarsFor(k),carsFor(k)),q={},list=st.wait[k]||(st.wait[k]=[]);
   const major=isMajorStation(st);
   /* 主要駅はホームにたくさん待機、それ以外の駅は少なめ */
@@ -3897,7 +3953,8 @@ function spawnWait(st,k){if(st.sp[k])return;if(physDup(st,k)){st.sp[k]=true;retu
 function spawnStaff(st){st.staff=[];return;const n=st.big?3:st.cls==='L'?1:2;st.staff=[];
   for(let i=0;i<n;i++){const k=Object.keys(st.sp)[i%Math.max(1,Object.keys(st.sp).length)]||'A';const T=TK[k],sd=T.side(st),base=T.off(st.s);
     const p=getPerson('staff');p.st=st.i;p.kind='idle';p.flow='staff';p.s=st.s-PBof(st)+18+i*40;p.o=base+sd*(2.2+i*0.3);p.trackO=-99;p.face=-sd;p.yaw=0;p.path=[];p.end=null;st.staff.push(p);}}
-function spawnIdle(st){for(const ex of st.extra){if(ex.line===RAPID)continue;const n=Math.min(12,crowd(5));for(let k=0;k<n;k++){const s=st.s-PBof(st)+10+rand(0,PBof(st)-5);const lo=ex.lo(s),hi=ex.hi(s);const p=getPerson();
+function spawnIdle(st){if(!_crowdSeedDepth)return withCrowdSeed(waitCastSeed(st,'idle'),()=>spawnIdleBody(st));return spawnIdleBody(st);}
+function spawnIdleBody(st){for(const ex of st.extra){if(ex.line===RAPID)continue;const n=Math.min(12,crowd(5));for(let k=0;k<n;k++){const s=st.s-PBof(st)+10+rand(0,PBof(st)-5);const lo=ex.lo(s),hi=ex.hi(s);const p=getPerson();
   p.st=st.i;p.kind='idle';p.flow='idle';p.s=s;p.o=rand(lo+0.9,hi-0.9);p.trackO=-99;p.face=Math.random()<0.5?-1:1;}}st.sp.idle=true;}
 const JOBS=[]; // delayed actions in game time
 /* 乗り換え客が階段に着いたら、コンコースを通って（少し時間をおいて）目的のホームの階段から出てきて並ぶ。
@@ -3907,6 +3964,10 @@ function xferArrive(p){const st=STATIONS[p.st],tk=p.xk;p.end=null;p.xk=null;
   const T2=TK[tk],doors2=doorList(st.s+T2.so,T2.dir<0,greenCarsFor(tk),carsFor(tk)),list2=st.wait[tk]||(st.wait[tk]=[]);
   spawnOneWait(st,tk,doors2,list2,{},false,p);p.delay=rand(3,8);p.hidden=true;p.g.visible=false;}
 function startFlows(st,k,frontS,train){
+  if(k==='G'||k==='H')return {a:0,b:0};
+  return withCrowdSeed('flow|'+LINE_ID+'|'+st.i+'|'+k+'|'+trainStopSeed(train),()=>startFlowsBody(st,k,frontS,train));
+}
+function startFlowsBody(st,k,frontS,train){
   if(k==='G'||k==='H')return {a:0,b:0}; /* 特急の地下ホームは乗降の列を作らない（地下駅の空間を優先） */
   const T=TK[k],isShTr=!BRANCH&&st.i===0&&(train==='OWN'||(train&&train.p)),sd=isShTr?-T.side(st):T.side(st),base=isShTr?ownTrackOff(k,st.s):T.off(st.s),gc=greenCarsFor(k),NC=carsFor(k),doors=doorList(frontS,T.dir<0,gc,NC),own=train==='OWN',ls=own?(G.door.local||sd*G.dir)*(ownTrain.rev?-1:1):train?sd*trSgn(train.tr):0;
   const last=G.list&&k===G.key&&stOf(G.list.length-1)===st,lastAI=BRANCH&&train&&train!=='OWN'&&((train.dir>0&&st.i===NST-1)||(train.dir<0&&st.i===0));
@@ -3943,17 +4004,18 @@ function startFlows(st,k,frontS,train){
     if(doors[p.j]===undefined)p.j=irand(0,doors.length-1);const ds=doors[p.j];
     p.kind='board';p.doorS=ds;p.face=-sd;p.trackO=base;
     /* 待たずにすぐ乗り込む */
-    p.delay=rand(0,0.08)+Math.min(0.35,(ac[p.j]||0)*0.05);
-    p.path=[[ds+(p.s>ds?0.2:-0.2)+rand(-0.25,0.25),base+sd*1.8],[ds+rand(-0.18,0.18),base+sd*1.12]];
+    const bq=(ac[p.j]||0);p.delay=rand(0,0.1)+Math.min(0.9,bq*0.16);
+    /* 同じドアに全員が1点で重ならないよう、人ごとに前後・左右へ少しずらして並ばせる */
+    p.path=[[ds+(p.s>ds?0.25:-0.25)+((bq%3)-1)*0.42, base+sd*(1.9+0.34*(bq%2))],[ds+((bq%2)?0.22:-0.22)+rand(-0.08,0.08), base+sd*(1.12+0.16*(bq%2))]];
     p.speed=rand(1.55,2.1);p.end='board';nb++;
     p.train=train||null;{const cd=doorCarOf(p.j,gc,NC);p.car=cd[0];p.dz=cd[1];}p.ls=ls;ac[p.j]=(ac[p.j]||0)+1;}
   list.length=0;
   if(k===fkey()){G.doorS=doors;G.runnerPlanned=Math.random()<0.55;G.runnerSpawned=false;G.runnerT=rand(2,5);G.load=clamp((G.load||trainLoadFor(G.key))-aN+nb,0,maxLoadFor(G.key));}
   return {a:aN,b:nb};
 }
-function spawnRunner(){const fk=fkey(),st=stOf(G.flowV),T=TK[fk],sd=T.side(st),base=T.off(st.s);const [ex,eo]=exitPt(st,fk);const ds=pick(G.doorS);
+function spawnRunner(){return withCrowdSeed('runner|'+LINE_ID+'|'+fkey()+'|'+(G.flowV|0)+'|'+(G.sq||0),()=>{const fk=fkey(),st=stOf(G.flowV),T=TK[fk],sd=T.side(st),base=T.off(st.s);const [ex,eo]=exitPt(st,fk);const ds=pick(G.doorS);
   const p=getPerson();p.st=st.i;p.kind='runner';p.flow=fk;p.trackO=base;p.doorS=ds;p.s=ex;p.o=eo;p.speed=3.3;
-  p.path=[[ds+(ex>ds?0.6:-0.6),base+sd*2.2],[ds+rand(-0.35,0.35),base+sd*1.6],[ds+rand(-0.4,0.4),base+sd*0.4]];p.end='board';}
+  p.path=[[ds+(ex>ds?0.6:-0.6),base+sd*2.2],[ds+rand(-0.35,0.35),base+sd*1.6],[ds+rand(-0.4,0.4),base+sd*0.4]];p.end='board';});}
 const fkey=()=>physKey(G.key,G.flowV>=0?stOf(G.flowV).s:G.s);
 const flowSt=()=>G.flowV>=0?stOf(G.flowV).i:-1;
 function maxLoadFor(key){return carsFor(key||G.key)*(isRushHour()?150:72);} // ラッシュは定員を大きく超えて乗る
@@ -3974,8 +4036,10 @@ function abandonPending(){const fi=flowSt(),fk=fkey(),st=STATIONS[fi];if(fi<0||!
       const T=TK[fk],sd=T.side(st),base=T.off(st.s),pr=platRange(st,fk),oMin=Math.min(pr[0],pr[1])+0.45,oMax=Math.max(pr[0],pr[1])-0.45;
       /* ホーム上で列に並んでいた人だけ待機に戻す */
       p.kind='wait';p.path=[];p.delay=0;p.g.visible=true;p.end=null;p.face=-sd;p.trackO=base;
-      p.o=clamp(base+sd*2.7,oMin,oMax);p.s=p.doorS||p.s;
-      const list=st.wait[fk]||(st.wait[fk]=[]);if(!list.includes(p)){p.j=p.j||0;p.q=list.length;list.push(p);}}}}
+      const list=st.wait[fk]||(st.wait[fk]=[]);p.j=(p.j!=null?p.j:0);
+      const qi=list.filter(x=>x.j===p.j).length;const qs=queueSlot(qi);
+      p.s=(p.doorS||p.s)+qs.col*0.92+(qs.row%2?0.14:-0.14);p.o=clamp(base+sd*(2.45+qs.row*0.62),oMin,oMax);
+      if(!list.includes(p)){p.q=qi;list.push(p);}}}}
 const CPG=new Map();
 const _CP_CELL=0.7;
 function cpKey(st,s,o){return ((st+1)*262144+Math.floor(s/_CP_CELL))*2048+(Math.floor(o/_CP_CELL)+1024);}
@@ -4060,7 +4124,7 @@ function crowdPush(p,dt){ /* 乗客同士の当たり判定：実際の体格・
         if(pMovingDoor){
           pushS+=res[0]*0.24;
         }else{
-          const k=q.kind==='wait'?0.35:0.28;
+          const k=q.kind==='wait'?0.46:0.28;
           pushS+=res[0]*k;pushO+=res[1]*k;
           if(p.path&&p.path.length){
             const ts=p.path[0][0]-p.s,to=p.path[0][1]-p.o,dl=Math.hypot(ts,to);
@@ -4113,7 +4177,7 @@ function updPeople(dt){sweepStranded();
       const nearPl=((PAX&&!RIDE)||G.walkOn)&&W.st&&W.st.i===p.st&&Math.hypot(p.s-W.s,p.o-W.o)<1.4;
       if(nearPl&&p.hidden){p.delay=0.25;p.g.visible=false;posePerson(p,false);continue;}
       p.g.visible=true;p.hidden=false;}}
-    let moving=false;
+    let moving=false;const _mvS=p.s,_mvO=p.o;
     if(p.path.length){const ts=p.path[0][0],to=p.path[0][1],ds=ts-p.s,dO=to-p.o,dist=Math.hypot(ds,dO),step=p.speed*dt;
       const t=P(p.s)[2];const wx=Math.sin(t)*ds+Math.cos(t)*dO,wz=-Math.cos(t)*ds+Math.sin(t)*dO;if(dist>0.01)p.yaw=Math.atan2(wx,wz);
       if(dist<=step){p.s=ts;p.o=to;p.path.shift();if(!p.path.length&&p.end==='xfer'){xferArrive(p);continue;}
@@ -4133,6 +4197,7 @@ function updPeople(dt){sweepStranded();
         }
       else{p.s+=ds/dist*step;p.o+=dO/dist*step;}moving=true;p.walk+=dt*p.speed*5.5;crowdPush(p,dt);}
     else{const t=P(p.s)[2];p.yaw=Math.atan2(Math.cos(t)*p.face,Math.sin(t)*p.face);crowdPush(p,dt);}
+    if(moving&&Math.hypot(p.s-_mvS,p.o-_mvO)<0.004)moving=false; /* 前の人に詰まって進めないときは足踏みしない */
     if(p.trackO!==-99&&p.st>=0){const stP=STATIONS[p.st],prP=stP&&p.flow?platRange(stP,p.flow):null;
       if(prP){const loP=Math.min(prP[0],prP[1])+0.35,hiP=Math.max(prP[0],prP[1])-0.35;
         const canCross=(p.kind==='board'||p.kind==='alight'||p.kind==='runner'||p.kind==='jam')&&(p.kind==='alight'||p.kind==='jam'||(p.train&&boardOpen(p)));
@@ -4162,6 +4227,8 @@ function trainOpenAt(st,k){
   return null;}
 /* ドア開中：待機列をすぐ乗車に切り替え */
 function pullWaiters(st,k){const train=trainOpenAt(st,k);if(!train)return 0;
+  return withCrowdSeed('pull|'+LINE_ID+'|'+st.i+'|'+k+'|'+trainStopSeed(train),()=>pullWaitersBody(st,k,train));}
+function pullWaitersBody(st,k,train){
   if(train==='OWN'&&G.noBoard)return 0; /* 戸閉めを押した後だけ打ち切り（満員でもドアへ向かう） */
   const list=st.wait[k];if(!list||!list.length)return 0;
   const T=TK[k],sd=T.side(st),base=T.off(st.s),gc=greenCarsFor(k),NC=carsFor(k);
@@ -4171,20 +4238,20 @@ function pullWaiters(st,k){const train=trainOpenAt(st,k);if(!train)return 0;
   for(const p of list.slice()){if(p.kind!=='wait')continue;
     if(doors[p.j]===undefined)p.j=irand(0,doors.length-1);const ds=doors[p.j]||doors[0];
     p.kind='board';p.doorS=ds;p.face=-sd;p.trackO=base;
-    p.delay=rand(0,0.06)+Math.min(0.25,n*0.04);
-    p.path=[[ds+rand(-0.22,0.22),base+sd*1.65],[ds+rand(-0.18,0.18),base+sd*1.12]];p.speed=rand(1.6,2.2);p.end='board';
+    const bq=n;p.delay=rand(0,0.08)+Math.min(0.9,bq*0.14);
+    p.path=[[ds+((bq%3)-1)*0.40,base+sd*(1.85+0.32*(bq%2))],[ds+((bq%2)?0.2:-0.2),base+sd*(1.12+0.16*(bq%2))]];p.speed=rand(1.6,2.2);p.end='board';
     p.train=train;const cd=doorCarOf(p.j,gc,NC);p.car=cd[0];p.dz=cd[1];p.ls=ls;n++;}
   list.length=0;
   if(train==='OWN'&&n)G.load=clamp((G.load||0)+0,0,maxLoadFor(G.key)); /* load は乗車完了時に加算 */
   return n;}
-function arrive1(st,k){const list=st.wait[k]||(st.wait[k]=[]);
+function arrive1(st,k){return withCrowdSeed(waitCastSeed(st,k)+'|arr|'+((st.arrN=(st.arrN||0)+1)),()=>{const list=st.wait[k]||(st.wait[k]=[]);
   const doors=doorList(st.s+TK[k].so,TK[k].dir<0,greenCarsFor(k),carsFor(k)),q={};
   const major=isMajorStation(st),r=Math.random();
   const n=major?(isRushHour()?irand(4,7):isQuietHour()?irand(1,2):irand(2,4)):(isRushHour()?irand(1,2):1);
   for(let i=0;i<n;i++)spawnOneWait(st,k,doors,list,q,false);
   /* 電車がいるなら列に並ばずすぐ乗車 */
   if(trainOpenAt(st,k))pullWaiters(st,k);
-}
+});}
 function updArrivals(dt){const here=PAX?W.s:G.s;
   for(const st of STATIONS){if(Math.abs(sdiff(here,st.s))>1000||!Object.keys(st.sp).length)continue;st.arrT=st.arrT||{};
     for(const k of KEYS){if(!serves(st,k)||!st.sp[k])continue;
@@ -4260,7 +4327,7 @@ function aiTurn(a,st){const ok=a.key,nk={A:'B',B:'A',C:'D',D:'C',E:'F',F:'E',G:'
     /* v1.9.7：折り返しで号車の並びが反転するので、乗っている人の号車と位置も反転させる */
     if(typeof RIDE!=='undefined'&&RIDE&&RIDE.a===a){RIDE.k=nC-1-RIDE.k;RIDE.lz=-RIDE.lz;RIDE.lx=-RIDE.lx;RIDE.fl='deck';if(RIDE.seat!=null)RIDE.seat=null;
       try{if(a.tr.cars[RIDE.k]){if(camera.parent)camera.parent.remove(camera);a.tr.cars[RIDE.k].add(camera);}}catch(e){}}}else if(a.insideSet){releaseInterior(a);}
-  a.s=st.s+TK[nk].so;a.state='dwell';a.v=0;a.t=dwellSec(a,st);a.dwellTot=a.t;a.last=st.i;a.side=TK[nk].side(st);a.flowed=false;a.sndF={};a.hold=0;a.pa={};
+  a.s=st.s+TK[nk].so;a.state='dwell';a.v=0;a.t=dwellSec(a,st);a.dwellTot=a.t;a.last=st.i;a.side=TK[nk].side(st);a.flowed=false;a.sndF={};a.hold=0;a.pa={};a.sq=(a.sq|0)+1;
   if(POOL[ok]&&POOL[nk]){const i=POOL[ok].indexOf(a);if(i>=0){POOL[ok].splice(i,1);POOL[nk].push(a);}}}
 /* 天宮支線の快速：待避駅より手前で前の各停に追いつかないよう、待避駅に着くのが各停より少し後になる速さで走る */
 function rapidPace(a){let P=null,dP=1e9;for(const st of STATIONS){if(!isPassSt(st))continue;const D=a.dir*sdiff(a.s,st.s);if(D>30&&D<dP){dP=D;P=st;}}
@@ -4276,7 +4343,7 @@ function oppComing(st,dir,self){const chk=(k,s2,d)=>{if(d===dir)return false;con
 function miniHold(){if(!MINI||PAX)return false;const v=G.atStation!==null?G.atStation:G.depCheck;if(v==null)return false;const st=stOf(v);return st.cls==='I'&&oppComing(st,G.dir,'OWN');}
 /* 他の電車：まだ乗り降りしている人がいるか */
 /* v1.9.8：AI列車の停車時間（ドア扱いあり14秒／なし10秒、主要駅+3秒） */
-function dwellSec(a,st){const s=st||(a&&a.stSt);return ((a&&a.doors)?14:10)+((s&&isMajorStation(s))?3:0);}
+function dwellSec(a,st){const s=st||(a&&a.stSt);return ((a&&a.doors)?20:12)+((s&&isMajorStation(s))?5:0);} /* 戸開から戸閉まで十分に乗れる停車時間（主要駅25秒） */
 function aiBusy(a){for(const p of active){if(p.train===a&&(p.kind==='board'||p.kind==='jam'))return true;if(p.kind==='alight'&&p.st===(a.stSt&&a.stSt.i)&&p.flow===a.key&&p.path&&p.path.length>1&&p.delay<=0)return true;}return false;}
 /* 汐見駅の分単位ダイヤ（外回り/内回り 各停・快速・快特） */
 const SHIOMI_TT={
@@ -4338,8 +4405,8 @@ function aiRun(a,dt){
       a._emerGap=(clearGap<=45);
       a._hardStop=(clearGap<=22);
     }
-    if(nx&&nx.D<0.2&&a.v<0.6){a.state='dwell';a.v=0;a.t=dwellSec(a,nx.st);a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;
-      if(!BRANCH&&nx.st.i===0&&SHIOMI_TT[a.key]){const depMs=nextShiomiDepMs(a.key,nowMs()+12000);a.shiomiDepMs=depMs;a.t=clamp((depMs-nowMs())/1000,14,180);a.dwellTot=a.t;}}
+    if(nx&&nx.D<0.2&&a.v<0.6){a.state='dwell';a.v=0;a.t=dwellSec(a,nx.st);a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;a.sq=(a.sq|0)+1;
+      if(!BRANCH&&nx.st.i===0&&SHIOMI_TT[a.key]){const depMs=nextShiomiDepMs(a.key,nowMs()+12000);a.shiomiDepMs=depMs;a.t=clamp((depMs-nowMs())/1000,20,180);a.dwellTot=a.t;}}
     else{const maxDec=a._emerGap?-4.5:-2.4;a.v+=clamp((vt-a.v)*2,maxDec,0.8)*dt;a.v=a._hardStop?0:Math.max(0,a.v);a.s+=a.dir*a.v*dt;}}
   else if(a.state==='dwell'){a.t-=dt;
     if(!BRANCH&&a.stSt&&a.stSt.i===0&&a.shiomiDepMs&&!a.forceDep){const rem=(a.shiomiDepMs-nowMs())/1000;if(rem>0&&rem<300){a.t=Math.max(a.t,rem);if(!a.dwellTot||a.dwellTot<a.t)a.dwellTot=a.t;}}
@@ -4386,6 +4453,17 @@ const POOL={};
 function placeCrew(tr){if(!tr||!tr.crew||!tr.crew.length)return;const f=tr.cars[0],l=tr.cars[tr.cars.length-1],fr=f.userData.cabR&&!f.userData.cabF;
   const d=tr.crew[0];f.add(d);if(fr){d.position.set(-XE,1.83-0.84,CARHALF-ZE-0.3);d.rotation.y=0;}else{d.position.set(XE,1.83-0.84,ZE+0.3-CARHALF);d.rotation.y=Math.PI;}
   if(tr.crew[1]){const c2=tr.crew[1],lr=l.userData.cabR&&!l.userData.cabF;l.add(c2);if(lr){c2.position.set(0.35,1.16,CARHALF-1.35);c2.rotation.y=-0.6;}else{c2.position.set(-0.35,1.16,-(CARHALF-1.35));c2.rotation.y=Math.PI-0.6;}}}
+/* 自列車の運転士・車掌も「他の人から見える」ように実体を置く。
+   運転席から見える本物の運転台（レイヤー2）とは別に、車外・車内巡回から見える（レイヤー1）。 */
+let OWNCREWSIG='';
+function updOwnCrew(){if(typeof ownTrain==='undefined'||!ownTrain||!ownTrain.cars||!ownTrain.cars.length)return;
+  const sig=(G.twoMan?1:0)+'|'+(CREWSEL||'one')+'|'+JSON.stringify(AVATAR||null);
+  if(ownTrain.crew&&OWNCREWSIG!==sig){for(const m of ownTrain.crew){try{if(m.parent)m.parent.remove(m);}catch(e){}}ownTrain.crew=null;}
+  if(!ownTrain.crew){try{addCustomCrew(ownTrain,!!G.twoMan,AVATAR,CREWSEL||'one');OWNCREWSIG=sig;placeCrew(ownTrain);}catch(e){}}
+  const c=ownTrain.crew||[];
+  if(c[0])c[0].visible=!G.walkOn;
+  if(c[1])c[1].visible=!!G.twoMan&&!(G.walkOn&&G.walkArea==='train');
+}
 function addCrew(tr,two){if(!tr||!tr.cars||tr.crew)return;tr.crew=[];const c0=tr.cars[0],cL=tr.cars[tr.cars.length-1];
   const drv=new THREE.Mesh(SSITG[0],upperMat);drv.position.set(XE,1.83-0.84,ZE+0.3-CARHALF);drv.rotation.y=Math.PI;c0.add(drv);tr.crew.push(drv);
   if(two){const cd=new THREE.Mesh(SSTANDG[1]||SSTANDG[0],upperMat);cd.position.set(0.35,1.16,CARHALF-1.35);cd.rotation.y=-0.6;cL.add(cd);tr.crew.push(cd);}
@@ -4510,7 +4588,7 @@ function spacingNowOld(k){const h=hourNow(),kd=KIND[k]||'local';if(BRANCH)return
 const POOLT={};
 /* 港見支線：電車は2本だけ。起点と終点から同時に出て、港前で行き違い、終点で折り返す */
 const MINIS={spawned:false};
-function miniSpawn(k,st){const a=POOL[k].find(x=>x.state==='off');if(!a)return;a.key=k;a.dir=TK[k].dir;aiSpawn(a,st.s+TK[k].so,0);a.state='dwell';a.v=0;a.t=34;a.stSt=st;a.last=st.i;a.side=TK[k].side(st);a.flowed=false;a.sndF={};a.hold=0;}
+function miniSpawn(k,st){const a=POOL[k].find(x=>x.state==='off');if(!a)return;a.key=k;a.dir=TK[k].dir;aiSpawn(a,st.s+TK[k].so,0);a.state='dwell';a.v=0;a.t=34;a.stSt=st;a.last=st.i;a.side=TK[k].side(st);a.flowed=false;a.sndF={};a.hold=0;a.sq=(a.sq|0)+1;}
 function isNearPlayerSpawn(a,pos){
   if(PAX||G.phase!=='play'||!a)return false;
   if(!MINI&&!sameTrack(a,G.key,pos,G.dir))return false;
@@ -4604,6 +4682,8 @@ window.handleAiPacket=(topic,ap)=>{
       a.dir=t.d;a.side=t.sd;a.frac=(t.f!=null?t.f:a.frac);
       if(!cmdLock){a.dispHold=!!t.dh;a.slowMode=t.sm||null;a.troubleActive=!!t.tb;}
       if(t.t!=null&&isFinite(t.t))a.t=t.t;
+      if(t.q!=null)a.sq=t.q|0;
+      if(t.d0!=null&&isFinite(t.d0))a.dwellTot=t.d0;
       if(t.st==='dwell'){a.stSt=stationNear(a.s);if(a.stSt)a.last=a.stSt.i;}else{a.stSt=null;}
     }
   }
@@ -4632,7 +4712,7 @@ function updPools(dt){const on=G.phase==='play'||window.__DISP_MONITOR;
       if(ONLINE_CLIENT&&ONLINE_CLIENT.connected&&isAiSyncLeader()){
         /* v1.9.7：数値が欠けた列車があっても同期発信が例外で止まらないように（更新が飛んでカクつく原因） */
         const N2=x=>{const v=Number(x);return isFinite(v)?v:0;};
-        const trains=OT.filter(a=>a&&a.state!=='off').map(a=>({n:a.name,k:a.key,s:+N2(a.s).toFixed(1),v:+N2(a.v).toFixed(2),st:a.state,d:a.dir,sd:a.side,f:+N2(a.frac).toFixed(2),dh:!!a.dispHold,sm:a.slowMode||null,tb:!!a.troubleActive,t:+N2(a.t).toFixed(1)}));
+        const trains=OT.filter(a=>a&&a.state!=='off').map(a=>({n:a.name,k:a.key,s:+N2(a.s).toFixed(1),v:+N2(a.v).toFixed(2),st:a.state,d:a.dir,sd:a.side,f:+N2(a.frac).toFixed(2),dh:!!a.dispHold,sm:a.slowMode||null,tb:!!a.troubleActive,t:+N2(a.t).toFixed(1),q:a.sq|0,d0:+N2(a.dwellTot||0).toFixed(1)}));
         try{ONLINE_CLIENT.publish('shiomi3d/v1/ai/state',JSON.stringify({leader:ONLINE_CLIENT_ID,ts:Date.now(),trains}),{qos:0});}catch(e){}
       }
     }
@@ -5624,11 +5704,11 @@ function openDoor(local,sys){if(sigStopped()){toast('停止信号で止まって
   if(G.phase!=='play')return;const D=G.door;
   if(D.state!=='closed'){if(D.local===local){if(D.state==='closing'){D.state='opening';G.noBoard=false;G.closeWait=null;doorOpenSnd();}}else toast('反対側の扉が開いています','warn');return;}
   if(G.v>0.05){toast('走行中は扉を開けられません','warn');return;}
-  if(G.depCheck!==null){const v=G.depCheck;if(local===localSide(stOf(v))&&Math.abs(stopDist(v))<20){G.atStation=v;G.nv=v;G.depCheck=null;D.local=local;D.side=local*G.dir;D.state='opening';doorOpenSnd();if(typeof broadcastEvent==='function')broadcastEvent('doorOpen');return;}}
+  if(G.depCheck!==null){const v=G.depCheck;if(local===localSide(stOf(v))&&Math.abs(stopDist(v))<20){G.atStation=v;G.nv=v;G.depCheck=null;D.local=local;D.side=local*G.dir;D.state='opening';G.sq=(G.sq|0)+1;doorOpenSnd();if(typeof broadcastEvent==='function')broadcastEvent('doorOpen');return;}}
   const v=G.nv,st=stOf(v),d=stopDist(v);
   if(d>17.9||d<-6.5){toast('ホームがありません','warn');return;}
   if(local!==localSide(st)){toast('ホームは'+(localSide(st)<0?'左':'右')+'側です','warn');return;}
-  G.atStation=v;D.local=local;D.side=local*G.dir;D.state='opening';G.flowPending=true;doorOpenSnd();toast(st.name+' に到着','ok');
+  G.atStation=v;D.local=local;D.side=local*G.dir;D.state='opening';G.flowPending=true;G.sq=(G.sq|0)+1;doorOpenSnd();toast(st.name+' に到着','ok');
   if(typeof broadcastEvent==='function')broadcastEvent('doorOpen');
   const end=v>=lastStop();if(!G.said['arr_'+v]){G.said['arr_'+v]=true;setTimeout(()=>sayJE(arriveAnn(st,end),arriveAnnEn(st,end)),400);}
   if(!G.list&&(st.cls==='M'||st.i===0)&&G.nv>0)askStation(st,false);
@@ -5642,6 +5722,23 @@ function closeDoor(local,sys){if(G.crew==='twoD'&&!sys){toast('ツーマン運�
     if(!G.closeWait){G.closeWait={t:0};toast(jam?'満員：お客さまを押し込み中…乗り終わり次第閉めます':'乗車が終わり次第閉めます','warn');say('扉に人がいます。','drv');}
     return;}
   startClosing();
+}
+/* 発車メロディ・乗降促進の「曲・音色」を1か所で決める。
+   自分の画面でも、他の人の画面でも、同じ関数・同じ曲・同じ音色で鳴らす。 */
+function promoRun(n,ctx,dest,vol){
+  if(!AC)return 0;
+  ctx=ctx||{};const d=dest||master,V=(vol==null?1:vol);
+  const key=ctx.key||'A',branch=ctx.branch!=null?!!ctx.branch:!!BRANCH;
+  const dir=ctx.dir!=null?ctx.dir:1;
+  const stIdx=(ctx.stIdx!=null&&isFinite(ctx.stIdx)&&ctx.stIdx>=0)?(ctx.stIdx|0):null;
+  const ltd=!branch&&(key==='E'||key==='F'||key==='G'||key==='H');
+  if(n===4)return ponSnd(d);
+  if(n===1)return 0;                                  /* 音声のみ */
+  if(branch&&stIdx!=null&&STATIONS[stIdx])return playSong(branchSongFor(STATIONS[stIdx]),d,V);
+  if(ltd&&n==='st'&&stIdx!=null&&STATIONS[stIdx])return playSong(ltdSong(stIdx),d,V);
+  if(n===2)return playSong(SONG_A,d,V);
+  if(n===3)return playSong(SONG_B,d,V);
+  return melody(d,V,undefined,dir);
 }
 const PROMO_NAMES=['外回り「汐鳴り」','乗降促進（音声のみ）','内回り「潮風」','快特専用「グラン汐見」','乗降促進（オリジナルチャイム）'];
 const PROMO_DEF={local:0,rapid:2,ltd:3,exp:2,branch:0}; // 支線は駅ごとのメロディ
@@ -5663,19 +5760,21 @@ function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new mel
   if(G.promoLoop){stopPromoLoop(true);return;} /* もう一度押すと止まる */
   if(G.promoOn){toast('放送中です','info');return;}
   G.promoOn=true;if(G.atStation!==null)G.promoted[G.atStation]=true;const fi=flowSt(),fk=fkey();
-  if(typeof broadcastEvent==='function')broadcastEvent('promo',{promoN:n,stName:(G.atStation!==null&&typeof stOf==='function'&&stOf(G.atStation)?stOf(G.atStation).name:'')});
   for(const p of active){if(p.flow!==fk||p.st!==fi)continue;
     if(p.kind==='board'||p.kind==='alight'||p.kind==='runner'){p.speed*=1.5;p.delay*=0.5;}
     if(p.kind==='jam')pushInJam(p);}
   if(G.runnerPlanned&&!G.runnerSpawned)G.runnerT=Math.min(G.runnerT,1.2);
-  const voice=()=>{G.promoOn=false;doorWarnT=nowMs();playGuide('tab_doors');if(LIVE&&liveAvail())liveSay('ドアが閉まります。ご注意ください。');};
+  const voice=()=>{G.promoOn=false;doorWarnT=nowMs();playGuide('tab_doors');if(typeof broadcastEvent==='function')broadcastEvent('promoVoice',{file:'assets/audio/ann/guide_tab_doors.mp3'});if(LIVE&&liveAvail())liveSay('ドアが閉まります。ご注意ください。');};
   const bSt=BRANCH&&G.atStation!==null?stOf(G.atStation):null;
   const isLtdTrain=!BRANCH&&(G.key==='E'||G.key==='F'||G.key==='G'||G.key==='H');
   const cSt=n==='st'&&isLtdTrain&&G.atStation!==null?stOf(G.atStation):null;
-  if(n===1){toast(PROMO_NAMES[1],'info');voice();return;}
+  if(n===1){toast(PROMO_NAMES[1],'info');if(typeof broadcastEvent==='function')broadcastEvent('promo',{promoN:1,promoKey:G.key,promoDir:G.dir,promoBranch:!!BRANCH,promoSt:(G.atStation!=null?G.atStation:-1)});voice();return;}
   toast((cSt?'発車メロディ「'+ltdSong(cSt.i).name+'」':bSt&&(n===0||n==='st')?'発車メロディ「'+branchSongFor(bSt).name+'」':(n===0||n==='st')?(G.dir<0?'発車メロディ「汐鳴り（内回り音色）」':'発車メロディ「汐鳴り（外回り音色）」'):PROMO_NAMES[n])+'（もう一度押すと止まります）','info');
-  const play=()=>{if(!G.promoLoop)return;const dur=n===4?ponSnd():(promoPlay(b=>cSt?playSong(ltdSong(cSt.i),b,1):(n===0||n==='st')?(bSt?playSong(branchSongFor(bSt),b,1):melody(b,1,undefined,G.dir)):playSong(n===2?SONG_A:SONG_B,b,1))||1);
+  const pctx={key:G.key,dir:G.dir,branch:!!BRANCH,stIdx:(G.atStation!=null?G.atStation:-1),stName:(G.atStation!=null&&stOf(G.atStation)?stOf(G.atStation).name:'')};
+  const play=()=>{if(!G.promoLoop)return;const dur=promoPlay(b=>promoRun(n,pctx,b,1))||1;
     G.promoLoop.onePhraseDur=dur;
+    /* 鳴らすたびに同じ内容を配信：他の人の画面でも同じ曲が同じタイミングで鳴る */
+    if(typeof broadcastEvent==='function')broadcastEvent('promo',{promoN:n,promoPlay:1,promoKey:pctx.key,promoDir:pctx.dir,promoBranch:pctx.branch,promoSt:pctx.stIdx,stName:pctx.stName});
     G.promoLoop.timer=setTimeout(play,dur*1000+250);};                                       /* 終わったらまた最初から */
   clearTimeout(promoVoiceT);G.promoLoop={n,timer:null,voice,t0:nowMs(),onePhraseDur:8};play();
 }
@@ -5739,6 +5838,7 @@ function updDoor(dt){const D=G.door;
 const hdPrev=new Map();
 function playRecordedAnn(file,gainVal,destNode){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
+  if(!window.__remoteSndPlaying&&typeof broadcastSound==='function'){try{broadcastSound(file,gainVal);}catch(e){}}
   const playFallback=()=>{try{const au=new Audio(file);au.volume=Math.min(1,(gainVal||1)*0.8);au.play().catch(()=>{});}catch(_){}};
   if(typeof loadAnnBuffer==='function'&&AC){
     loadAnnBuffer(file).then(buf=>{
@@ -7716,7 +7816,8 @@ function strapPlace(p,sg,z){const g=p.g,sc=g.scale.x,ax=(VD[g.userData.vi].shoul
 function strapPose(p,sp,y){const q=strapPlace(p,sp.sg,sp.z);p.g.position.set(q.x,y,q.z);p.g.rotation.set(0,q.yaw,0);personPose(p.g,'strap');}
 function nearStrapTaken(list,spots,x,z){if(Math.abs(x)<0.4||Math.abs(x)>0.9)return false;for(let j=0;j<list.length;j++)if(list[j]&&spots[j].sg===Math.sign(x)&&Math.abs(spots[j].z-z)<0.5)return true;return false;}
 function sitPose(p,st){const g=p.g;personPose(g,'sit');g.position.set(st.x,st.h-0.84*g.scale.y,st.z);g.rotation.set(0,st.yaw,0);}
-function populateCars(a,cars){a.inside=a.inside||[];a.insideSet=a.insideSet||new Set();const perCar=Math.min(SEATS.length+standCap(),Math.max(0,Math.round((a.load||0)/Math.max(1,a.tr.cars.length))));
+function populateCars(a,cars){if(!_crowdSeedDepth)return withCrowdSeed('inside|'+LINE_ID+'|'+trainStopSeed(a)+'|'+(cars||[]).join(','),()=>populateCarsBody(a,cars));return populateCarsBody(a,cars);}
+function populateCarsBody(a,cars){a.inside=a.inside||[];a.insideSet=a.insideSet||new Set();const perCar=Math.min(SEATS.length+standCap(),Math.max(0,Math.round((a.load||0)/Math.max(1,a.tr.cars.length))));
   const doorZs=(a.tr.cars[0]&&a.tr.cars[0].userData.green)?GDOORZ:DOORZ;
   const doorDist=z=>Math.min(...doorZs.map(d=>Math.abs(z-d)));
   for(const k of cars){if(a.insideSet.has(k)||!a.tr.cars[k])continue;a.insideSet.add(k);const car=a.tr.cars[k],sl=carSlots(a,k),SE=seatsOf(a,k);let rs=(k*7919+a.name.charCodeAt(1)*131+7)%2147483647;const rr=()=>{rs=(rs*16807)%2147483647;return (rs-1)/2147483646;};
@@ -7877,7 +7978,8 @@ function salPerson(body){body=body||pickKind();let p=SAL.pool.find(x=>!x.used&&x
   if(!p){const g=makePerson(body==='child'?'child':null);g.traverse(o=>o.layers.set(2));p={g,body,used:false};SAL.pool.push(p);}
   p.used=true;p.g.visible=true;p.path=null;p.sit=null;p.onDone=null;p.strapI=null;p.strapYaw=null;p.tgt=null;p.standYaw=null;cab.add(p.g);SAL.people.push(p);return p;}
 function salFree(p){pbRemove(p,false);if(p.strapI!=null&&SAL.strap[p.strapI]===p)SAL.strap[p.strapI]=null;p.strapI=null;p.strapYaw=null;p.used=false;p.g.visible=false;p.path=null;p.onDone=null;if(p.g.parent)p.g.parent.remove(p.g);const i=SAL.people.indexOf(p);if(i>=0)SAL.people.splice(i,1);}
-function salFill(n){n=Math.min(n,SALSEAT.length+standCap()-6);SAL.on=true;for(const p of SAL.people.slice())salFree(p);SAL.seat.fill(null);SAL.stand.length=0;
+function salFill(n){if(!_crowdSeedDepth)return withCrowdSeed('saloon|'+LINE_ID+'|'+trainStopSeed(null)+'|'+(G.sq||0)+'|'+Math.round((G.load||0)/40),()=>salFillBody(n));return salFillBody(n);}
+function salFillBody(n){n=Math.min(n,SALSEAT.length+standCap()-6);SAL.on=true;for(const p of SAL.people.slice())salFree(p);SAL.seat.fill(null);SAL.stand.length=0;
   const order=SALSEAT.map((v,i)=>[Math.random(),i]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]),seated=Math.min(n,SALSEAT.length);
   for(let i=0;i<seated;i++){const si=order[i],p=salPerson();sitPose(p,SALSEAT[si]);SAL.seat[si]=p;}
   SAL.strap.fill(null);const sOrd=SALSTRAP.map((v,i)=>[Math.random(),i]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);let sj=0;
@@ -8455,7 +8557,8 @@ function update(dt,now){
   if(G.promoLoop&&!(G.door.state==='open'||G.door.state==='opening'))stopPromoLoop(false);
   try{updLive();}catch(e){}
   updSideLEDs(dt);pbFlush();try{updTraffic(dt);}catch(e){console.error(e);}try{updSea(dt);}catch(e){console.error(e);}
-  CABT=(typeof CABT==='number'?CABT:0)+dt;if(CABT>0.8){CABT=0;try{updCabModels();}catch(e){console.error(e);}if(PAX)updResv();}
+  CABT=(typeof CABT==='number'?CABT:0)+dt;if(CABT>0.8){CABT=0;try{updCabModels();}catch(e){console.error(e);}try{updOwnCrew();}catch(e){console.error(e);}if(PAX)updResv();}
+  else{if(!PAX)try{updOwnCrew();}catch(e){}}
   if(BRANCH){OLS.t=(OLS.t||0)+dt;if(OLS.t>0.07){drawOLED(OLS.t);updDoorLamps();OLS.t=0;}}
   for(const k of LEDLIVE)k.tk.tex.offset.x=(k.tk.tex.offset.x+dt*80/2048)%1; // 駅の電光掲示板のテロップ
   if(!PAX)updSalDoors();
@@ -8740,8 +8843,12 @@ function frameBody(now){
             continue;
           }
           if (p.s == null || !isFinite(p.s) || p.state === 'passenger' || p.isPax || p.state === 'title' || p.state === 'dispatch') {
-            if (window.__RIDEHOOK && p.ai) window.__RIDEHOOK.ghost(p);      /* v1.9.7：乗客を降ろさず列車を停める */
-            if (p.tr && p.tr.grp) p.tr.grp.visible = false;
+            /* 乗客が乗っている列車は、運転士が一瞬タイトル等に戻っても止めない */
+            const ridingThis = !!(typeof RIDE !== 'undefined' && RIDE && p.ai && RIDE.a === p.ai);
+            if (!ridingThis) {
+              if (window.__RIDEHOOK && p.ai) window.__RIDEHOOK.ghost(p);      /* v1.9.7：乗客を降ろさない */
+              if (p.tr && p.tr.grp) p.tr.grp.visible = false;
+            }
             continue;
           }
           const k = (p.key && typeof TK !== 'undefined' && TK[p.key]) ? p.key : 'A';
@@ -8757,7 +8864,8 @@ function frameBody(now){
 
           const avSig = JSON.stringify(p.avatar || null) + '|' + (p.crew || 'one');
           // 他プレイヤーの乗務員室・種別・両数・旧型仕様・アバターに変更があれば自動で再構築
-          if (p.tr && (p.currentKey !== k || p.currentNCars !== nCar || p.currentOld !== isOld || p.currentFlip !== flip || p.currentLiv !== liv || p.currentAvSig !== avSig)) {
+          const someoneRiding = !!(typeof RIDE !== 'undefined' && RIDE && p.ai && RIDE.a === p.ai);
+          if (!someoneRiding && p.tr && (p.currentKey !== k || p.currentNCars !== nCar || p.currentOld !== isOld || p.currentFlip !== flip || p.currentLiv !== liv || p.currentAvSig !== avSig)) {
             if (window.__RIDEHOOK && p.ai) window.__RIDEHOOK.ghost(p);       /* v1.9.7：乗客を降ろさない */
             if (p.tr) { disposeTrain(p.tr); p.tr = null; }
           }
@@ -8881,6 +8989,7 @@ function frameBody(now){
           p.ai.stSt = curStObj;
           p.ai.last = curStObj ? curStObj.i : -1;
           p.ai.side = p.doorSide || (curStObj ? TK[k].side(curStObj) : 1);
+          p.ai.sq = p.sq | 0;
 
           // 乗客モード対応：カメラの実際の位置（W.s / RIDE.a.s / G.s）からの距離で正しく判定
           const camS = (typeof PAX !== 'undefined' && PAX) ? ((typeof RIDE !== 'undefined' && RIDE && RIDE.a) ? RIDE.a.s : (typeof W !== 'undefined' ? W.s : 0)) : ((typeof G !== 'undefined' && G && G.s != null) ? G.s : 0);
@@ -8888,7 +8997,7 @@ function frameBody(now){
           /* 指令所の定点カメラ：選択列車の周辺は指令カメラの位置で描画判定する */
           const camDist2 = (window.__DISP&&window.__DISP.on&&window.__DISP.focusS!=null)?Math.abs(sdiff(p.smoothS,window.__DISP.focusS)):camDist;
           const camDistEff = Math.min(camDist, camDist2);
-          if (camDistEff < 2600) {
+          if (camDistEff < 2600 || (typeof RIDE !== 'undefined' && RIDE && p.ai && RIDE.a === p.ai)) {
             if (p.tr && p.tr.grp) p.tr.grp.visible = true;
             placeTrain(p.tr, p.smoothS, s=>ownTrackOff(k, s), TK[k].y);
             if (p.tr) {
@@ -8940,8 +9049,12 @@ function buildCabModel(){if(CABMODEL)return;const MONG=new Set(Object.values(MON
 function cabInst(){let g=CABPOOL.pop();if(g)return g;g=new THREE.Group();for(const c of CABMODEL){const ms=new THREE.Mesh(c.geo,c.mat);ms.matrixAutoUpdate=false;g.add(ms);}return g;}
 function updCabModels(){if(!CABMODEL){try{buildCabModel();}catch(e){CABMODEL=[];}}if(!CABMODEL.length)return;
   const camP=camera.getWorldPosition(new THREE.Vector3()),want=new Set();
-  const trs=[];for(const a of OT)if(a.vis&&a.state!=='off'&&a.tr&&a.tr.leds&&a.tr.leds.length)trs.push(a.tr); /* 自列車は本物の運転台があるので複製しない */
-  for(const tr of trs){const c0=tr.cars[0],cl=tr.cars[tr.cars.length-1];if(Math.min(c0.position.distanceTo(camP),cl.position.distanceTo(camP))<220)want.add(tr);}
+  const trs=[];for(const a of OT)if(a.vis&&a.state!=='off'&&a.tr&&a.tr.leds&&a.tr.leds.length)trs.push(a.tr);
+  /* 他プレイヤーの列車にも同じ運転台を入れる（外から覗いても・車内から見ても同じ運転台） */
+  if(IS_ONLINE&&window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){const p2=ONLINE_PLAYERS[pid];if(p2&&p2.tr&&p2.tr.cars&&p2.tr.cars.length&&p2.tr.grp&&p2.tr.grp.visible)trs.push(p2.tr);}}
+  /* 自列車：運転席から見える本物の運転台（レイヤー2）とは別に、外・車内巡回から見える同じ運転台（レイヤー1）を先頭と最後尾に入れる */
+  if(typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars&&ownTrain.cars.length&&ownTrain.grp)trs.push(ownTrain);
+  for(const tr of trs){if(!tr||!tr.cars||!tr.cars.length)continue;const c0=tr.cars[0],cl=tr.cars[tr.cars.length-1];if(Math.min(c0.position.distanceTo(camP),cl.position.distanceTo(camP))<220)want.add(tr);}
   for(const [tr,gs] of CABATT)if(!want.has(tr)){for(const g of gs){if(g.parent)g.parent.remove(g);CABPOOL.push(g);}CABATT.delete(tr);}
   for(const tr of want){if(CABATT.has(tr))continue;const gs=[];
     for(const car of tr.cars){if(car.userData.cabF){const f=cabInst();f.position.set(0,0,-CARHALF);f.rotation.set(0,0,0);car.add(f);gs.push(f);}if(car.userData.cabR){const r=cabInst();r.position.set(0,0,CARHALF);r.rotation.set(0,Math.PI,0);car.add(r);gs.push(r);}}
@@ -9265,7 +9378,7 @@ function updTroubleVisual(dt){
 window.__spawnTroubleVisual=spawnTroubleVisual;
 window.__clearTroubleVisual=clearTroubleVisual;
 window.toast=toast;
-window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,playGuide,playStationAnnounce,ltdSong,SONG_A,SONG_B,listenerSealed,clamp};
+window.__AUD={get AC(){return AC;},get master(){return master;},get camera(){return camera;},get TK(){return TK;},get STATIONS(){return STATIONS;},offsG,tone,mnote,melody,playSong,chime,ponSnd,doorOpenSnd,doorCloseSnd,playGuide,playStationAnnounce,ltdSong,SONG_A,SONG_B,promoRun,loadAnnBuffer,listenerSealed,clamp};
 window.__T={
   /* v1.9.7：放送の結合結果を確認するための診断（開発・検証用。読み取りのみ） */
   annTest:(urls)=>prepareAnnBuffer(urls).then(buf=>{ if(!buf) return null; const d=buf.getChannelData(0), sr=buf.sampleRate;
