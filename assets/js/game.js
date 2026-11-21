@@ -9237,6 +9237,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       const el = document.getElementById(v);
       if (el) el.classList.toggle('hide', v !== id);
     }
+    /* 画面を切り替えたら先頭から表示する（ご意見箱が途中から開いて見出しに戻れない不具合の修正） */
+    try{const home=document.getElementById('home');if(home)home.scrollTop=0;window.scrollTo(0,0);}catch(e){}
     if (id === 'viewMain' || id === 'viewDutySelect') {
       updateDriverCardUI();
       if (typeof updateBranchLockUI === 'function') updateBranchLockUI();
