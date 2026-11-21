@@ -1428,7 +1428,6 @@ if(window.__WORLD_RENDERER){try{window.__WORLD_RENDERER.dispose();if(window.__WO
 if(window.ONLINE_PLAYERS){for(const pid in ONLINE_PLAYERS){const p=ONLINE_PLAYERS[pid];if(p){if(p.tr){try{disposeTrain(p.tr);}catch(e){}}p.tr=null;p.ai=null;p.paxG=null;}}}
 if(window.__WORLD_BUILT){ try{const og=document.getElementById('gl'); if(og&&og.parentNode) og.parentNode.removeChild(og);}catch(e){} }
 window.__WORLD_BUILT=true; window.__DISP_MONITOR=false;
-try{if(typeof applyConditionState==='function')applyConditionState();}catch(e){}
 try{refreshDailyCond();const cb=document.getElementById('condBadge');if(cb)cb.classList.remove('hide');}catch(e){}
 /* v1.9.7：支線の解放条件（累計100km）を撤廃。誰でも最初から全路線を選べる */
 IS_ONLINE = (LINE_ID !== 'branch4'); // 港見支線以外は全種別・全駅必ずオンライン！
