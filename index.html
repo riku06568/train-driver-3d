@@ -431,6 +431,12 @@ body.disp-monitor #gl{display:none!important}
           </div>
         </div>
 
+        <!-- 今日の運転条件（自動天気・自動ダイヤ） -->
+        <div id="dailyCondCard" style="background:rgba(15,23,42,0.88);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:8px 14px;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12.5px;color:#cbd5e1;">
+          <span id="dailyCondTitle" style="font-weight:700;color:#7dd3fc;">🗓️ 今日の運転条件</span>
+          <span id="dailyCondText" style="color:#e2e8f0;">読み込み中…</span>
+        </div>
+
         <!-- チュートリアル設定＆最新版更新バッジ -->
         <div style="background:rgba(15,23,42,0.88);border:1px solid rgba(56,189,248,0.35);border-radius:12px;padding:8px 14px;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -1356,36 +1362,14 @@ body.disp-monitor #gl{display:none!important}
   </div>
 </div>
 
-<!-- 運転条件（天候・ダイヤ・出庫・トラブル）モーダル -->
+<!-- 運転条件（トラブル発生モード）モーダル -->
 <div id="troubleConfirmModal" class="dt-modal hide">
-  <div class="dt-card" style="width:min(560px,94vw);border-color:#38bdf8;max-height:90vh;overflow:auto;">
-    <div style="font-size:16px;font-weight:800;color:#7dd3fc;">🚉 運転条件を選んでください</div>
+  <div class="dt-card" style="width:min(480px,94vw);border-color:#f59e0b;max-height:90vh;overflow:auto;">
+    <div style="font-size:16px;font-weight:800;color:#fbbf24;">⚠️ トラブル発生モード</div>
     <div style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">
-      天候・ダイヤ・出庫・トラブルの設定ができます。あとから変えたいときは一度タイトルに戻って乗り直してください。
+      今日の天気とダイヤは自動で決まります（毎日・毎月かわります）。走行中のトラブルを発生させるかだけ選んでください。
     </div>
-    <div style="font-size:12.5px;color:#93c5fd;font-weight:800;">☀️ 天候</div>
-    <div class="dt-grid" id="wxGrid">
-      <button class="dt-btn wx on" data-w="clear">☀️ 晴れ</button>
-      <button class="dt-btn wx" data-w="cloudy">☁️ 曇り</button>
-      <button class="dt-btn wx" data-w="rain">🌧️ 雨</button>
-      <button class="dt-btn wx" data-w="snow">❄️ 雪</button>
-      <button class="dt-btn wx" data-w="fog">🌫️ 霧</button>
-    </div>
-    <div id="wxDesc" style="font-size:11.5px;color:#94a3b8;line-height:1.55;">晴れ：見通し良好。ブレーキ性能は通常どおりです。</div>
-    <div style="font-size:12.5px;color:#93c5fd;font-weight:800;margin-top:4px;">🗓️ ダイヤ</div>
-    <div class="dt-grid" id="diaGrid">
-      <button class="dt-btn dia on" data-d="normal">通常ダイヤ</button>
-      <button class="dt-btn dia" data-d="extra">臨時・団体</button>
-      <button class="dt-btn dia" data-d="change">変更ダイヤ</button>
-    </div>
-    <div id="diaDesc" style="font-size:11.5px;color:#94a3b8;line-height:1.55;">通常ダイヤ：各駅停車・快速・特急・快速特急が決まった停車駅で運転します。</div>
-    <div style="font-size:12.5px;color:#93c5fd;font-weight:800;margin-top:4px;">🚉 出庫</div>
-    <div class="dt-grid" id="depGrid">
-      <button class="dt-btn dep on" data-p="0">駅から開始</button>
-      <button class="dt-btn dep" data-p="1">車庫から出庫</button>
-    </div>
-    <div id="depDesc" style="font-size:11.5px;color:#94a3b8;line-height:1.55;">駅から開始：選んだ駅のホームから乗務を始めます。</div>
-    <div style="font-size:12.5px;color:#fbbf24;font-weight:800;margin-top:4px;">⚠️ トラブル発生モード</div>
+    <div id="dailyCondModal" style="font-size:12.5px;color:#93c5fd;line-height:1.7;background:rgba(14,30,54,0.75);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:8px 12px;margin:8px 0 10px;"></div>
     <div class="dt-grid">
       <button id="btnTroubleOff" class="dt-btn">オフ（通常運転）</button>
       <button id="btnTroubleOn" class="dt-btn warn">オン（トラブルあり）</button>
@@ -1458,6 +1442,7 @@ body.disp-monitor #gl{display:none!important}
 <div id="paxSel" class="hide"><div class="wrap"><div class="brand"><div class="led">駅を移動</div></div><div class="sub">見学する駅を選んでください</div><div id="paxGrid"></div><button id="paxClose" class="backbtn">← もどる</button></div></div>
 <div id="ask" class="hide"><div class="box"><h3 id="askText"></h3><p id="askMsg"></p><div id="askBtns"></div></div></div>
 <button id="waitEnd" class="hide">待ち合わせを終わる</button>
+<div id="condBadge" class="hide" style="position:fixed;left:10px;top:max(10px,env(safe-area-inset-top));z-index:66;pointer-events:none;background:rgba(8,18,32,0.72);border:1px solid rgba(125,211,252,0.35);border-radius:10px;padding:5px 10px;font-size:11.5px;font-weight:700;color:#dbeafe;line-height:1.35;box-shadow:0 3px 10px rgba(0,0,0,0.35);"></div>
 <div id="mascon" class="hide"><div id="mcSpd">0 km/h</div><button id="mcUp">▲ 加速</button><div id="mcVal">B4</div><button id="mcDn">▼ ブレーキ</button><button id="mcN">N</button><button id="mcEB">非常</button></div>
 <div id="dev" class="hide"><div id="devFrame"><div id="devBar"><button id="devHome">◯</button><span id="devTitle"></span><button id="devClose">✕</button></div><div id="devScreen"></div></div></div><div id="devFlash" class="hide"></div>
 <div id="condUI" class="hide"><div class="lt" id="cHint"></div><div class="lb"><button id="cExit" style="background:#34445e;color:#fff">ホームに出る</button><button id="cOpen">戸開</button><button id="cClose" style="background:#c22f28;color:#fff">戸閉</button><button id="cMelo" style="background:#e0a21a">発車メロディ</button><button id="cPromo" style="background:#f2d27a">乗降促進</button><button id="cSig" style="background:#1f7a4a;color:#fff">合図（発車）</button></div></div>
