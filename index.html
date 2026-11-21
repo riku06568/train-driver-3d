@@ -446,7 +446,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.0.1)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.1.0)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -474,7 +474,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v2.0.1 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.1.0 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -516,7 +516,7 @@ body.disp-monitor #gl{display:none!important}
         <button id="btnSelectLoop" class="duty-cat-card cat-loop">
           <div class="cat-badge">本線</div>
           <h3>🔁 汐見環状線</h3>
-          <p>全85駅・方向別三複線（内回り・外回り）。各駅停車・快速・快速特急が走る都心大環状線。</p>
+          <p>全85駅・方向別三複線（内回り・外回り）。各駅停車・快速・快速特急・特急が走る都心大環状線。</p>
           <div class="meta"><span>全85駅</span><span>一周 約1時間21分〜2時間57分</span><span>三複線</span></div>
         </button>
 
@@ -672,7 +672,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.0.1)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.1.0)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -715,6 +715,27 @@ body.disp-monitor #gl{display:none!important}
       </div>
       <div class="sub">汐見環状線 3Dトレインシミュレーターの最新アップデート情報</div>
       <div class="credits-box" style="text-align:left;line-height:1.7;">
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.1.0</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.1.0 (2026.11.21)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">毎日の天気・毎月のダイヤ自動化、特急の地下全面刷新、四嶺連絡線の縮尺修正、放送の重なり修正、駅ごとの発車メロディ</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>運転条件はトラブル発生モードだけに</b>：天候・ダイヤ・車庫出庫の選択画面をなくし、走行中にトラブルを起こすかどうかだけを聞くようにしました</li>
+            <li><b>毎日・季節ごとに自動で天気が変わる</b>：日付と季節から決まるので、同じ日は全員同じ天気・毎日かわります（晴れ・曇り・雨・雪・霧）</li>
+            <li><b>毎月の自動ダイヤ</b>：毎月ランダムな2日に「臨時・団体ダイヤ」、別の2日に「変更ダイヤ」が自動で始まり、翌日には通常ダイヤに戻ります。今日の天気とダイヤはタイトル画面と運転中の画面に表示されます</li>
+            <li><b>車庫からの出庫を廃止</b>：選択肢と出庫開始ルートをなくしました</li>
+            <li><b>先頭車の車内モニターが運転席に飛び出す不具合を修正</b>：最前部の液晶を客室の内側に収めました</li>
+            <li><b>特急を全面刷新</b>：環状線の地下を専用線で走り、汐見駅と主要駅だけに停車、全車両が1階建てのグリーン車、AI列車は10分間隔、最高速度210km/hに対応（速度計・制限速度・信号も）</li>
+            <li><b>四嶺連絡線の縮尺を修正</b>：環状線と各支線の終点の位置関係から距離を計算し、全長を約71kmに修正しました</li>
+            <li><b>ご意見箱の表示・操作を修正</b>：スクロール・返信の表示・送信・閉じる動きを点検して直しました</li>
+            <li><b>「改札口へ」ボタンの位置を修正</b>：ほかのボタンと同じ並びに移して押しやすくしました</li>
+            <li><b>発車時に車内放送が2つ重なる不具合を修正</b>：発車後放送と次駅放送を一本化し、広告も割り込まないようにしました</li>
+            <li><b>途中停車後に同じ車内放送がまた流れる不具合を修正</b>：同じ駅間では一度だけ放送し、信号停車などで止まって再発車しても鳴り直しません</li>
+            <li><b>支線と快速特急の駅ごとの発車メロディ</b>：全支線の全駅と快速特急の全停車駅に、駅ごとに違う完全オリジナルのメロディを割り当てました</li>
+          </ul>
+        </div>
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#16a34a;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.0.1</span>
@@ -1369,7 +1390,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">
       今日の天気とダイヤは自動で決まります（毎日・毎月かわります）。走行中のトラブルを発生させるかだけ選んでください。
     </div>
-    <div id="dailyCondModal" style="font-size:12.5px;color:#93c5fd;line-height:1.7;background:rgba(14,30,54,0.75);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:8px 12px;margin:8px 0 10px;"></div>
+    <div id="dailyCondModal" style="font-size:12.5px;color:#93c5fd;line-height:1.7;white-space:pre-line;background:rgba(14,30,54,0.75);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:8px 12px;margin:8px 0 10px;"></div>
     <div class="dt-grid">
       <button id="btnTroubleOff" class="dt-btn">オフ（通常運転）</button>
       <button id="btnTroubleOn" class="dt-btn warn">オン（トラブルあり）</button>
@@ -1384,7 +1405,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.0.1)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.1.0)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1458,7 +1479,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=122', function() {});
+      loadScript('assets/js/game.js?v=123', function() {});
     });
   });
 })();

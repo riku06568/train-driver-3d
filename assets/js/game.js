@@ -200,7 +200,7 @@ function stopsOf(stations,kind){const chg=(DIASH==='change');
     :kind==='exp'?(chg?(st.i===0||st.cls==='M'||st.cls==='X'):(st.i===0||st.cls==='M')) /* 特急は汐見と主要駅だけ（快速特急より少ない） */
     :true);}
 function lapTime(cfg,stations,kind){ // rough timetable estimate for one lap / one way
-  const stops=stopsOf(stations,kind),vc={local:21,rapid:29,ltd:32,exp:30,branch:18}[kind],dw={local:30,rapid:35,ltd:40,exp:38,branch:30}[kind];let t=0;
+  const stops=stopsOf(stations,kind),vc={local:21,rapid:29,ltd:40,exp:48,branch:18}[kind],dw={local:30,rapid:35,ltd:40,exp:35,branch:30}[kind];let t=0;
   for(let i=0;i<stops.length;i++){const a=stops[i],b=stops[(i+1)%stops.length];if(kind==='branch'&&i===stops.length-1)break;const d=mod(b.s-a.s,cfg.L);t+=d/vc+28+(b.cls==='M'?dw+10:dw);}return t;}
 function fmtDur(sec){const m=Math.round(sec/60);return m>=60?Math.floor(m/60)+'時間'+(m%60)+'分':m+'分';}
 
@@ -2272,10 +2272,16 @@ function buildLtdChunk(c,c0,c1){
 function buildLtdStation(st,c){
   const D=LTD_DEPTH,y=D+PH,s0=st.s-PBof(st)-30,s1=st.s+PF+30,t=P(st.s)[2];
   const conc=MATS.conc,concD=MATS.concD,tile=lam(0xe8eef2),wallM=lam(0xd7dde4);
+  /* 駅の内装：明るいタイルの壁とライン色の帯（トンネル内でも駅と分かるように） */
+  for(const sg of [-1,1]){
+    ltdStrip(c,s0,s1,6,[[sg*(LTD_HALF-0.06),PH+D],[sg*(LTD_HALF-0.06),D+4.9]],'conc');
+    ltdStrip(c,s0,s1,6,[[sg*(LTD_HALF-0.10),D+3.15],[sg*(LTD_HALF-0.10),D+3.75]],'rail');
+  }
   /* ホーム（線路の外側に相対式2面） */
   for(const [o0,o1] of [[-LTD_OFF-6.4,-LTD_OFF-1.72],[LTD_OFF+1.72,LTD_OFF+6.4]]){
     ltdStrip(c,s0,s1,6,[[o0,y],[o1,y]],'conc');
     ltdStrip(c,s0,s1,6,[[o0,y+0.02],[o0+0.5,y+0.02]],'rail');   /* 縁の白帯 */
+    ltdStrip(c,s0,s1,6,[[o1-(o1>0?0.6:0.0),y+0.03],[o1-(o1>0?0.0:-0.6),y+0.03]],'rail'); /* 内側の縁 */
     const om=(o0+o1)/2;
     for(let s2=s0+8;s2<s1-4;s2+=18){const b=new THREE.Mesh(boxGeo(0.9,0.45,3.2),tile);b.position.copy(offsG(s2,om+ (o1>0?1.4:-1.4),y+0.22));b.rotation.y=-t;addTo(c,b);} /* ベンチ */
     /* 駅名サイン */
@@ -6758,7 +6764,7 @@ function drawSpeed(){
   const bg=x.createLinearGradient(0,0,0,384);bg.addColorStop(0,'#061019');bg.addColorStop(1,'#02060a');x.fillStyle=bg;x.fillRect(0,0,512,384);
   /* 上段：システム名・時刻 */
   x.fillStyle='#0a1a28';x.fillRect(0,0,512,38);x.fillStyle='#2fd0ff';x.fillRect(0,36,512,2);
-  x.textAlign='left';x.fillStyle='#8fd6ff';x.font='700 19px '+FONT;x.fillText('運転台モニタ  v1.9',14,26);
+  x.textAlign='left';x.fillStyle='#8fd6ff';x.font='700 19px '+FONT;x.fillText('運転台モニタ  v2.1',14,26);
   x.textAlign='right';x.fillStyle='#eaf6ff';x.font='700 26px '+FONT;x.fillText(hms(nowMs()),498,27);x.textAlign='left';
   /* 速度リング */
   const SMAX=(G.key==='G'||G.key==='H')?210:160; /* 特急は210km/hまで表示 */
@@ -9593,7 +9599,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const modeBadge = isMinatomi 
       ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン専用</span>'
       : '<span style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.12);">🌐 常時オンライン</span>';
-    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡線（7駅・複線・各駅停車）。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '汐見駅と主要駅だけに停車。環状線の地下を専用線で走る、全車グリーン車の最速210km/h列車です。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
+    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡線（7駅・複線・各駅停車・全長約71km）。環状線と各支線終点の位置関係から距離を計算して縮尺を合わせました。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '汐見駅と主要駅だけに停車。環状線の地下を専用線で走る、全車グリーン車の最速210km/h列車です。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
     b.addEventListener('click', () => {
       currentDutyView = isBranch ? 'viewBranch' : 'viewLoop';
       pickStation(id);
