@@ -640,7 +640,8 @@ function handleRemotePlayerUpdate(data) {
       greenCars: data.greenCars || null,
       liv: data.liv != null ? data.liv : null,
       twoMan: !!data.twoMan,
-      crew: data.crew || 'one'
+      crew: data.crew || 'one',
+      sq: data.sq | 0
     };
     ONLINE_PLAYERS[data.id] = p;
     try {
@@ -700,6 +701,7 @@ function handleRemotePlayerUpdate(data) {
     p.crewLx = data.crewLx || 0;
     p.crewLz = data.crewLz || 0;
     p.crewFl = data.crewFl || 'deck';
+    if (data.sq != null) p.sq = data.sq | 0;
     p.crew = data.crew || p.crew || 'one';
     p.twoMan = !!data.twoMan;
     p.paxRide = data.paxRide !== undefined ? data.paxRide : p.paxRide;
@@ -3833,7 +3835,7 @@ const enName=st=>st.kana.replace(/-/g,' ');
 /* 端末をまたいで同じ乗客を出すための「列車の停車ごとのID」。駅に着くたびに1つ増える。 */
 function trainStopSeed(train){
   if(!train)return 'none';
-  if(train==='OWN')return 'OWN-'+(G.sq||0);
+  if(train==='OWN')return 'P-'+(typeof ONLINE_CLIENT_ID!=='undefined'?ONLINE_CLIENT_ID:'own')+'-'+(G.sq||0);
   if(train.p&&train.p.id)return 'P-'+train.p.id+'-'+(train.p.sq||0);
   return 'AI-'+(train.name||'T')+'-'+(train.sq||0);
 }
