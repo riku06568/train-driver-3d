@@ -651,14 +651,8 @@ function handleRemotePlayerUpdate(data) {
       }
     } catch(e) {}
   } else {
-    // 他プレイヤーの乗降促進メロディ再生（ループ継続にも対応）
-    const promoChanged = data.promoT && (!p.lastPromoT || data.promoT > p.lastPromoT);
-    const promoLoopTick = !!(data.promoOn && (!p._lastPromoPlayMs || now - p._lastPromoPlayMs > 6500));
-    if (promoChanged || promoLoopTick) {
-      if (data.promoT) p.lastPromoT = data.promoT;
-      p._lastPromoPlayMs = now;
-      playRemoteTrainSound(p, 'promo', { promoN: data.promoN, stName: data.stName, key: data.key, dir: data.dir });
-    }
+    // 他プレイヤーの乗降促進メロディは events の promo（鳴らすたびに届く）だけで再生する。
+    // 位置情報からの推測再生は二重に鳴るため行わない（v2.2.1）
     // 他プレイヤーのドア開閉音・チャイム再生
     if (data.door && data.door !== p.lastDoor) {
       if (data.door === 'opening') {
@@ -4464,11 +4458,15 @@ function placeCrew(tr){if(!tr||!tr.crew||!tr.crew.length)return;const f=tr.cars[
   if(tr.crew[1]){const c2=tr.crew[1],lr=l.userData.cabR&&!l.userData.cabF;l.add(c2);if(lr){c2.position.set(0.35,1.16,CARHALF-1.35);c2.rotation.y=-0.6;}else{c2.position.set(-0.35,1.16,-(CARHALF-1.35));c2.rotation.y=Math.PI-0.6;}}}
 /* 自列車の運転士・車掌も「他の人から見える」ように実体を置く。
    運転席から見える本物の運転台（レイヤー2）とは別に、車外・車内巡回から見える（レイヤー1）。 */
-let OWNCREWSIG='';
+let OWNCREWSIG='',OWNCREWT=0;
 function updOwnCrew(){if(typeof ownTrain==='undefined'||!ownTrain||!ownTrain.cars||!ownTrain.cars.length)return;
-  const sig=(G.twoMan?1:0)+'|'+(CREWSEL||'one')+'|'+JSON.stringify(AVATAR||null);
-  if(ownTrain.crew&&OWNCREWSIG!==sig){for(const m of ownTrain.crew){try{if(m.parent)m.parent.remove(m);}catch(e){}}ownTrain.crew=null;}
-  if(!ownTrain.crew){try{addCustomCrew(ownTrain,!!G.twoMan,AVATAR,CREWSEL||'one');OWNCREWSIG=sig;placeCrew(ownTrain);}catch(e){}}
+  const nowT=(typeof performance!=='undefined'?performance.now():Date.now());
+  if(!ownTrain.crew||nowT-OWNCREWT>1500){
+    OWNCREWT=nowT;
+    const sig=(G.twoMan?1:0)+'|'+(CREWSEL||'one')+'|'+JSON.stringify(AVATAR||null);
+    if(ownTrain.crew&&OWNCREWSIG!==sig){for(const m of ownTrain.crew){try{if(m.parent)m.parent.remove(m);}catch(e){}}ownTrain.crew=null;}
+    if(!ownTrain.crew){try{addCustomCrew(ownTrain,!!G.twoMan,AVATAR,CREWSEL||'one');OWNCREWSIG=sig;placeCrew(ownTrain);}catch(e){}}
+  }
   const c=ownTrain.crew||[];
   try{const f=ownTrain.cars[0],l=ownTrain.cars[ownTrain.cars.length-1];
     if(c[0]&&c[0].parent!==f)placeCrew(ownTrain);
