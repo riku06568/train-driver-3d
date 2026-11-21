@@ -2028,7 +2028,7 @@ function setHD(hd,f){if(Math.abs(hd.frac-f)<0.002)return;hd.frac=f;for(const l o
 function hdDoorCenters(hd){if(hd._doors)return hd._doors;const s=new Set();for(const l of hd.leaves)s.add(l.d);return hd._doors=[...s];}
 function hdGapAt(hd,s){if(hd.frac<0.35)return false;const half=hd.frac*1.35-0.05;for(const d of hdDoorCenters(hd))if(Math.abs(s-d)<half)return true;return false;}
 function applyHDCollision(p){if(p.trackO===-99||!p.g.visible)return;const st=STATIONS[p.st];if(!st||!st.hd)return;
-  const k=p.flow;const hdKeys=(!BRANCH&&st.i===0)?[k,'S'+k]:[k];
+  const k=p.flow,pk=platKey(st,k);const hdKeys=(!BRANCH&&st.i===0)?[pk,'S'+pk]:(pk!==k?[pk,k]:[k]);
   for(const hk of hdKeys){const hd=st.hd[hk];if(!hd)continue;
     const sd=hd.sd!=null?hd.sd:(TK[k]?TK[k].side(st):1),line=hd.line,safe=line+sd*0.55;
     if(Math.abs(p.o-line)>3.2&&(!BRANCH&&st.i===0))continue;
@@ -4004,7 +4004,8 @@ function startFlowsBody(st,k,frontS,train){
     if(own&&car===(CONDV?carsFor(G.key)-1:0)&&SAL.on){const dl=0.3+ac[j]*0.5+rand(0,0.3);JOBS.push({t:dl,fn:()=>salAlight(dz*SIDEINV*(ownTrain.rev?-1:1),(G.door.local||sd*G.dir)*SIDEINV,sg=>mk(true,sg))});}
     else if(train&&(train!=='OWN'?isPop(train,car):(OWNAI&&isPop(OWNAI,car)))){const ia=train==='OWN'?OWNAI:train,dl=0.3+ac[j]*0.5+rand(0,0.3);JOBS.push({t:dl,fn:()=>{if(isPop(ia,car))alightInside(ia,car,dz,ls,sg=>mk(true,sg));else mk(false);}});}
     else mk(false);ac[j]++;}
-  const list=st.wait[k]||[];
+  const pk=platKey(st,k);
+  const list=(st.wait[k]&&st.wait[k].length)?st.wait[k]:(st.wait[pk]||[]);
   for(const p of list){if(p.kind!=='wait')continue;
     if(doors[p.j]===undefined)p.j=irand(0,doors.length-1);const ds=doors[p.j];
     p.kind='board';p.doorS=ds;p.face=-sd;p.trackO=base;
@@ -4413,23 +4414,27 @@ function aiRun(a,dt){
       a._emerGap=(clearGap<=45);
       a._hardStop=(clearGap<=22);
     }
-    if(nx&&nx.D<0.2&&a.v<0.6){a.state='dwell';a.v=0;a.t=dwellSec(a,nx.st);a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;a.sq=(a.sq|0)+1;
+    const _isFollower=!BRANCH&&!MINI&&IS_ONLINE&&!isAiSyncLeader()&&_aiLastRx&&(Date.now()-_aiLastRx)<3500;
+    if(nx&&nx.D<0.2&&a.v<0.6&&!_isFollower){a.state='dwell';a.v=0;a.t=dwellSec(a,nx.st);a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;a.sq=(a.sq|0)+1;
       if(!BRANCH&&nx.st.i===0&&SHIOMI_TT[a.key]){const depMs=nextShiomiDepMs(a.key,nowMs()+12000);a.shiomiDepMs=depMs;a.t=clamp((depMs-nowMs())/1000,20,180);a.dwellTot=a.t;}}
     else{const maxDec=a._emerGap?-4.5:-2.4;a.v+=clamp((vt-a.v)*2,maxDec,0.8)*dt;a.v=a._hardStop?0:Math.max(0,a.v);a.s+=a.dir*a.v*dt;}}
   else if(a.state==='dwell'){a.t-=dt;
+    const _isFollower=!BRANCH&&!MINI&&IS_ONLINE&&!isAiSyncLeader()&&_aiLastRx&&(Date.now()-_aiLastRx)<3500;
+    if(_isFollower&&a.t<0.2)a.t=0.2;
     if(!BRANCH&&a.stSt&&a.stSt.i===0&&a.shiomiDepMs&&!a.forceDep){const rem=(a.shiomiDepMs-nowMs())/1000;if(rem>0&&rem<300){a.t=Math.max(a.t,rem);if(!a.dwellTot||a.dwellTot<a.t)a.dwellTot=a.t;}}
     if(!BRANCH&&a.stSt&&a.stSt.i===0&&a.yieldToPlayer){if(!PAX&&G.phase==='play'&&G.key===a.key&&Math.abs(sdiff(G.s,STATIONS[0].s))<180)a.t=Math.max(a.t,6);else a.yieldToPlayer=false;}
     if(B3&&a.doors&&KIND[a.key]!=='rapid'&&isPassSt(a.stSt)&&a.t<10&&(a.hold||0)<240&&rapidComing(a)){a.t=10;a.hold=(a.hold||0)+dt;} /* 待避 */
     if(MINI&&a.stSt&&a.stSt.cls==='I'&&a.t<10&&(a.hold||0)<900&&oppComing(a.stSt,a.dir,a)){a.t=10;a.hold=(a.hold||0)+dt;} /* 単線：対向列車を待って行き違い */
     if(a.doors&&a.t<9.4&&a.t>9.1&&(a.boardHold||0)<30&&aiBusy(a)){a.t=9.4;a.boardHold=(a.boardHold||0)+dt;} /* 乗り降りが終わるまで待つ（戸閉前に余裕を取る） */
+    if(!a.dwellTot||a.dwellTot<a.t)a.dwellTot=Math.max(dwellSec(a,a.stSt),a.t);
     const tot=a.dwellTot||dwellSec(a),el=Math.max(0,tot-a.t);
     if(a.doors){a.frac=clamp(Math.min(el/2.4,(a.t-1.4)/2.6),0,1);
       if(!a.flowed&&a.frac>=1){a.flowed=true;const term=BRANCH&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0));
         if(term&&RIDE&&RIDE.a===a){toast('終点です。全員お降りください','warn');setTimeout(()=>{if(RIDE&&RIDE.a===a)alightTrain();},2600);} /* 乗客モードでも終点では降りる */
         const camS=PAX?(RIDE?RIDE.a.s:W.s):G.s;
-        if(Math.abs(sdiff(camS,a.stSt.s))<1400){const r=startFlows(a.stSt,a.key,a.stSt.s+T.so,a);a.load=term?r.b:clamp(a.load-Math.min(r.a,a.load)+r.b,0,maxLoadFor(a.key));}else if(term)a.load=0;else a.load=clamp(a.load+irand(-6,10),Math.round(trainLoadFor(a.key)*0.55),maxLoadFor(a.key));}}
-    aiSounds(a,el,tot);if(a.t<=0&&BRANCH&&a.stSt&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0))&&a!==FT){aiTurn(a,a.stSt);}
-    else if(a.t<=0){const leftSt=a.stSt;a.state='run';a.frac=0;a.forceDep=false;a.shiomiDepMs=0;}
+        if(a.stSt&&Math.abs(sdiff(camS,a.stSt.s))<1400){const r=startFlows(a.stSt,a.key,a.stSt.s+T.so,a);a.load=term?r.b:clamp(a.load-Math.min(r.a,a.load)+r.b,0,maxLoadFor(a.key));}else if(term)a.load=0;else a.load=clamp(a.load+irand(-6,10),Math.round(trainLoadFor(a.key)*0.55),maxLoadFor(a.key));}}
+    if(a.stSt)aiSounds(a,el,tot);if(!_isFollower&&a.t<=0&&BRANCH&&a.stSt&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0))&&a!==FT){aiTurn(a,a.stSt);}
+    else if(!_isFollower&&a.t<=0){const leftSt=a.stSt;a.state='run';a.frac=0;a.forceDep=false;a.shiomiDepMs=0;}
       /* 乗っている電車の発車後放送は updRide の「次駅放送」に一本化（同じ放送を2系統から同時に鳴らさない） */}
   if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if(a.charter&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,'臨時');}catch(e){}}}}
   /* 汐見13・14番線の列車は、本線へ合流したら各停として運転を続ける */
@@ -4693,14 +4698,15 @@ window.handleAiPacket=(topic,ap)=>{
       /* v1.9.7：受信位置との差を少しずつ詰める（60mを超えたらワープさせていたのをやめ、600m以上のときだけ合わせる） */
       if(Math.abs(err)>600){a.s=predS;a._syncErr=0;a.v=t.v;}
       else{a._syncErr=err;}
-      if(t.st!==a.state){a.state=t.st;if(Math.abs((t.v||0)-(a.v||0))>4)a.v=t.v;}
+      const prevSt=a.state;
+      if(t.st!==a.state){a.state=t.st;if(t.st==='dwell'){a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;}if(t.st==='run'){a.frac=0;}if(Math.abs((t.v||0)-(a.v||0))>4)a.v=t.v;}
       else if(Math.abs(a.v-t.v)>1.0){a.v+=(t.v-a.v)*0.18;}
-      a.dir=t.d;a.side=t.sd;a.frac=(t.f!=null?t.f:a.frac);
+      a.dir=t.d;a.side=t.sd;if(t.f!=null)a.frac=t.f;
       if(!cmdLock){a.dispHold=!!t.dh;a.slowMode=t.sm||null;a.troubleActive=!!t.tb;}
       if(t.t!=null&&isFinite(t.t))a.t=t.t;
       if(t.q!=null)a.sq=t.q|0;
       if(t.d0!=null&&isFinite(t.d0))a.dwellTot=t.d0;
-      if(t.st==='dwell'){a.stSt=stationNear(a.s);if(a.stSt)a.last=a.stSt.i;}else{a.stSt=null;}
+      if(t.st==='dwell'){a.stSt=stationNear(a.s);if(a.stSt)a.last=a.stSt.i;if(prevSt!=='dwell'&&!a.dwellTot)a.dwellTot=dwellSec(a,a.stSt);}else{a.stSt=null;}
     }
   }
 };
@@ -5929,21 +5935,22 @@ function updHomeDoors(dt){
     for(const k in st.hd){const hd=st.hd[k];let f=0;
       const isSiding=k.length===2&&k[0]==='S',baseK=isSiding?k[1]:k,isShiomi=!BRANCH&&st.i===0;
       if(!isShiomi || !isSiding){
-        for(const a of OT)if(a.key&&a.state==='dwell'&&physKey(a.key,st.s)===baseK&&a.stSt===st&&a.v<0.3&&Math.abs(sdiff(a.s,st.s+TK[a.key].so))<25)f=Math.max(f,a.frac);
+        for(const a of OT)if(a.key&&a.state==='dwell'&&(physKey(a.key,st.s)===baseK||platKey(st,a.key)===baseK)&&(a.stSt===st||Math.abs(sdiff(a.s,st.s+TK[a.key].so))<35)&&a.v<0.3&&Math.abs(sdiff(a.s,st.s+TK[a.key].so))<35)f=Math.max(f,a.frac);
       }
       if(!isShiomi || isSiding){
-        if(!PAX && physKey(G.key,st.s)===baseK&&(G.atStation!==null&&stOf(G.atStation)===st)&&G.v<0.3&&Math.abs(sdiff(G.s,st.s+TK[G.key].so))<25)f=Math.max(f,G.door.frac);
+        if(!PAX && (physKey(G.key,st.s)===baseK||platKey(st,G.key)===baseK)&&(G.atStation!==null&&stOf(G.atStation)===st)&&G.v<0.3&&Math.abs(sdiff(G.s,st.s+TK[G.key].so))<35)f=Math.max(f,G.door.frac);
         if(IS_ONLINE && window.ONLINE_PLAYERS){
           const curLine = (typeof CFG !== 'undefined' && CFG) ? CFG.id : 'loop';
+          const nowReal = Date.now();
           for(const pid in ONLINE_PLAYERS){
             const p = ONLINE_PLAYERS[pid];
             if(!p || p.isPax || p.state !== 'driving' || p.s == null || (p.v || 0) > 0.3) continue;
-            if(p.lastSeen && (nowMs() - p.lastSeen > 12000)) continue;
+            if(p.lastSeen && (nowReal - p.lastSeen > 12000)) continue;
             if((p.line || 'loop') !== curLine) continue;
-            if(!p.key || physKey(p.key, st.s) !== baseK) continue;
+            if(!p.key || (physKey(p.key, st.s) !== baseK && platKey(st, p.key) !== baseK)) continue;
             const pPos = p.smoothS != null ? p.smoothS : p.s;
-            const d = Math.abs(sdiff(pPos, st.s + TK[baseK].so));
-            const isAtThisSt = (d < 25 && (p.v || 0) < 0.3);
+            const d = Math.abs(sdiff(pPos, st.s + (TK[p.key] ? TK[p.key].so : TK[baseK].so)));
+            const isAtThisSt = (d < 35 && (p.v || 0) < 0.3);
             if(isAtThisSt && (p.door === 'open' || p.door === 'opening' || (p.doorFrac || 0) > 0.05)){
               const pf = p.doorFrac != null ? p.doorFrac : (p.door === 'open' ? 1.0 : 0.6);
               f = Math.max(f, pf);
@@ -7618,8 +7625,8 @@ function nearTrainDoor(){if(!PAX||RIDE||!W.st||!PX.plats.length)return null;cons
     const isAtSt = (a.stSt===W.st) || (a.p && a.p.stName===W.st.name) || (Math.abs(sdiff(a.s, W.st.s + (TK[a.key]?TK[a.key].so:0))) < 55);
     const isOpen = (a.state==='dwell'||(a.p&&(a.p.door==='open'||a.p.door==='opening'))||(a.frac||0)>0.15);
     if(!isAtSt || !isOpen) continue;
-    const T=TK[a.key],isShOn=!BRANCH&&W.st.i===0&&!!a.p,edge=(isShOn?ownTrackOff(a.key,W.st.s):T.off(W.st.s))+(isShOn?-T.side(W.st):T.side(W.st))*1.72;if(Math.abs(W.o-edge)>2.4)continue;
-    const NC=a.tr.cars.length,rel=a.dir*sdiff(W.s,a.s);if(rel<-1||rel>NC*CARL+1)continue;return {a,k:clamp(Math.floor(rel/CARL),0,NC-1),lz:clamp(CARHALF-(rel-Math.floor(rel/CARL)*CARL),-9,9)};}
+    const T=TK[a.key],isShOn=!BRANCH&&W.st.i===0&&!!a.p,edge=(a.p?ownTrackOff(a.key,W.st.s):T.off(W.st.s))+(isShOn?-T.side(W.st):T.side(W.st))*1.72;if(Math.abs(W.o-edge)>2.9)continue;
+    const NC=a.tr.cars.length,rel=a.dir*sdiff(W.s,a.s);if(rel<-1.5||rel>NC*CARL+1.5)continue;return {a,k:clamp(Math.floor(rel/CARL),0,NC-1),lz:clamp(CARHALF-(rel-Math.floor(rel/CARL)*CARL),-9,9)};}
   return null;}
 function boardTrain(n){if(!n||!n.a||!n.a.tr||!n.a.tr.cars||!n.a.tr.cars.length)return;
   /* v1.9.7：号車番号を必ず実在する車両に丸める（編成が短い車両・差し替わった直後でも乗れるように） */
@@ -7649,8 +7656,8 @@ function paxWalkIn(rawS,rawO){if(RIDE||!W.st||!PX.plats.length)return false;cons
     const isAtSt = (a.stSt===W.st) || (a.p && a.p.stName===W.st.name) || (Math.abs(sdiff(a.s, W.st.s + (TK[a.key]?TK[a.key].so:0))) < 55);
     const isOpen = (a.state==='dwell'||(a.p&&(a.p.door==='open'||a.p.door==='opening'))||(a.frac||0)>0.15);
     if(!isAtSt || !isOpen) continue;
-    for(let k=0;k<a.tr.cars.length;k++){const car=a.tr.cars[k];car.updateMatrixWorld();
-      _pwP.copy(offs(W.s,W.o,PH+1));car.worldToLocal(_pwP);if(Math.abs(_pwP.z)>CARHALF||Math.abs(_pwP.x)>2.65)continue;
+    for(let k=0;k<a.tr.cars.length;k++){const car=a.tr.cars[k];car.updateMatrixWorld(true);
+      _pwP.copy(offs(W.s,W.o,PH+1));car.worldToLocal(_pwP);if(Math.abs(_pwP.z)>CARHALF||Math.abs(_pwP.x)>2.85)continue;
       const dzs=car.userData.green?GDOORZ:DOORZ;let dz=null;for(const d of dzs)if(Math.abs(_pwP.z-d)<0.85)dz=d;if(dz===null)continue;
       _pwR.copy(offs(rawS,rawO,PH+1));car.worldToLocal(_pwR);
       if(Math.abs(_pwR.x)>=Math.abs(_pwP.x)-0.001)continue;            // 電車の方へ進もうとしているときだけ
@@ -9056,11 +9063,13 @@ function frame(now){if(window.__FRAME_TOKEN!==TOKEN)return;requestAnimationFrame
   if(now-LOOPERR.t>60000){LOOPERR.n=0;LOOPERR.t=0;}}
 /* ===== 運転台の模型：運転モードの運転台（机・モニター・計器・ボタン・椅子）をまとめて1つの形にし、近くの電車の先頭・最後尾に取り付ける ===== */
 let CABMODEL=null;const CABPOOL=[],CABATT=new Map();
-function buildCabModel(){if(CABMODEL)return;const MONG=new Set(Object.values(MON).map(m=>m&&m.g).filter(Boolean));cab.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(cab.matrixWorld).invert(),groups=new Map(),skip=new Set([CM.shell,CM.floor,CM.hit]),tmp=new THREE.Vector3();
+function buildCabModel(){if(CABMODEL)return;
+  try{if(typeof drawSpeed==='function')drawSpeed();if(typeof drawInfo==='function')drawInfo();if(typeof drawMap==='function')drawMap();if(typeof drawPanel==='function')drawPanel();if(typeof drawExitBtn==='function'){drawExitBtn('L',0,false);drawExitBtn('R',0,false);}}catch(e){}
+  const MONG=new Set(Object.values(MON).map(m=>m&&m.g).filter(Boolean));cab.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(cab.matrixWorld).invert(),groups=new Map(),skip=new Set([CM.shell,CM.hit]),tmp=new THREE.Vector3();
   const pbm=cab.userData.pb&&cab.userData.pb.mesh;
   cab.traverse(o=>{if(!o.isMesh||!o.geometry||!o.material||Array.isArray(o.material)||o===pbm||o.material===upperMat)return;const m=o.material;if(skip.has(m)||m.visible===false||m.transparent&&m.opacity<0.2)return;
     let q=o;while(q&&q!==cab){if(q.userData&&q.userData.legs)return;q=q.parent;}if(o.userData&&o.userData.act&&m===CM.hit)return;
-    o.getWorldPosition(tmp);cab.worldToLocal(tmp);if(tmp.z>2.55||tmp.z<-0.4)return;           /* 運転台の範囲だけ（後ろの客室は除く） */
+    o.getWorldPosition(tmp);cab.worldToLocal(tmp);if(tmp.z>2.65||tmp.z<-0.4)return;           /* 運転台〜背面仕切りまで（後ろの客室は除く） */
     const g=o.geometry;if(!g.attributes.position||!g.attributes.normal)return;
     const M=new THREE.Matrix4().multiplyMatrices(inv,o.matrixWorld);
     /* 運転士が見ているのと同じ位置・同じ大きさで複製する（モニターの位置補正はしない） */
