@@ -3707,11 +3707,12 @@ setTimeout(()=>{
 const monCam=OLDMON?new THREE.PerspectiveCamera(26,384/144,0.1,500):new THREE.PerspectiveCamera(40,4/3,0.1,500);monCam.layers.enable(1);
 function monQuads(){const NC=ownTrain.cars.length;if(OLDMON)return [{i0:0,n:Math.min(3,NC)},NC>3?{i0:3,n:NC-3}:null];const c=Math.max(2,Math.ceil(NC/4)),out=[];
   for(let q=0;q<4;q++)out.push(q*c<NC?{i0:q*c,n:Math.min(c,NC-q*c)}:null);return out;}
-function aimCamQ(st,Q){const T=TK[G.key],isSh=!BRANCH&&st.i===0,sd=isSh?-T.side(st):T.side(st),F=st.s+T.so,dr=G.dir,base=isSh?ownTrackOff(G.key,st.s):T.off(st.s);
-  if(OLDMON){if(Q.i0===0){monCam.position.copy(offs(F+dr*14,base+sd*3.0,4.3));monCam.lookAt(offs(F-dr*62,base+sd*1.45,1.6));}
-    else{monCam.position.copy(offs(F-dr*57,base+sd*3.1,4.3));monCam.lookAt(offs(F-dr*126,base+sd*1.45,1.6));}return;}
+function aimCamQ(st,Q){const T=TK[G.key],isLtd=!BRANCH&&(G.key==='G'||G.key==='H'),isSh=!BRANCH&&!isLtd&&st.i===0,sd=isSh?-T.side(st):T.side(st),F=st.s+T.so,dr=G.dir,base=isSh?ownTrackOff(G.key,st.s):T.off(st.s);
+  const camOff=(s,o,y)=>isLtd?offsG(s,o,LTD_DEPTH+y):offs(s,o,y);
+  if(OLDMON){if(Q.i0===0){monCam.position.copy(camOff(F+dr*14,base+sd*3.0,4.3));monCam.lookAt(camOff(F-dr*62,base+sd*1.45,1.6));}
+    else{monCam.position.copy(camOff(F-dr*57,base+sd*3.1,4.3));monCam.lookAt(camOff(F-dr*126,base+sd*1.45,1.6));}return;}
   const S0=F-dr*Q.i0*CARL,S1=F-dr*(Q.i0+Q.n)*CARL;
-  monCam.position.copy(offs(S0+dr*(Q.i0===0?14:4),base+sd*3.0,4.3));monCam.lookAt(offs(S1-dr*3,base+sd*1.45,1.6));}
+  monCam.position.copy(camOff(S0+dr*(Q.i0===0?14:4),base+sd*3.0,4.3));monCam.lookAt(camOff(S1-dr*3,base+sd*1.45,1.6));}
 
 /* ================= state ================= */
 const G={s:STATIONS[0].s,v:0,notch:-4,bc:300,mr:830,comp:false,phase:'title',nv:0,atStation:0,depCheck:null,
