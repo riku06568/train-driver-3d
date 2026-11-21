@@ -555,6 +555,10 @@ function initOnlineClient() {
         }
         if (topic.startsWith('shiomi3d/v1/ai/')) {
           const ap = JSON.parse(message.toString());
+          if (topic === 'shiomi3d/v1/ai/state' && ap && Array.isArray(ap.trains)) {
+            window.__ONLINE_AI_SNAPSHOT = { ts: Date.now(), trains: ap.trains };
+            if (typeof updateStationSelectButtons === 'function') updateStationSelectButtons();
+          }
           if (typeof window.handleAiPacket === 'function') window.handleAiPacket(topic, ap);
           return;
         }
@@ -1206,13 +1210,14 @@ function checkOnlineStationBlocked(st, serviceKey, lineId) {
   const cfg = lineConfig(targetLine);
   const L = (cfg && cfg.L) ? cfg.L : 72000;
   const trackSo = (typeof TK !== 'undefined' && TK[serviceKey]) ? (TK[serviceKey].so || 0) : 0;
+  const stPos = st.s + trackSo;
   for (const pid in ONLINE_PLAYERS) {
     const p = ONLINE_PLAYERS[pid];
     if (!p || p.isPax || p.state !== 'driving') continue;
     const pLine = p.line || 'loop';
     if (pLine === targetLine && p.key === serviceKey && p.s != null) {
-      const d = Math.abs(mod(p.s - (st.s + trackSo) + L / 2, L) - L / 2);
-      if (d < 500) {
+      const d = Math.abs(mod(p.s - stPos + L / 2, L) - L / 2);
+      if (d < 1000) {
         return { name: p.name, dist: Math.round(d) };
       }
     }
@@ -1221,9 +1226,17 @@ function checkOnlineStationBlocked(st, serviceKey, lineId) {
   if (T && T.OT && (!T.CFG || (T.CFG.id || 'loop') === targetLine)) {
     for (const a of T.OT) {
       if (!a || a.state === 'off' || a.key !== serviceKey) continue;
-      const d = Math.abs(mod(a.s - (st.s + trackSo) + L / 2, L) - L / 2);
-      if (d < 500) {
+      const d = Math.abs(mod(a.s - stPos + L / 2, L) - L / 2);
+      if (d < 1000) {
         return { name: 'AI列車(' + (a.name || serviceKey) + ')', dist: Math.round(d) };
+      }
+    }
+  } else if (targetLine === 'loop' && window.__ONLINE_AI_SNAPSHOT && (Date.now() - window.__ONLINE_AI_SNAPSHOT.ts) < 30000) {
+    for (const a of window.__ONLINE_AI_SNAPSHOT.trains) {
+      if (!a || a.k !== serviceKey || a.s == null) continue;
+      const d = Math.abs(mod(a.s - stPos + L / 2, L) - L / 2);
+      if (d < 1000) {
+        return { name: 'AI列車(' + (a.n || serviceKey) + ')', dist: Math.round(d) };
       }
     }
   }
@@ -1245,16 +1258,19 @@ function updateStationSelectButtons() {
     if (!bt) return;
     const blocked = isOnlineSvc ? checkOnlineStationBlocked(st, curOnlineService.key, curOnlineService.line || 'loop') : null;
     if (blocked) {
-      if (!bt.disabled) {
+      const sig = blocked.name + ':' + blocked.dist;
+      if (!bt.disabled || bt.dataset.blk !== sig) {
         bt.disabled = true;
+        bt.dataset.blk = sig;
         bt.style.opacity = '0.45';
         bt.style.cursor = 'not-allowed';
         bt.style.borderColor = '#ef4444';
-        bt.innerHTML = st.name + '<small style="color:#ef4444;font-weight:700;">⛔ 接近中: ' + blocked.name + ' (' + blocked.dist + 'm)</small>';
+        bt.innerHTML = st.name + '<small style="color:#ef4444;font-weight:700;">⛔ ' + blocked.name + '接近中 (' + blocked.dist + 'm)</small>';
       }
     } else {
-      if (bt.disabled) {
+      if (bt.disabled || bt.dataset.blk) {
         bt.disabled = false;
+        delete bt.dataset.blk;
         bt.style.opacity = '1';
         bt.style.cursor = 'pointer';
         bt.style.borderColor = '';
@@ -4559,10 +4575,10 @@ function addCustomCrew(tr,two,avatar,crewMode){if(!tr||!tr.cars||tr.crew)return;
   const drv=new THREE.Mesh(drvGeo,upperMat);drv.position.set(XE,1.83-0.84,ZE+0.3-CARHALF);drv.rotation.y=Math.PI;c0.add(drv);tr.crew.push(drv);
   if(two){const cd=new THREE.Mesh(condGeo,upperMat);cd.position.set(0.35,1.16,CARHALF-1.35);cd.rotation.y=-0.6;if(condScale!==1)cd.scale.set(condScale,condScale,condScale);cL.add(cd);tr.crew.push(cd);}
   for(const m of tr.crew)m.layers.mask=c0.layers.mask;}
-const POOL_CNT_MAP={A:12,B:12,C:16,D:16,E:8,F:8,G:8,H:8};
-const POOL_CNT=BRANCH?10:22;
+const POOL_CNT_MAP={A:8,B:8,C:6,D:6,E:4,F:4};
+const POOL_CNT=BRANCH?(LINE_ID==='branch4'?1:LINE_ID==='branch'?2:LINE_ID==='branch2'?3:LINE_ID==='branch3'?2:4):16;
 const TR_POOL={};
-for(const k of ALLK){POOL[k]=[];TR_POOL[k]=[];const nP=BRANCH?10:(POOL_CNT_MAP[k]||8);
+for(const k of ALLK){POOL[k]=[];TR_POOL[k]=[];const nP=BRANCH?POOL_CNT:(POOL_CNT_MAP[k]||4);
   for(let i=0;i<nP;i++){
     const TWO=KIND[k]==='ltd'&&i%2===1;
     const isOld=B3?(KIND[k]!=='rapid'&&i%2===0):!!BRANCH;
@@ -10772,8 +10788,16 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
           out.push({ pid:'ai:'+ai.name, name:'AI '+ai.name, dir:ai.dir||1, s:ai.s, v:ai.v||0, state:ai.state === 'dwell' ? 'dwell' : 'run', delay:0, kind:(ai.dispHold||ai.troubleActive) ? 'hold' : 'ai', key:ai.key, cars:6 });
         }
       } else {
-        const D = dispSimOf(id);
-        if (D) for (const t of D.trains) out.push({ pid:t.id, name:dispSimName(id, t.idx), dir:t.dir, s:t.s, v:t.v, state:t.state, delay:t.delay, kind:(t.hold||t.trouble) ? 'hold' : 'sim', key:t.dir > 0 ? 'A' : 'B', cars:t.cars });
+        const T = window.__T;
+        if (T && T.CFG && T.CFG.id === id && T.OT) {
+          for (const ai of T.OT){
+            if (!ai || ai.state === 'off' || ai.s == null) continue;
+            out.push({ pid:'ai:'+ai.name, name:'AI '+ai.name, dir:ai.dir||1, s:ai.s, v:ai.v||0, state:ai.state === 'dwell' ? 'dwell' : 'run', delay:0, kind:(ai.dispHold||ai.troubleActive) ? 'hold' : 'ai', key:ai.key, cars:6 });
+          }
+        } else {
+          const D = dispSimOf(id);
+          if (D) for (const t of D.trains) out.push({ pid:t.id, name:dispSimName(id, t.idx), dir:t.dir, s:t.s, v:t.v, state:t.state, delay:t.delay, kind:(t.hold||t.trouble) ? 'hold' : 'sim', key:t.dir > 0 ? 'A' : 'B', cars:t.cars });
+        }
       }
       return out;
     }
@@ -10909,15 +10933,17 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         if (ctx.roundRect) ctx.roundRect(x0, lane - 6, wPx, 12, 3); else ctx.rect(x0, lane - 6, wPx, 12);
         ctx.fill();
         if (sel){ ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke(); }
-        /* 名前（重なるときは選択中の列車だけ表示して読みやすくする） */
+        /* 名前（重なるときは上下に段をずらして全列車を表示） */
         const tag = tr.name + (tr.delay > 0 ? ' +' + Math.max(1, Math.round(tr.delay / 60)) + '分' : '');
         ctx.font = '700 10.5px ' + FONT;
         const tw = ctx.measureText(tag).width;
-        const ty = tr.dir > 0 ? lane - 12 : lane + 24;
+        let ty = tr.dir > 0 ? lane - 12 : lane + 24;
         const tx = Math.min(W - tw - 8, Math.max(4, x - tw / 2));
-        let clash = false;
-        for (const lb of drawnLabels) if (Math.abs(lb.y - ty) < 14 && tx < lb.x + lb.w && tx + tw + 8 > lb.x){ clash = true; break; }
-        if (clash && !sel){ dispHitBoxes.push({ pid: tr.pid, x, y: lane, rx: x0, ry: lane - 8, rw: wPx, rh: 16 }); continue; }
+        for (let row = 0; row < 4; row++) {
+          const candY = tr.dir > 0 ? (lane - 12 - row * 17) : (lane + 24 + row * 17);
+          const hit = drawnLabels.some(lb => Math.abs(lb.y - candY) < 14 && tx < lb.x + lb.w && tx + tw + 8 > lb.x);
+          if (!hit) { ty = candY; break; }
+        }
         drawnLabels.push({ x:tx, y:ty, w:tw + 8 });
         ctx.fillStyle = sel ? 'rgba(120,63,6,0.95)' : 'rgba(6,14,24,0.9)';
         ctx.strokeStyle = sel ? '#fbbf24' : 'rgba(120,150,180,0.45)';

@@ -449,7 +449,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.2.4)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.2.5)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -477,7 +477,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v2.2.4 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.2.5 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -675,7 +675,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.2.4)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.2.5)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -720,7 +720,18 @@ body.disp-monitor #gl{display:none!important}
       <div class="credits-box" style="text-align:left;line-height:1.7;">
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.2.4</span>
+            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.2.5</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.2.5 (2026.11.22)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">AI列車本数の指令所統一・駅選択での前後1kmAI列車表示＆接近ブロック</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>AI列車の本数を指令所の表示と完全一致化</b>：本線・各支線のAI列車数を適正本数に統一し、指令所でも重なったラベルを段分けして全列車を表示するようにしました</li>
+            <li><b>駅選択時の前後1kmAI列車表示・開始ブロックを修正</b>：プレイヤーだけでなく同じ線路の前後1,000m以内のAI列車もリアルタイムで検出し、近くの駅を「⛔ 接近中」として選択不可にしました</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#64748b;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.2.4</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v2.2.4 (2026.11.22)</h3>
           </div>
           <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">AI列車のオンライン同期安定化・他プレイヤー列車乗車後の車内移動修正</div>
@@ -1471,7 +1482,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.2.4)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.2.5)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1558,7 +1569,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=141', function() {});
+      loadScript('assets/js/game.js?v=142', function() {});
     });
   });
 })();
