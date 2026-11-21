@@ -1,5 +1,69 @@
 (function(){
 'use strict';
+/* ===== 毎日・季節連動の自動天気／毎月の自動ダイヤ（日付シード・全員同じ） =====
+   プレイヤーは選ばない。日付（と季節）から決定論的に決まるので、同じ日は全員同じ天気・同じダイヤになる。
+   端末の時計が同じ日付なら、サーバーなしで全員に同じ条件が出る。 */
+function _hashStr(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function _rng01(seed){let t=(seed+0x6D2B79F5)>>>0;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;}
+function _ymd(d){return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function seasonOfDate(d){const m=d.getMonth()+1;return (m===12||m<=2)?'winter':m<=5?'spring':m<=8?'summer':'autumn';}
+const SEASON_KANJI={winter:'冬',spring:'春',summer:'夏',autumn:'秋'};
+/* 季節ごとの出現確率（合計1.0）。冬は雪、夏は霧・雨が増える */
+const WX_SEASON={
+  winter:{clear:0.38,cloudy:0.30,snow:0.22,fog:0.06,rain:0.04},
+  spring:{clear:0.50,cloudy:0.26,rain:0.19,fog:0.05},
+  summer:{clear:0.52,cloudy:0.24,rain:0.17,fog:0.07},
+  autumn:{clear:0.48,cloudy:0.29,rain:0.16,fog:0.07}
+};
+const WX_ORDER=['clear','cloudy','rain','snow','fog'];
+function _wxPick(d){
+  const tbl=WX_SEASON[seasonOfDate(d)],r=_rng01(_hashStr('wx-'+_ymd(d)));let acc=0;
+  for(const k of WX_ORDER){const p=tbl[k]||0;if(r<acc+p)return k;acc+=p;}return 'clear';
+}
+/* 日付だけから決まる天気。前日と同じ天気にはならず、毎日変わる */
+function weatherForDate(d){
+  const today=_wxPick(d);const prev=new Date(d.getTime()-86400000);const y=_wxPick(prev);
+  if(today!==y)return today;
+  const tbl=WX_SEASON[seasonOfDate(d)],avail=WX_ORDER.filter(k=>(tbl[k]||0)>0&&k!=='fog');
+  const i=Math.max(0,avail.indexOf(today));return avail[(i+1)%avail.length]||today;
+}
+/* 月ごとの自動ダイヤ：臨時・団体ダイヤ2日、変更ダイヤ2日（日付は重ならない） */
+const _diaMonthCache={};
+function monthlyDiaPlan(d){
+  const y=d.getFullYear(),m=d.getMonth(),key=y+'-'+m;
+  if(_diaMonthCache[key])return _diaMonthCache[key];
+  const dim=new Date(y,m+1,0).getDate(),seed=_hashStr('dia-'+key);
+  const used=new Set(),pick=(salt)=>{for(let i=0;i<600;i++){const v=(_rng01((seed+salt*7919+i*2654435761)>>>0)*dim|0)+1;if(!used.has(v)){used.add(v);return v;}}return 1;};
+  const extra=[pick(1),pick(2)],change=[pick(3),pick(4)];
+  const plan={extra:extra.sort((a,b)=>a-b),change:change.sort((a,b)=>a-b),key};
+  _diaMonthCache[key]=plan;return plan;
+}
+function diaForDate(d){
+  const p=monthlyDiaPlan(d),day=d.getDate();
+  if(p.extra.includes(day))return 'extra';
+  if(p.change.includes(day))return 'change';
+  return 'normal';
+}
+const DIA_NAME={normal:'通常ダイヤ',extra:'臨時・団体ダイヤ',change:'変更ダイヤ'};
+const WX_NAME={clear:'晴れ',cloudy:'曇り',rain:'雨',snow:'雪',fog:'霧'};
+const WX_ICON={clear:'☀️',cloudy:'☁️',rain:'🌧️',snow:'❄️',fog:'🌫️'};
+function dailyCondition(){const now=new Date();const wid=weatherForDate(now),dia=diaForDate(now);
+  return {wid,dia,date:now,wxName:(WX_NAME[wid]||'晴れ'),season:SEASON_KANJI[seasonOfDate(now)],diaName:DIA_NAME[dia]};}
+/* タイトル・運転条件モーダル・HUDの「今日の天気／ダイヤ」表示を更新する */
+function dailyCondText(){
+  const c=(window.__DAILY_COND&&window.__DAILY_COND.wid)?window.__DAILY_COND:dailyCondition();
+  const wk=['日','月','火','水','木','金','土'][c.date.getDay()];
+  return {short:WX_ICON[c.wid]+' '+c.wxName+'　'+DIA_NAME[c.dia],
+    long:WX_ICON[c.wid]+' 今日の天気：'+c.wxName+'（'+c.season+'・'+ (c.date.getMonth()+1)+'月'+c.date.getDate()+'日 '+wk+'）\n🚄 今日のダイヤ：'+DIA_NAME[c.dia]+'（毎月自動で変わります）'};
+}
+function refreshDailyCond(){
+  let t=null;try{t=dailyCondText();}catch(e){return;}
+  const a=document.getElementById('dailyCondText');if(a)a.textContent=t.short;
+  const m=document.getElementById('dailyCondModal');if(m)m.textContent=t.long;
+  const b=document.getElementById('condBadge');
+  if(b){b.innerHTML=WX_ICON[(window.__DAILY_COND||{}).wid||'clear']+' '+((window.__DAILY_COND||{}).wxName||'')+'<br>🚄 '+((window.__DAILY_COND||{}).diaName||'')+'<span style="opacity:.65">（'+(((window.__DAILY_COND||{}).season)||'')+'）</span>';}
+}
+window.__refreshDailyCond=refreshDailyCond;
 /* 画質・動作の設定：extreme=最軽量 ultralight=超軽量（低スペック向け） light=軽い normal=普通 heavy=重い（最高画質） */
 const AV_DEF={female:false,height:170,skin:0,hair:0,hairLong:false,tails:false,topStyle:'shirt',top:0x2f3b52,sleeve:'long',bottom:'long',bottomC:0x2b2d33,skirtType:1,skirtLen:0.36,sock:0,sockC:0xf4f2ec,shoeC:0x2a2a2a,bag:0,glasses:false};
 let AVATAR=(()=>{try{return Object.assign({},AV_DEF,JSON.parse(localStorage.getItem('td_avatar')||'{}'));}catch(e){return Object.assign({},AV_DEF);}})(); /* 乗客モードの自分の見た目 */
@@ -1563,69 +1627,7 @@ _on(renderer.domElement,'webglcontextrestored',()=>{CTXLOST=false; /* 画像を�
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, isMobileDevice ? 1.0 : 1.1));
 renderer.setSize(innerWidth,innerHeight);renderer.domElement.id='gl';document.body.prepend(renderer.domElement);
 const scene=new THREE.Scene();scene.fog=new THREE.Fog(0xc4d6e6,200,1400);scene.background=new THREE.Color(0xc4d6e6);
-/* ===== 毎日・季節連動の自動天気／毎月の自動ダイヤ（日付シード・全員同じ） =====
-   プレイヤーは選ばない。日付（と季節）から決定論的に決まるので、同じ日は全員同じ天気・同じダイヤになる。
-   端末の時計が同じ日付なら、サーバーなしで全員に同じ条件が出る。 */
-function _hashStr(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
-function _rng01(seed){let t=(seed+0x6D2B79F5)>>>0;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;}
-function _ymd(d){return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
-function seasonOfDate(d){const m=d.getMonth()+1;return (m===12||m<=2)?'winter':m<=5?'spring':m<=8?'summer':'autumn';}
-const SEASON_KANJI={winter:'冬',spring:'春',summer:'夏',autumn:'秋'};
-/* 季節ごとの出現確率（合計1.0）。冬は雪、夏は霧・雨が増える */
-const WX_SEASON={
-  winter:{clear:0.38,cloudy:0.30,snow:0.22,fog:0.06,rain:0.04},
-  spring:{clear:0.50,cloudy:0.26,rain:0.19,fog:0.05},
-  summer:{clear:0.52,cloudy:0.24,rain:0.17,fog:0.07},
-  autumn:{clear:0.48,cloudy:0.29,rain:0.16,fog:0.07}
-};
-const WX_ORDER=['clear','cloudy','rain','snow','fog'];
-function _wxPick(d){
-  const tbl=WX_SEASON[seasonOfDate(d)],r=_rng01(_hashStr('wx-'+_ymd(d)));let acc=0;
-  for(const k of WX_ORDER){const p=tbl[k]||0;if(r<acc+p)return k;acc+=p;}return 'clear';
-}
-/* 日付だけから決まる天気。前日と同じ天気にはならず、毎日変わる */
-function weatherForDate(d){
-  const today=_wxPick(d);const prev=new Date(d.getTime()-86400000);const y=_wxPick(prev);
-  if(today!==y)return today;
-  const tbl=WX_SEASON[seasonOfDate(d)],avail=WX_ORDER.filter(k=>(tbl[k]||0)>0&&k!=='fog');
-  const i=Math.max(0,avail.indexOf(today));return avail[(i+1)%avail.length]||today;
-}
-/* 月ごとの自動ダイヤ：臨時・団体ダイヤ2日、変更ダイヤ2日（日付は重ならない） */
-const _diaMonthCache={};
-function monthlyDiaPlan(d){
-  const y=d.getFullYear(),m=d.getMonth(),key=y+'-'+m;
-  if(_diaMonthCache[key])return _diaMonthCache[key];
-  const dim=new Date(y,m+1,0).getDate(),seed=_hashStr('dia-'+key);
-  const used=new Set(),pick=(salt)=>{for(let i=0;i<600;i++){const v=(_rng01((seed+salt*7919+i*2654435761)>>>0)*dim|0)+1;if(!used.has(v)){used.add(v);return v;}}return 1;};
-  const extra=[pick(1),pick(2)],change=[pick(3),pick(4)];
-  const plan={extra:extra.sort((a,b)=>a-b),change:change.sort((a,b)=>a-b),key};
-  _diaMonthCache[key]=plan;return plan;
-}
-function diaForDate(d){
-  const p=monthlyDiaPlan(d),day=d.getDate();
-  if(p.extra.includes(day))return 'extra';
-  if(p.change.includes(day))return 'change';
-  return 'normal';
-}
-const DIA_NAME={normal:'通常ダイヤ',extra:'臨時・団体ダイヤ',change:'変更ダイヤ'};
-const WX_ICON={clear:'☀️',cloudy:'☁️',rain:'🌧️',snow:'❄️',fog:'🌫️'};
-function dailyCondition(){const now=new Date();const wid=weatherForDate(now),dia=diaForDate(now);
-  return {wid,dia,date:now,wxName:WXDEF[wid].n,season:SEASON_KANJI[seasonOfDate(now)],diaName:DIA_NAME[dia]};}
-/* タイトル・運転条件モーダル・HUDの「今日の天気／ダイヤ」表示を更新する */
-function dailyCondText(){
-  const c=(window.__DAILY_COND&&window.__DAILY_COND.wid)?window.__DAILY_COND:dailyCondition();
-  const wk=['日','月','火','水','木','金','土'][c.date.getDay()];
-  return {short:WX_ICON[c.wid]+' '+c.wxName+'　'+DIA_NAME[c.dia],
-    long:WX_ICON[c.wid]+' 今日の天気：'+c.wxName+'（'+c.season+'・'+ (c.date.getMonth()+1)+'月'+c.date.getDate()+'日 '+wk+'）\n🚄 今日のダイヤ：'+DIA_NAME[c.dia]+'（毎月自動で変わります）'};
-}
-function refreshDailyCond(){
-  let t=null;try{t=dailyCondText();}catch(e){return;}
-  const a=document.getElementById('dailyCondText');if(a)a.textContent=t.short;
-  const m=document.getElementById('dailyCondModal');if(m)m.textContent=t.long;
-  const b=document.getElementById('condBadge');
-  if(b){b.innerHTML=WX_ICON[(window.__DAILY_COND||{}).wid||'clear']+' '+((window.__DAILY_COND||{}).wxName||'')+'<br>🚄 '+((window.__DAILY_COND||{}).diaName||'')+'<span style="opacity:.65">（'+(((window.__DAILY_COND||{}).season)||'')+'）</span>';}
-}
-window.__refreshDailyCond=refreshDailyCond;
+
 /* ===== 天候設定（自動。プレイヤーは選ばない）===== */
 const WXDEF={
   clear:{n:'晴れ',sky:0xc4d6e6,fog:[0xc4d6e6,260,1700],sun:1.0,amb:0.9,trac:1.0,vis:1.0},
