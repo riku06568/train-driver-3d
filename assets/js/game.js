@@ -197,7 +197,7 @@ let WX=null,DIASH='normal',DEPOT_START=false,WXF=1,WXPTS=null,WXPOS=null;
 function stopsOf(stations,kind){const chg=(DIASH==='change');
   return stations.filter(st=>kind==='rapid'?(chg?(st.cls==='M'||st.cls==='X'||(st.cls==='R'&&st.i%2===0)):st.cls!=='L')
     :kind==='ltd'?(st.cls==='M'||st.cls==='X')
-    :kind==='exp'?(chg?(st.cls==='M'||st.cls==='X'):st.cls==='M') /* 特急は汐見と主要駅だけ（快速特急より少ない） */
+    :kind==='exp'?(chg?(st.i===0||st.cls==='M'||st.cls==='X'):(st.i===0||st.cls==='M')) /* 特急は汐見と主要駅だけ（快速特急より少ない） */
     :true);}
 function lapTime(cfg,stations,kind){ // rough timetable estimate for one lap / one way
   const stops=stopsOf(stations,kind),vc={local:21,rapid:29,ltd:32,exp:30,branch:18}[kind],dw={local:30,rapid:35,ltd:40,exp:38,branch:30}[kind];let t=0;
@@ -1581,8 +1581,8 @@ for(const k in TK){TK[k].y=(k==='G'||k==='H')?ltdY:Yat;const m=TK[k].main;TK[k].
 const serves=(st,k)=>{if(DIASH==='change'&&!BRANCH){
   /* 変更ダイヤ：快速が特急並み、特急が快速並みの停車駅になる（自分の列車にも適用） */
   if(k==='C'||k==='D')return st.cls==='M'||st.cls==='X'||(st.cls==='R'&&st.i%2===0);
-  if(k==='G'||k==='H')return st.cls==='M'||st.cls==='X';}
-  return k==='A'||k==='B'?true:(k==='C'||k==='D')?(BRANCH?(B3&&RSTOPS_B3.has(st.i)):st.cls!=='L'):(k==='E'||k==='F')?(st.cls==='M'||st.cls==='X'):(k==='G'||k==='H')?(!BRANCH&&st.cls==='M'):(k==='I'||k==='J')?(!BRANCH&&st.i===0):false;};
+  if(k==='G'||k==='H')return st.i===0||st.cls==='M'||st.cls==='X';}
+  return k==='A'||k==='B'?true:(k==='C'||k==='D')?(BRANCH?(B3&&RSTOPS_B3.has(st.i)):st.cls!=='L'):(k==='E'||k==='F')?(st.cls==='M'||st.cls==='X'):(k==='G'||k==='H')?(!BRANCH&&(st.i===0||st.cls==='M')):(k==='I'||k==='J')?(!BRANCH&&st.i===0):false;};
 const KIND={A:'local',B:'local',C:'rapid',D:'rapid',E:'ltd',F:'ltd',G:'exp',H:'exp',I:'local',J:'local'};
 const PARTNER={A:'C',C:'A',B:'D',D:'B',G:'E',E:'G',H:'F',F:'H'};
 const partnerAt=(st,k)=>isM(st)?({C:'E',E:'C',D:'F',F:'D'})[k]:PARTNER[k]; // who arrives across the island
@@ -3889,7 +3889,7 @@ function inZone(){const fi=flowSt(),fk=fkey();for(const p of active){if(p.flow!=
   if(Math.abs(p.o-p.trackO)<2.2&&Math.abs(p.s-p.doorS)<1.1)return true;}return false;}
 function doorBlocked(){return inZone()||(isTrainFull(G.load,G.key)&&jamCount()>0);}
 function jamCount(){const fi=flowSt(),fk=fkey();let n=0;for(const p of active){if(p.flow===fk&&p.st===fi&&p.kind==='jam'&&p.g.visible)n++;}return n;}
-function pending(){const fi=flowSt(),fk=fkey();return active.some(p=>p.flow===fk&&p.st===fi&&(p.kind==='board'||p.kind==='alight'||p.kind==='jam'||p.kind==='runner')&&(p.kind==='jam'||p.delay>0||(p.path&&p.path.length)));}
+function pending(){if(typeof G!=='undefined'&&G&&(G.key==='G'||G.key==='H'))return false; /* 特急の地下ホームは乗降の列を作らない */const fi=flowSt(),fk=fkey();return active.some(p=>p.flow===fk&&p.st===fi&&(p.kind==='board'||p.kind==='alight'||p.kind==='jam'||p.kind==='runner')&&(p.kind==='jam'||p.delay>0||(p.path&&p.path.length)));}
 function abandonPending(){const fi=flowSt(),fk=fkey(),st=STATIONS[fi];if(fi<0||!st)return;
   for(const p of active.slice()){if(p.flow!==fk||p.st!==fi)continue;
     /* 線路側に近い人はホームに戻さず乗車扱い */
@@ -9593,7 +9593,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const modeBadge = isMinatomi 
       ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン専用</span>'
       : '<span style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.12);">🌐 常時オンライン</span>';
-    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡線（7駅・複線・各駅停車）。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '主要駅と快速停車駅の一部に停車。快速特急と同じ中央の線路を最高135km/hで走ります。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
+    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡線（7駅・複線・各駅停車）。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。起点の先はすべて地下を走る複線。' : S.line === 'branch3' ? (S.rapid ? '天宮〜峰月の快速（15駅停車・本線と同じ電車）。退避駅で各駅停車を追い越します。' : '天宮から峰月まで40駅。2面4線・通過線の駅で快速を待避します。') : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '汐見駅と主要駅だけに停車。環状線の地下を専用線で走る、全車グリーン車の最速210km/h列車です。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
     b.addEventListener('click', () => {
       currentDutyView = isBranch ? 'viewBranch' : 'viewLoop';
       pickStation(id);
