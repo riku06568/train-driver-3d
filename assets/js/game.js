@@ -3926,14 +3926,17 @@ function spawnOneWait(st,k,doors,list,q,already,pReuse){ /* already=true: 最初
   p.st=st.i;p.kind='wait';p.flow=k;p.j=j;p.q=qi;p.face=-sd;p.trackO=base;
   const {col,row}=queueSlot(qi);
   /* 前後（線路方向）に列、横に並びきれない分の列 */
-  const tgtS=doors[j]+col*0.92+(row%2?0.20:-0.20);
-  let tgtO=clamp(base+sd*(2.45+row*0.62),oMin,oMax);
+  let tgtS=doors[j]+col*0.92+(row%2?0.20:-0.20);
+  let wantO=base+sd*(2.45+row*0.62);
   /* ホームドアのある駅：閉じた戸の内側（安全な位置）より線路側には並ばせない。
      列は「線路から離れる向き」に広げる（同じ位置に固まらないように） */
   if(st.hd){const hd=st.hd[k]||st.hd['S'+k];if(hd&&hd.line!=null){const sd2=hd.sd!=null?hd.sd:sd,safe=hd.line+sd2*0.80;
-    tgtO=clamp(safe+sd*(0.58*row),oMin,oMax);}}
+    wantO=safe+sd*(0.58*row);}}
+  /* ホームの端まで来て横に広げられない分は、線路方向にずらして間隔を保つ */
+  let tgtO=clamp(wantO,oMin,oMax);tgtS+=clamp(wantO-tgtO,-3,3)*1.15;
+  tgtS=clamp(tgtS,doors[j]-4.2,doors[j]+4.2);
   /* すでに並んでいる人と重ならない位置まで、線路から離れる向きにずらす */
-  {let tries=0;while(tries<8&&list.some(q2=>q2!==p&&q2.kind==='wait'&&q2.flow===k&&Math.hypot(q2.s-tgtS,q2.o-tgtO)<0.6)){tgtO=clamp(tgtO+sd*0.34,oMin,oMax);tries++;}}
+  {let tries=0;while(tries<10&&list.some(q2=>q2!==p&&q2.kind==='wait'&&q2.flow===k&&Math.hypot(q2.s-tgtS,q2.o-tgtO)<0.62)){const b4=tgtO;tgtO=clamp(tgtO+sd*0.34,oMin,oMax);if(Math.abs(tgtO-b4)<0.02)tgtS=clamp(tgtS+0.46,doors[j]-4.6,doors[j]+4.6);tries++;}}
   if(already){p.s=tgtS;p.o=tgtO;p.path=[];p.delay=0;}
   else{const [ss,so]=stairPt(st,k);p.s=ss;p.o=so;p.path=[[tgtS,tgtO]];p.speed=rand(1.15,1.55);p.delay=rand(0,0.4);}
   p.end=null;list.push(p);return p;
