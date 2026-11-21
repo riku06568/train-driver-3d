@@ -2287,12 +2287,20 @@ function buildLtdStation(st,c){
     /* 駅名サイン */
     const sgn=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.4),new THREE.MeshBasicMaterial({map:signTex(st,STATIONS[(st.i+NST-1)%NST].name,STATIONS[(st.i+1)%NST].name,st.kana),side:DS}));
     sgn.position.copy(offsG(st.s-2,o1>0?LTD_HALF-0.15:-LTD_HALF+0.15,D+4.0));sgn.rotation.y=-t+(o1>0?-Math.PI/2:Math.PI/2);addTo(c,sgn);
+    /* ホームの縁を光らせる（地下でもホームの位置が分かるように） */
+    ltdStrip(c,s0+2,s1-2,6,[[o0+(o0<0?0.02:-0.02),y+0.05],[o0+(o0<0?0.22:-0.22),y+0.05]],'rail');
     /* 出口への階段（ホーム端から地上へ） */
     const stS=st.s-40,oo=o1>0?LTD_OFF+4.2:-LTD_OFF-4.2;
     for(let q=0;q<9;q++){const yy=D+PH+q*2.3,h=new THREE.Mesh(boxGeo(3.2,0.3,6.0),concD);h.position.copy(offsG(stS-q*4.2,oo,yy+1.0));h.rotation.y=-t;addTo(c,h);}
     const up=new THREE.Mesh(boxGeo(3.6,26,1.0),wallM);up.position.copy(offsG(stS-40,oo,D+12));up.rotation.y=-t;addTo(c,up);
     const ex=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.8),new THREE.MeshBasicMaterial({map:canvasTex(256,80,(x,w,h2)=>{x.fillStyle='#0b3d2c';x.fillRect(0,0,w,h2);x.fillStyle='#c8f5d8';x.font='700 40px '+FONT;x.textAlign='center';x.textBaseline='middle';x.fillText('出口 Exit',w/2,h2/2);}),side:DS}));
     ex.position.copy(offsG(stS-8,oo,D+3.2));ex.rotation.y=-t;addTo(c,ex);
+  }
+  /* 進入してくる列車に見える駅名サイン（線路の上に吊るす） */
+  for(const k of ['G','H']){
+    const T=TK[k],off=T.off(st.s);
+    const sg=new THREE.Mesh(new THREE.PlaneGeometry(5.0,1.35),new THREE.MeshBasicMaterial({map:signTex(st,STATIONS[(st.i+NST-1)%NST].name,STATIONS[(st.i+1)%NST].name,st.kana),side:DS}));
+    sg.position.copy(offsG(s0-8,off,D+4.9));sg.rotation.y=-t+(T.dir>0?Math.PI:0);addTo(c,sg);
   }
   /* 中央の柱と天井照明 */
   for(let s2=s0+10;s2<s1-4;s2+=16){for(const o of [-11.6,0,11.6]){const p=new THREE.Mesh(boxGeo(0.5,6.8,0.5),conc);p.position.copy(offsG(s2,o,D+3.4));p.rotation.y=-t;addTo(c,p);}
