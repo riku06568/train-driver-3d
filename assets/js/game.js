@@ -3216,7 +3216,7 @@ for(const sg of [-1,1]){const x=sg*1.37;cbox(0.06,1.05,2.5,CM.shell,x,1.675,1.35
   cbox(0.5,0.1,0.5,CM.desk,-0.3,1.72,1.55);cbox(0.5,0.55,0.08,CM.desk,-0.3,2.05,1.82);cbox(0.08,0.55,0.08,CM.metal,-0.3,1.45,1.55);}
 const SALDOOR=[]; // the saloon doors slide with the real ones
 function updSalDoors(){const D=G.door,f=(D.state==='open'||D.state==='opening'||D.state==='closing')?D.frac:0;
-  for(const d of SALDOOR){const open=D.local===d.sg?f:0;d.m.position.z=d.base+d.k*(0.35+open*0.62);}}
+  for(const d of SALDOOR){const open=(D.local*SIDEINV)===d.sg?f:0;d.m.position.z=d.base+d.k*(0.35+open*0.62);}}
 /* passenger saloon behind the cab: same fittings as the rest of the train */
 const SM=OWNOLD?OLDI:TM;
 {const OFF=CARHALF,LY=salLayout(true,false); /* 運転台ローカル z = 車両ローカル z + 9.75 */
@@ -8067,13 +8067,13 @@ _on(window,'keydown',e=>{
   // キーボード操作：右矢印で右扉の開閉、左矢印で左扉の開閉、エンターキーでATO、スペースキーで次駅放送
   if(e.code==='ArrowRight'){
     e.preventDefault();
-    const isRightOpen=(G.door&&G.door.state==='open'&&G.door.side===-1*SIDEINV);
+    const isRightOpen=(G.door&&G.door.state==='open'&&G.door.local===1*SIDEINV);
     if(isRightOpen)doAct('rc');else doAct('ro');
     return;
   }
   if(e.code==='ArrowLeft'){
     e.preventDefault();
-    const isLeftOpen=(G.door&&G.door.state==='open'&&G.door.side===1*SIDEINV);
+    const isLeftOpen=(G.door&&G.door.state==='open'&&G.door.local===-1*SIDEINV);
     if(isLeftOpen)doAct('lc');else doAct('lo');
     return;
   }
