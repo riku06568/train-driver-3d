@@ -4279,7 +4279,7 @@ function aiRun(a,dt){
         if(Math.abs(sdiff(camS,a.stSt.s))<1400){const r=startFlows(a.stSt,a.key,a.stSt.s+T.so,a);a.load=term?r.b:clamp(a.load-Math.min(r.a,a.load)+r.b,0,maxLoadFor(a.key));}else if(term)a.load=0;else a.load=clamp(a.load+irand(-6,10),Math.round(trainLoadFor(a.key)*0.55),maxLoadFor(a.key));}}
     aiSounds(a,el,tot);if(a.t<=0&&BRANCH&&a.stSt&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0))&&a!==FT){aiTurn(a,a.stSt);}
     else if(a.t<=0){const leftSt=a.stSt;a.state='run';a.frac=0;a.forceDep=false;a.shiomiDepMs=0;}
-      /* 乗っている電車の発車後放送は updRide の「次駅放送」に一本化（同じ放送を2系統から同時に鳴らさない） */
+      /* 乗っている電車の発車後放送は updRide の「次駅放送」に一本化（同じ放送を2系統から同時に鳴らさない） */}
   if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if(a.charter&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,'臨時');}catch(e){}}}}
   /* 汐見13・14番線の列車は、本線へ合流したら各停として運転を続ける */
   if((a.key==='I'||a.key==='J')&&a.state==='run'&&Math.abs(sdiff(SH7,a.s))>950)convertCharterToMain(a);
