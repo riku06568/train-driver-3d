@@ -4174,6 +4174,14 @@ for(const k of ALLK){POOL[k]=[];TR_POOL[k]=[];const nP=BRANCH?10:(POOL_CNT_MAP[k
 /* 臨時・団体列車ダイヤ：汐見の前後から臨時列車を増発し、13・14番線に団体列車を停車させる。
    開始直後はどの列車も走っている（空きがない）ため、空きが出るまで数秒おきに再試行する。 */
 function charterCount(){let n=0;for(const a of OT)if(a.charter)n++;return n;}
+/* 臨時列車に使う車両を確保：空き車両がなければ、プレイヤーから十分離れた列車を転用する（見えない位置なので見た目は変わらない） */
+function takeFreeTrain(pool){
+  if(!pool)return null;
+  let a=pool.find(x=>x.state==='off'&&!x.charter);if(a)return a;
+  let best=null,bd=0;for(const x of pool){if(x.charter)continue;const d=Math.abs(sdiff(G.s,x.s));if(d>3000&&d>bd){bd=d;best=x;}}
+  if(best){try{releaseAiTr(best);}catch(e){}}
+  return best;
+}
 function spawnCharter(){
   if(BRANCH||PAX||G.phase!=='play')return;
   const cap=6;let n=0,ij=0;
@@ -4181,7 +4189,7 @@ function spawnCharter(){
   for(const k of ['A','B','C','D']){
     if(charterCount()+n>=cap)break;
     const pool=POOL[k];if(!pool)continue;
-    const a=pool.find(x=>x.state==='off');if(!a)continue;
+    const a=takeFreeTrain(pool);if(!a)continue;
     const d=TK[k].dir;
     const p2=mod(STATIONS[0].s+TK[k].so-d*(k==='A'||k==='C'?1400:2200),L);
     if(!hasTrack(p2)||!hasTrack(p2+d*160))continue;
@@ -4197,7 +4205,7 @@ function spawnCharter(){
     if(charterCount()+n>=cap)break;
     const has=OT.some(a=>a.key===k&&a.state!=='off');
     if(has)continue;
-    const src=(POOL.A&&POOL.A.find(x=>x.state==='off'))||(POOL.C&&POOL.C.find(x=>x.state==='off'));
+    const src=takeFreeTrain(POOL.A)||takeFreeTrain(POOL.C);
     if(!src)continue;
     src.key=k;src.dir=1;src.charter=true;src._cd=0;src.twoMan=false;src.vmax=VMAX.A;src.insideSet=false;
     src.last=-1;src.shiomiDepMs=0;
