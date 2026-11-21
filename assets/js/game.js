@@ -1346,8 +1346,6 @@ function sendPlayNotification(lineId, svcKey, startI, stName) {
    ===================================================================== */
 window.__PAX = false;
 function boot(LINE_ID,SVC,START_I){
-/* タイトルで選んだ運転条件（天候・ダイヤ・車庫出庫）を、この乗務の開始時に反映する */
-applyConditionState();
 /* 指令モニター等で既に3Dの世界を作っているときは、古い描画ループ・イベントリスナ・前のキャンバスを片付けてから作り直す */
 const TOKEN=(window.__FRAME_TOKEN||0)+1; window.__FRAME_TOKEN=TOKEN;
 if(window.__WORLD_ABORT){try{window.__WORLD_ABORT.abort();}catch(e){}}
