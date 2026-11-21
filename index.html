@@ -519,7 +519,7 @@ body.disp-monitor #gl{display:none!important}
         <button id="btnSelectLoop" class="duty-cat-card cat-loop">
           <div class="cat-badge">本線</div>
           <h3>🔁 汐見環状線</h3>
-          <p>全85駅・方向別三複線（内回り・外回り）。各駅停車・快速・快速特急・特急が走る都心大環状線。</p>
+          <p>全85駅・方向別三複線（内回り・外回り）。各駅停車・快速・快速特急が走る都心大環状線。</p>
           <div class="meta"><span>全85駅</span><span>一周 約1時間21分〜2時間57分</span><span>三複線</span></div>
         </button>
 
@@ -723,14 +723,14 @@ body.disp-monitor #gl{display:none!important}
             <span style="background:#0284c7;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.1.0</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v2.1.0 (2026.11.21)</h3>
           </div>
-          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">毎日の天気・毎月のダイヤ自動化、特急の地下全面刷新、四嶺連絡線の縮尺修正、放送の重なり修正、駅ごとの発車メロディ</div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">毎日の天気・毎月のダイヤ自動化、四嶺連絡線の縮尺修正、放送の重なり修正、駅ごとの発車メロディ</div>
           <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
             <li><b>運転条件はトラブル発生モードだけに</b>：天候・ダイヤ・車庫出庫の選択画面をなくし、走行中にトラブルを起こすかどうかだけを聞くようにしました</li>
             <li><b>毎日・季節ごとに自動で天気が変わる</b>：日付と季節から決まるので、同じ日は全員同じ天気・毎日かわります（晴れ・曇り・雨・雪・霧）</li>
             <li><b>毎月の自動ダイヤ</b>：毎月ランダムな2日に「臨時・団体ダイヤ」、別の2日に「変更ダイヤ」が自動で始まり、翌日には通常ダイヤに戻ります。今日の天気とダイヤはタイトル画面と運転中の画面に表示されます</li>
             <li><b>車庫からの出庫を廃止</b>：選択肢と出庫開始ルートをなくしました</li>
             <li><b>先頭車の車内モニターが運転席に飛び出す不具合を修正</b>：最前部の液晶を客室の内側に収めました</li>
-            <li><b>特急を全面刷新</b>：環状線の地下を専用線で走り、汐見駅と主要駅だけに停車、全車両が1階建てのグリーン車、AI列車は10分間隔、最高速度210km/hに対応（速度計・制限速度・信号も）</li>
+            <li><b>特急の廃止</b>：種別「特急」を廃止し、各駅停車・快速・快速特急の3種別構成に整理しました</li>
             <li><b>四嶺連絡線の縮尺を修正</b>：環状線と各支線の終点の位置関係から距離を計算し、全長を約71kmに修正しました</li>
             <li><b>ご意見箱の表示・操作を修正</b>：スクロール・返信の表示・送信・閉じる動きを点検して直しました</li>
             <li><b>「改札口へ」ボタンの位置を修正</b>：ほかのボタンと同じ並びに移して押しやすくしました</li>
@@ -1482,7 +1482,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=132', function() {});
+      loadScript('assets/js/game.js?v=133', function() {});
     });
   });
 })();

@@ -173,7 +173,6 @@ function genPath(L,R0){const px=new Float64Array(L+1),pz=new Float64Array(L+1),t
 const SERVICES={lo:{key:'A',name:'各駅停車　外回り',short:'各停 外回り',en:'Local, Outer Circle',col:'#14935f',kind:'local'},li:{key:'B',name:'各駅停車　内回り',short:'各停 内回り',en:'Local, Inner Circle',col:'#14935f',kind:'local'},
   ro:{key:'C',name:'快速　外回り',short:'快速 外回り',en:'Rapid, Outer Circle',col:'#e8731e',kind:'rapid'},ri:{key:'D',name:'快速　内回り',short:'快速 内回り',en:'Rapid, Inner Circle',col:'#e8731e',kind:'rapid'},
   eo:{key:'E',name:'快速特急　外回り',short:'快特 外回り',en:'Limited Rapid Express, Outer Circle',col:'#c8322b',kind:'ltd'},ei:{key:'F',name:'快速特急　内回り',short:'快特 内回り',en:'Limited Rapid Express, Inner Circle',col:'#c8322b',kind:'ltd'},
-  xo:{key:'G',name:'特急　外回り',short:'特急 外回り',en:'Limited Express, Outer Circle',col:'#1f5fbf',kind:'exp'},xi:{key:'H',name:'特急　内回り',short:'特急 内回り',en:'Limited Express, Inner Circle',col:'#1f5fbf',kind:'exp'},
   pax:{key:'A',name:'乗客モード　環状線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax'},paxb:{key:'A',name:'乗客モード　白峰支線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax',branch:true,line:'branch'},
   pax2:{key:'A',name:'乗客モード　紫雲地下線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax',branch:true,line:'branch2'},pax3:{key:'A',name:'乗客モード　天宮高架線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax',branch:true,line:'branch3'},
   bu:{key:'A',name:'白峰支線　奥峰行き',short:'支線 奥峰行',en:'Shiramine Branch Line',col:'#5aa832',kind:'branch',branch:true,line:'branch',dir:1},bd:{key:'B',name:'白峰支線　白峰行き',short:'支線 白峰行',en:'Shiramine Branch Line',col:'#5aa832',kind:'branch',branch:true,line:'branch',dir:-1},
@@ -1544,8 +1543,8 @@ function cityOff(ci,side,j,which){return s=>{const st=STATIONS[ci],u=sdiff(st.s-
 const CITYPAIRS=[];
 for(const ci of BIG){const st=STATIONS[ci];let n=0;const sides=BRANCH?[1]:[-1,1];for(const side of sides)for(const j of [0,1]){const ln=st.lines[n++];if(!ln)continue;CITYPAIRS.push({ci,side,j,line:ln,t1:cityOff(ci,side,j,0),t2:cityOff(ci,side,j,1)});}}
 const KEYS=BRANCH?(B3?['A','B','C','D']:['A','B']):['A','B','C','D','E','F'];
-const EXK=BRANCH?[]:['G','H'];                      // 特急（快速特急と同じ線路・ホームを使う）
-const ALLK=BRANCH?KEYS:KEYS.concat(EXK);            // AI列車プールは特急も含む
+const EXK=[];                                     // 特急は廃止
+const ALLK=KEYS;                                    // AI列車プールはKEYSのみ
 const TRACKS=[];
 for(const k of (MINI?['A']:BRANCH?['A','B']:KEYS))TRACKS.push({k,off:{A:()=>0,B:sepB,C:offC,D:offD,E:offE,F:offF}[k],a:BRANCH?TRK0:null,b:TRK1});
 if(!BRANCH){const s0=STATIONS[0],sa=s0.s-PBof(s0)-460,sb=s0.s+PF+460;for(const k of KEYS)TRACKS.push({k:'S'+k,off:s=>TK[k].off(s)-TK[k].dir*8.6*shiomiBump(s),a:sa,b:sb});} /* 汐見駅：各線路にプレイヤー退避線（左側）を追加し12線化 */
@@ -2328,7 +2327,7 @@ function buildChunk(c){const ch=CHUNKS[c];if(ch.built)return;ch.g=new THREE.Grou
     for(let s2=Math.ceil(a/0.7)*0.7;s2<b;s2+=0.7)inst(c,'sleeper',s2,T.off(s2),0.34);
     if(T.yard)continue;const pts=[];for(let s2=a;s2<=b;s2+=10)pts.push(offs(s2,T.off(s2),6.3));
     if(pts.length>1)addTo(c,new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),WIREMAT));}
-  try{buildLtdChunk(c,c0,c1);}catch(e){console.warn(e);}
+  /* 特急（G/H）は廃止したため地下トンネル・地下駅は生成しない */
   for(let s2=c0+20;s2<c1;s2+=50){if(Yat(s2)<-6||!hasTrack(s2))continue;let [lo,hi]=ourSpan(s2);
     if(s2>DEPOT.a-20&&s2<DEPOT.b+180&&!shiomiBump(s2)){lo=-3.2;}
     inst(c,'post',s2,lo-0.6,3.6);inst(c,'post',s2,hi+0.6,3.6);inst(c,'beam',s2,(lo+hi)/2,7.0,hi-lo+1.5,1,1);}
@@ -7085,7 +7084,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   if(DIASH!=='normal'&&!PAX){
     setTimeout(()=>{if(G.phase!=='play')return;
       try{playGuide(DIASH==='extra'?'dia_extra':'dia_change');}catch(e){}
-      toast(DIASH==='extra'?'臨時・団体列車ダイヤ：臨時列車が増発されています':'変更ダイヤ：快速・特急の停車駅が変更されています','ok');},3000);
+      toast(DIASH==='extra'?'臨時・団体列車ダイヤ：臨時列車が増発されています':'変更ダイヤ：停車駅が変更されています','ok');},3000);
   }
   try{preloadStationAnnounce(stOf(G.nv));}catch(e){}
   G.tabNextAnn=false;G.tabDepSwitched=false;G.tabAnnMode=null;G.tabDepAnnDone=false;G.tabSoonAnnDone=false;
@@ -7158,16 +7157,12 @@ function platformsOf(st){const out=[],s=st.s-62;
     add('7・8番線　快速特急 内回り（左:退避 / 右:AI）',['F'],sr('F'));
     add('9・10番線　快速 内回り（左:退避 / 右:AI）',['D'],sr('D'));
     add('11・12番線　各停 内回り（左:退避 / 右:AI）',['B'],sr('B'));
-    add('15番線（地下）　特急 外回り',['G'],platRange(st,'G'));
-    add('16番線（地下）　特急 内回り',['H'],platRange(st,'H'));
   }else if(st.cls==='M'){
     const rA=platRange(st,'A'),rB=platRange(st,'B'),rC=platRange(st,'C'),rD=platRange(st,'D');
     add('1番線　各停 外回り',['A'],rA,sideStair(rA[0],rA[1],true));
     add('2・3番線　快速・快速特急 外回り',['C','E'],rC); /* 島式：中央に階段 */
     add('4・5番線　快速特急・快速 内回り',['F','D'],rD);
     add('6番線　各停 内回り',['B'],rB,sideStair(rB[0],rB[1],false));
-    add('地下1番線　特急 外回り',['G'],platRange(st,'G'));
-    add('地下2番線　特急 内回り',['H'],platRange(st,'H'));
   }else{
     add('1・2番線　各停・快速 外回り',['A','C'],platRange(st,'A'));
     if(st.cls==='X')add('3・4番線　快速特急 外回り・内回り',['E','F'],platRange(st,'E'));
@@ -10944,7 +10939,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         date: '2026/11/18',
         sender: '名無し運転士さん',
         q: '種別を追加してください。 特急を追加してほしいです。',
-        a: 'ご意見ありがとうございます！新しい種別「特急」を追加しました。\n快速特急と同じ中央の線路を最高135km/hで走り、主要駅と快速停車駅の一部に停車します。専用の車体色・前面表示・車内/駅のLCD・放送（すべて事前録音）・AI列車の運転にも対応しています。路線選択の「本線」からどうぞ。\n（v2.1.0で、環状線の地下を走る専用線・全車1階建てのグリーン車・最高210km/h・汐見駅と主要駅だけに停車する、快速特急の上位版に刷新しました）'
+        a: 'ご意見ありがとうございます！新しい種別「特急」を追加しました。\n（※特急は v2.1.0 のアップデートにて廃止し、各停・快速・快速特急の3種別構成に戻しました）'
       },
       {
         id: 3,
