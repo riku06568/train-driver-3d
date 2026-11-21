@@ -1981,10 +1981,16 @@ function buildConcourse(c,st){const C=concourseGeom(st),B=(st.concY!=null?st.con
   for(const ds of [-C.len/2,C.len/2])put(26,H,0.25,mWall,C.sc+ds,om,B+H/2);                   // 線路方向の端の壁
   put(0.25,H,C.len,mWall,C.sc,C.o1,B+H/2);                                                    // 奥の壁
   put(0.18,1.1,C.len,mWall,C.sc,C.o0,B+0.55);                                                 // ホーム側の手すり壁
+  /* ホーム側はガラス板で仕切り、下のホームを見渡せるようにする */
+  {const gm=cmat(c,new THREE.MeshLambertMaterial({color:0xbcd6e8,transparent:true,opacity:0.22,side:DS}));
+    put(0.08,1.35,C.len,gm,C.sc,C.o0,B+1.78);
+    for(const ds of [-14,0,14])put(0.16,1.35,0.16,lam(0x7b8794),C.sc+ds,C.o0,B+1.78);}
   for(let i2=0;i2<4;i2++){const ss=C.sc-7.5+i2*2.1;                                            // 自動改札（4通路）
-    put(2.6,1.0,0.55,mGate,ss,C.o0-9,B+0.5);
-    const p1=sign(gateTex,ss,C.o0-9.9,B+0.9,0.5,0.25);p1.rotation.x=-0.5;}
-  put(2.6,1.0,0.55,mGate,C.sc+2.0,C.o0-9,B+0.5);
+    put(2.6,0.95,0.62,mSt,ss,C.o0-9,B+0.48);                                                  // 改札機の本体（金属）
+    put(2.66,0.10,0.68,lam(0x2b3038),ss,C.o0-9,B+0.98);                                       // 天板
+    const p1=sign(gateTex,ss,C.o0-8.66,B+0.72,1.05,0.42);p1.rotation.x=0;                      // ICリーダー面
+    const p2=sign(gateTex,ss,C.o0-9.34,B+0.72,1.05,0.42,Math.PI);p2.rotation.x=0;}
+  put(2.6,0.95,0.62,mSt,C.sc+2.0,C.o0-9,B+0.48);put(2.66,0.10,0.68,lam(0x2b3038),C.sc+2.0,C.o0-9,B+0.98);
   sign(TEX_GATE,C.sc-3,C.o0-8.4,B+2.9,3.4,0.85);
   { // トイレ（入口・洗面・個室）
     const s0=C.sc+8,s1=C.sc+18,oF=C.o0-6,oB=C.o0-16,sm=(s0+s1)/2;
