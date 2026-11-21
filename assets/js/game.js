@@ -1994,6 +1994,31 @@ const HD_LCD_MATS={
   open:new THREE.MeshBasicMaterial({map:mkHdLcdTex('ドアが開きます','Doors opening · 足元にご注意','#092b1e','#22c55e',false)}),
   closing:new THREE.MeshBasicMaterial({map:mkHdLcdTex('ドアが閉まります','Doors closing · ご注意ください','#8f1111','#ef4444',true)})
 };
+const HD_LIVE_POOL=Array.from({length:16},()=>{
+  const m=mkCanvas(512,128);
+  const mat=new THREE.MeshBasicMaterial({map:m.tex});
+  return {c:m.c,x:m.x,tex:m.tex,mat,hd:null,sig:'',lastDraw:0};
+});
+function drawHdLcdLive(slot,mode,title,sub,bg,accent,alert,blinkOn){
+  const sig=mode+'|'+title+'|'+sub+'|'+(blinkOn?1:0);
+  if(slot.sig===sig)return;
+  slot.sig=sig;
+  const x=slot.x,w=512,h=128;
+  x.fillStyle=bg;x.fillRect(0,0,w,h);
+  x.fillStyle=accent;x.fillRect(0,0,w,10);
+  if(alert){
+    x.fillStyle=blinkOn?'rgba(255,255,255,0.20)':'rgba(255,255,255,0.06)';
+    for(let i=-h;i<w+h;i+=28){x.beginPath();x.moveTo(i,h);x.lineTo(i+12,h);x.lineTo(i+h+12,0);x.lineTo(i+h,0);x.closePath();x.fill();}
+  }
+  const fnt='"Noto Sans JP","Hiragino Sans","Apple SD Gothic Neo","PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillStyle='#ffffff';x.textAlign='center';x.textBaseline='middle';
+  x.font='800 34px '+fnt;
+  fitText(x,title,w/2,48,w-28,34,'800','center');
+  x.fillStyle='rgba(255,255,255,0.90)';
+  x.font='600 20px '+fnt;
+  fitText(x,sub,w/2,90,w-28,20,'600','center');
+  slot.tex.needsUpdate=true;
+}
 const HD_LAMP_MATS={
   wait:new THREE.MeshBasicMaterial({color:0x38bdf8}),
   open:new THREE.MeshBasicMaterial({color:0x22c55e}),
@@ -5203,9 +5228,16 @@ function chime(dest, type){
   if (!AC) return;
   initAudio();
   const out = dest || master;
-  const isLtd = type === 'ltd' || (typeof G !== 'undefined' && G && G.key && KIND[G.key] === 'ltd');
+  const isLtd = type === 'ltd' || (type !== 'branch2pt' && typeof G !== 'undefined' && G && G.key && KIND[G.key] === 'ltd');
 
-  if (isLtd) {
+  if (type === 'branch2pt') {
+    // 支線用2点チャイム（澄んだピン・ポーン）
+    [86, 81].forEach((m, i) => {
+      const t = AC.currentTime + 0.02 + i * 0.22;
+      mbell(m, t, 0.55, out);
+      mnote(m, t, 0.75, 'sine', 0.30, out, true);
+    });
+  } else if (isLtd) {
     // 汐見線オリジナル特急4点チャイム（完全オリジナル）
     // D5 (587Hz) -> A5 (880Hz) -> D6 (1175Hz) -> F#6 (1480Hz)
     [74, 81, 86, 90].forEach((m, i) => {
@@ -6048,9 +6080,139 @@ function updHomeDoors(dt){
       const tgt=Math.min(1,f*1.15);const cur=hd.frac<0?0:hd.frac,nf=cur+clamp(tgt-cur,-dt/2.2,dt/2.0);
       const was=hdPrev.get(hd)||0,dir=Math.sign(nf-cur);if(dir!==0&&was!==dir){playAt(offs(st.s-60,hd.line,1.5),d=>hdSnd(dir>0,d));}hdPrev.set(hd,dir||was&&0);
       const ns=(dir<0&&nf>0.03)?'closing':(nf>0.25||dir>0)?'open':'wait';
-      if(hd.lcdState!==ns){
+      const nearObs=Math.abs(sdiff(obsS,st.s))<460;
+      if(nearObs && hd.lcdMeshes && hd.lcdMeshes.length){
+        let slot=HD_LIVE_POOL.find(s=>s.hd===hd);
+        if(!slot){
+          slot=HD_LIVE_POOL.find(s=>!s.hd || Math.abs(sdiff(obsS,s.hd.st.s))>=460);
+          if(slot){
+            if(slot.hd && slot.hd!==hd){
+              const prevHd=slot.hd;
+              if(prevHd.lcdMeshes)for(const m of prevHd.lcdMeshes)m.material=HD_LCD_MATS[prevHd.lcdState||'wait'];
+            }
+            slot.hd=hd;slot.sig='';
+          }
+        }
+        if(slot){
+          for(const m of hd.lcdMeshes)if(m.material!==slot.mat)m.material=slot.mat;
+          const nowT=nowMs(), nowR=Date.now();
+          if(nowR-slot.lastDraw>180){
+            slot.lastDraw=nowR;
+            const hdKeys=KEYS.filter(kk=>serves(st,kk)&&(physKey(kk,st.s)===baseK||platKey(st,kk)===baseK));
+            let isClosing=(ns==='closing');
+            let dwellTrain=null, nextBest=null;
+            const spdOf=kk=>BRANCH?(KIND[kk]==='rapid'?15:13):({local:15,rapid:19,ltd:24,exp:22})[KIND[kk]]||15;
+            const countStopsBetween=(tS, kTrain)=>{
+              const ddir=TK[kTrain].dir;
+              let cnt=0;
+              for(const s2 of STATIONS){
+                if(s2===st || !serves(s2,kTrain))continue;
+                const dFromTrain=ddir*sdiff(tS,s2.s+TK[kTrain].so);
+                const dTrainToSt=ddir*sdiff(tS,st.s+TK[kTrain].so);
+                if(dFromTrain>15 && dFromTrain<dTrainToSt-15)cnt++;
+              }
+              return Math.max(1,cnt+1);
+            };
+            const checkTrain=(tS,tV,tKey,isDwell,isClosingTrain,isOwn)=>{
+              if(!isShiomi||!isSiding){if(isSiding && !isOwn)return;}
+              if(isDwell){
+                dwellTrain={key:tKey,closing:isClosingTrain};
+                if(isClosingTrain)isClosing=true;
+                return;
+              }
+              const D=TK[tKey].dir*sdiff(tS,st.s+TK[tKey].so);
+              if(D>-30 && D<25000){
+                const sec=D/spdOf(tKey)+(D>0?6:0);
+                if(!nextBest || D<nextBest.D)nextBest={D,sec,key:tKey,s:tS,stops:countStopsBetween(tS,tKey)};
+              }
+            };
+            if(!isShiomi || !isSiding){
+              for(const a of OT){
+                if(!a.key||a.state==='off'||!hdKeys.includes(a.key))continue;
+                const atSt=(a.state==='dwell'&&(a.stSt===st||Math.abs(sdiff(a.s,st.s+TK[a.key].so))<35)&&a.v<0.35);
+                const cl=atSt && ((a.t<9.5&&a.t>0)||(a.frac>0.05&&a.doors===0));
+                checkTrain(a.s,a.v,a.key,atSt,cl,false);
+              }
+            }
+            if(!isShiomi || isSiding){
+              if(!PAX && G.phase==='play' && hdKeys.includes(G.key)){
+                const atSt=(G.atStation!==null&&stOf(G.atStation)===st&&G.v<0.35);
+                const cl=atSt && (!!G.promoOn || (typeof doorWarnOn==='function'&&doorWarnOn()) || G.door.state==='closing');
+                checkTrain(G.s,G.v,G.key,atSt,cl,true);
+              }
+              if(IS_ONLINE && window.ONLINE_PLAYERS){
+                const curLine=(typeof CFG!=='undefined'&&CFG)?CFG.id:'loop';
+                for(const pid in ONLINE_PLAYERS){
+                  const p=ONLINE_PLAYERS[pid];
+                  if(!p||p.isPax||p.state!=='driving'||!p.key||!hdKeys.includes(p.key))continue;
+                  if(p.lastSeen&&(nowR-p.lastSeen>12000))continue;
+                  if((p.line||'loop')!==curLine)continue;
+                  const pS=p.smoothS!=null?p.smoothS:p.s;if(pS==null)continue;
+                  const atSt=(Math.abs(sdiff(pS,st.s+TK[p.key].so))<35&&(p.v||0)<0.35);
+                  const cl=atSt && (p.door==='closing');
+                  checkTrain(pS,p.v||0,p.key,atSt,cl,true);
+                }
+              }
+            }
+            const blinkOn=Math.floor(nowR/400)%2===0;
+            if(isClosing){
+              drawHdLcdLive(slot,'closing','ドアが閉まります','Doors Closing · ご注意ください',blinkOn?'#b91c1c':'#7f1d1d','#ef4444',true,blinkOn);
+            }else if(dwellTrain || (nextBest && nextBest.D<95)){
+              const tk=dwellTrain?dwellTrain.key:nextBest.key;
+              const kd=KIND[tk]||'local';
+              const ddir=TK[tk].dir;
+              let nxtSt=null;
+              if(BRANCH){
+                const ni=st.i+ddir;
+                if(ni>=0&&ni<NST)nxtSt=STATIONS[ni];
+              }else{
+                nxtSt=getAfterStopStation(st,ddir,kd);
+              }
+              const kLbl=(LK[kd]?LK[kd][0]:'普通');
+              const tTitle=nxtSt?('次は '+nxtSt.name):'終点です';
+              const tSub=nxtSt?(kLbl+' · Next Stop: '+enName(nxtSt)):(kLbl+' · Terminal');
+              drawHdLcdLive(slot,'next',tTitle,tSub,'#092b1e','#22c55e',false,false);
+            }else if(nextBest && nextBest.sec<=60){
+              const lang=Math.floor(nowR/1200)%4;
+              const msgs=[
+                ['まもなく到着','Arriving Soon · まもなく列車がまいります'],
+                ['Arriving Soon','まもなく到着 · Please stand back'],
+                ['곧 도착합니다','まもなく到着 · Arriving Soon'],
+                ['即将到站','まもなく到着 · Arriving Soon']
+              ];
+              drawHdLcdLive(slot,'soon',msgs[lang][0],msgs[lang][1],'#451a03','#f59e0b',true,lang%2===0);
+            }else{
+              let arrT=nowT+180000, stAway=3, kd='local';
+              if(nextBest){
+                arrT=nowT+nextBest.sec*1000;
+                stAway=nextBest.stops;
+                kd=KIND[nextBest.key]||'local';
+              }else{
+                let bestT=null,bestK=hdKeys[0]||'A';
+                for(const kk of hdKeys){
+                  if(!serves(st,kk))continue;
+                  const h=hdwSec(kk);if(h>7200)continue;
+                  const tt=(!BRANCH&&st.i===0&&SHIOMI_TT[kk])?nextShiomiDepMs(kk,nowT):(nowT+h*1000);
+                  if(!bestT||tt<bestT){bestT=tt;bestK=kk;}
+                }
+                if(bestT){arrT=bestT;kd=KIND[bestK]||'local';stAway=Math.max(1,Math.round((bestT-nowT)/50000));}
+              }
+              const ph=Math.floor(nowR/2000)%2;
+              const kLbl=(LK[kd]?LK[kd][0]:'普通');
+              if(ph===0){
+                drawHdLcdLive(slot,'wait_time','次列車 '+hms2(arrT)+' 到着',kLbl+' · Next Train Arrival','#0b1628','#38bdf8',false,false);
+              }else{
+                drawHdLcdLive(slot,'wait_dist','現在 '+stAway+'駅前にいます',kLbl+' · '+stAway+' station'+(stAway>1?'s':'')+' away ('+hms2(arrT)+')','#0b1628','#38bdf8',false,false);
+              }
+            }
+          }
+        }
+      }else if(hd.lcdState!==ns){
         hd.lcdState=ns;
         if(hd.lcdMeshes)for(const m of hd.lcdMeshes)m.material=HD_LCD_MATS[ns];
+      }
+      if(hd.lcdState!==ns){
+        hd.lcdState=ns;
         if(hd.lampMeshes)for(const m of hd.lampMeshes)m.material=HD_LAMP_MATS[ns];
       }
       setHD(hd,nf);}}
@@ -6635,6 +6797,37 @@ function buildAnnouncementData(st, mode){
     return {parts,text,isLtd:true};
   }
 
+  if(!BRANCH && kind==='local'){
+    const dname=isOuter?'outer':'inner';
+    const mname=isSoon?'arr':'dep';
+    const file='assets/audio/ann/v230/loop_local_'+dname+'_'+mname+'_'+st.i+'.mp3';
+    const prevSt=STATIONS[mod(st.i-(dir>0?1:-1),NST)];
+    const prevMajor=isMajorStation(prevSt);
+    const sideStr=(sideIsLeft?'左':'右')+'側';
+    if(!isSoon){
+      if(prevMajor){
+        const dirMajors=getAheadMajorStations(prevSt.i,dir,kind,2).map(s=>s.name).join('、');
+        text='この電車は環状線'+(isOuter?'外回り':'内回り')+'、'+dirMajors+'方面行きです。次は'+st.name+'、'+st.name+'、お出口は'+sideStr+'です。（英語放送）';
+      }else{
+        text='次は'+st.name+'、'+st.name+'、お出口は'+sideStr+'です。（英語放送）';
+      }
+    }else{
+      const trNames=(isMajor&&st.lines&&st.lines.length)?('（'+st.lines.map(l=>l[0]).join('・')+'はお乗り換え）'):'';
+      text='まもなく、'+st.name+'、'+st.name+'、お出口は'+sideStr+'です。'+trNames+'（英語放送）';
+    }
+    return {parts:[file],text,isLtd:false,chimeType:'local'};
+  }
+
+  if(BRANCH){
+    const bp=LINE_ID==='branch2'?'b2':LINE_ID==='branch3'?'b3':LINE_ID==='branch4'?'b4':LINE_ID==='branch5'?'b5':'b1';
+    const mname=isSoon?'arr':'dep';
+    const file='assets/audio/ann/v230/br_'+bp+'_'+mname+'_'+st.i+'.mp3';
+    text=isSoon
+      ?('ご乗車お疲れ様でした。まもなく'+st.name+'です。ホーム側全てのドアが開きます')
+      :('次は'+st.name+'に止まります');
+    return {parts:[file],text,isLtd:false,chimeType:'branch2pt'};
+  }
+
   if(isMajor&&!BRANCH){
     if(!isSoon){
       const dirParts=majorsAhead.map(s=>stPartJa(s));
@@ -6793,7 +6986,7 @@ function triggerRideAnnounce(a, mode){
     if(!PAX||!RIDE||RIDE.a!==a)return;
     try{initAudio();}catch(_){}
     if(AC&&AC.state==='suspended'){try{AC.resume();}catch(_){}}
-    const chimeDelay=info.isLtd?chimeLtdLong(AC?AC.destination:null):(chime(),600);
+    const chimeDelay=info.isLtd?chimeLtdLong(AC?AC.destination:null):(chime(AC?AC.destination:null, info.chimeType),info.chimeType==='branch2pt'?520:600);
     if(annSeqTimer){clearTimeout(annSeqTimer);annSeqTimer=null;}
     annSeqTimer=setTimeout(()=>{
       annSeqTimer=null;
@@ -6823,7 +7016,7 @@ function triggerNextStationAnnounce(mode){
   const info=buildAnnouncementData(nst,isSoon?'soon':'next');
   preloadAnnUrls(info.parts);
   try{ prepareAnnBuffer(info.parts); }catch(e){}   /* v1.9.7：鳴らす前に結合しておく（途切れ防止） */
-  const chimeDelay=info.isLtd?chimeLtdLong(AC?AC.destination:null):(chime(),600);
+  const chimeDelay=info.isLtd?chimeLtdLong(AC?AC.destination:null):(chime(AC?AC.destination:null, info.chimeType),info.chimeType==='branch2pt'?520:600);
   if(!isSoon)annReservedUntil=nowMs()+Math.max(6000,chimeDelay+4000);
   toast((isSoon?'📢 まもなく放送：':'📢 次駅放送：')+info.text,'info');
   if(annSeqTimer){clearTimeout(annSeqTimer);annSeqTimer=null;}
