@@ -7624,7 +7624,8 @@ function nearTrainDoor(){if(!PAX||RIDE||!W.st||!PX.plats.length)return null;cons
 function boardTrain(n){if(!n||!n.a||!n.a.tr||!n.a.tr.cars||!n.a.tr.cars.length)return;
   /* v1.9.7：号車番号を必ず実在する車両に丸める（編成が短い車両・差し替わった直後でも乗れるように） */
   let k0=Math.round(n.k||0);if(!isFinite(k0))k0=0;k0=clamp(k0,0,n.a.tr.cars.length-1);
-  RIDE={a:n.a,k:k0,lx:n.lx!=null?n.lx:0.2,lz:n.lz||0,prev:n.a.state||'dwell',seat:null,fl:'deck'};const car=n.a.tr.cars[k0];if(camera.parent)camera.parent.remove(camera);car.add(camera);
+  const walkUI=document.getElementById('walkUI');if(walkUI)walkUI.classList.remove('hide');
+  RIDE={a:n.a,k:k0,lx:n.lx!=null?n.lx:0.2,lz:n.lz||0,prev:n.a.state||'dwell',seat:null,fl:'deck',boardTs:performance.now()};const car=n.a.tr.cars[k0];if(camera.parent)camera.parent.remove(camera);car.add(camera);
   const k=n.a.key||'A',T=TK[k]||TK.A,stRef=n.a.stSt||W.st||STATIONS[0],sd=T.side(stRef)*trSgn(n.a.tr);W.yaw=n.yaw!=null?n.yaw:(sd>0?-Math.PI/2:Math.PI/2);W.pitch=0;W.mv.x=W.mv.y=0;
   camera.position.set(RIDE.lx,1.16+1.56,RIDE.lz);camera.rotation.set(W.pitch,W.yaw,0);
   document.getElementById('walkHint').textContent='車内：左側スワイプで移動　右側スワイプで視点　駅に着いたら「降車する」';
@@ -7700,6 +7701,7 @@ function rideXLim(car,z){const u=car.userData;if(u.green&&!u.gflat){const az=Mat
   for(const dz of DOORZ){const d=Math.abs(z-dz);if(d<0.64)return 1.28;if(d<1.12)return 1.1;}if(u.cabF&&z<-CARHALF+CABLEN+0.6)return 1.1;if(u.cabR&&z>CARHALF-CABLEN-0.6)return 1.1;return 0.8;}
 /* 車内：他の乗客の実際の形(OBB)に合わせて押し戻される */
 function rideBump(){const a=RIDE.a,car=a.tr.cars[RIDE.k];if(!a.inside)return;
+  if(RIDE.boardTs&&performance.now()-RIDE.boardTs<1500){const lm=rideXLim(car,RIDE.lz);RIDE.lx=clamp(RIDE.lx,-lm,lm);return;}
   const pAx=obbAxesXZ(W.yaw+Math.PI),pEx={hx:0.28,hz:0.14};
   for(const q of a.inside){if(!q.used||!(q.g.parent===car||q.pbH===car))continue;
     if(Math.abs(RIDE.lx-q.g.position.x)>0.85||Math.abs(RIDE.lz-q.g.position.z)>0.85)continue;
@@ -7837,7 +7839,7 @@ function populateCarsBody(a,cars){a.inside=a.inside||[];a.insideSet=a.insideSet|
   const doorZs=(a.tr.cars[0]&&a.tr.cars[0].userData.green)?GDOORZ:DOORZ;
   const doorDist=z=>Math.min(...doorZs.map(d=>Math.abs(z-d)));
   for(const k of cars){if(a.insideSet.has(k)||!a.tr.cars[k])continue;a.insideSet.add(k);const car=a.tr.cars[k],sl=carSlots(a,k),SE=seatsOf(a,k);let rs=(k*7919+a.name.charCodeAt(1)*131+7)%2147483647;const rr=()=>{rs=(rs*16807)%2147483647;return (rs-1)/2147483646;};
-    const order=SE.map((v,i)=>[rr(),i]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]),seated=Math.min(perCar,SE.length);
+    const order=SE.map((v,i)=>[rr(),i]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]),maxSeat=PAX?Math.max(0,SE.length-4):SE.length,seated=Math.min(perCar,maxSeat);
     if(RESV&&RESV.a===a&&RESV.k===k&&!sl.seat[RESV.si])sl.seat[RESV.si]='RES'; /* 予約席は空けておく */
     const bl=[]; // 静止した人（まとめ描画に入れる）
     for(let i=0;i<seated;i++){const si=order[i];if(sl.seat[si])continue;const p=intPerson();sitPose(p,SE[si]);car.add(p.g);p.g.traverse(o2=>o2.layers.mask=car.layers.mask);a.inside.push(p);sl.seat[si]=p;bl.push(p);}
@@ -10085,13 +10087,13 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   function pickStationGo(id){
     const S=SERVICES[id];
     const isMinatomi = (S.line === 'branch4');
-    const isOnlineSvc = !isMinatomi; // 港見支線以外は全種別・全駅必ずオンライン！
+    const isOnlineSvc = !isMinatomi && S.kind !== 'pax' && S.kind !== 'staff'; // 港見支線・乗客・駅員以外は他列車から1km以上離して開始
     curOnlineStList = null;
     curOnlineService = S;
     document.getElementById('home').classList.add('hide');
     document.getElementById('stSel').classList.remove('hide');
-    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+((S.kind==='ltd'||S.kind==='local')?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (isOnlineSvc ? ' [🌐 リアルタイム常時オンライン]' : ' [📴 オフライン専用]');
-    document.getElementById('stSelSub').textContent=isOnlineSvc ? '【リアルタイム常時オンライン】他列車から1km以上離れた駅を選択してください' : '【オフライン専用】港見支線は短距離ローカル線（16km・4駅）のためオフライン運行です。開始駅を選択してください';
+    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+((S.kind==='ltd'||S.kind==='local')?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (!isMinatomi ? ' [🌐 リアルタイム常時オンライン]' : ' [📴 オフライン専用]');
+    document.getElementById('stSelSub').textContent=(S.kind==='pax'||S.kind==='staff') ? '【乗客・駅員モード】どの駅でも選べます（他プレイヤーがいる駅にもそのまま行けます）' : (isOnlineSvc ? '【リアルタイム常時オンライン】他列車から1km以上離れた駅を選択してください' : '【オフライン専用】港見支線は短距離ローカル線（16km・4駅）のためオフライン運行です。開始駅を選択してください');
     const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2;
     const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
     curOnlineStList = list;
