@@ -4111,7 +4111,7 @@ function aiRun(a,dt){
       if(RIDE&&RIDE.a===a&&leftSt){const gk=guideKindFor(a.key,leftSt);if(gk)scheduleGuideAfterSpeech(gk,()=>!!(RIDE&&RIDE.a===a));}}} /* 車内放送は乗っている電車のみ */
   if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if(a.charter&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,'臨時');}catch(e){}}}}
   /* 汐見13・14番線の列車は、本線へ合流したら各停として運転を続ける */
-  if((a.key==='I'||a.key==='J')&&a.state==='run'&&Math.abs(sdiff(SH7,a.s))>800)convertCharterToMain(a);
+  if((a.key==='I'||a.key==='J')&&a.state==='run'&&Math.abs(sdiff(SH7,a.s))>950)convertCharterToMain(a);
 }
 function aiSounds(a,el,tot){
   if(!a.vis||!a.doors||!a.stSt||!a.tr||!a.tr.cars||!a.tr.cars[2])return;
