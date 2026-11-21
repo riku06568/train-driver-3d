@@ -4171,31 +4171,43 @@ for(const k of ALLK){POOL[k]=[];TR_POOL[k]=[];const nP=BRANCH?10:(POOL_CNT_MAP[k
     ai.twoMan=TWO;POOL[k].push(ai);
   }
 }
-/* 臨時・団体列車ダイヤ：汐見の前後から臨時列車を増発する */
+/* 臨時・団体列車ダイヤ：汐見の前後から臨時列車を増発し、13・14番線に団体列車を停車させる。
+   開始直後はどの列車も走っている（空きがない）ため、空きが出るまで数秒おきに再試行する。 */
+function charterCount(){let n=0;for(const a of OT)if(a.charter)n++;return n;}
 function spawnCharter(){
   if(BRANCH||PAX||G.phase!=='play')return;
-  let n=0;
+  const cap=6;let n=0,ij=0;
+  if(charterCount()>=cap)return;
   for(const k of ['A','B','C','D']){
+    if(charterCount()+n>=cap)break;
     const pool=POOL[k];if(!pool)continue;
     const a=pool.find(x=>x.state==='off');if(!a)continue;
     const d=TK[k].dir;
     const p2=mod(STATIONS[0].s+TK[k].so-d*(k==='A'||k==='C'?1400:2200),L);
     if(!hasTrack(p2)||!hasTrack(p2+d*160))continue;
-    a.key=k;a.charter=true;a._cd=0;a.dir=d;a.vmax=BRANCH?22:VMAX[k];a.twoMan=false;
+    {const minSep=carsFor(k)*CARL+140;
+      if(OT.some(o=>o!==a&&o.state!=='off'&&o.key&&physKey(o.key,p2)===physKey(k,p2)&&Math.abs(sdiff(o.s,p2))<minSep))continue;
+      if(!PAX&&G.phase==='play'&&physKey(G.key,p2)===physKey(k,p2)&&Math.abs(sdiff(G.s,p2))<minSep)continue;}
+    a.key=k;a.charter=true;a._cd=0;a.dir=d;a.vmax=VMAX[k];a.twoMan=false;
     aiSpawn(a,p2,0);n++;
   }
   /* 汐見駅13・14番線：臨時・団体列車をホームに停車させる（13番線＝I、14番線＝J） */
   const st0=STATIONS[0];
   for(const k of ['I','J']){
+    if(charterCount()+n>=cap)break;
+    const has=OT.some(a=>a.key===k&&a.state!=='off');
+    if(has)continue;
     const src=(POOL.A&&POOL.A.find(x=>x.state==='off'))||(POOL.C&&POOL.C.find(x=>x.state==='off'));
     if(!src)continue;
     src.key=k;src.dir=1;src.charter=true;src._cd=0;src.twoMan=false;src.vmax=VMAX.A;src.insideSet=false;
+    src.last=-1;src.shiomiDepMs=0;
     aiSpawn(src,mod(st0.s+TK[k].so,L),0);
-    src.state='dwell';src.stSt=st0;src.last=0;src.t=rand(60,85);src.dwellTot=src.t;
+    src.state='dwell';src.stSt=st0;src.last=0;src.t=rand(70,110);src.dwellTot=src.t;
     src.side=TK[k].side(st0);src.frac=0;src.flowed=false;src.sndF={};src.hold=0;src.boardHold=0;src.doors=true;
-    n++;
+    n++;ij++;
   }
-  if(n)toast('臨時列車を'+n+'本増発しました（汐見駅13・14番線に団体列車）','ok');
+  if(n)toast('臨時列車を'+n+'本増発しました'+(ij?'（汐見駅13・14番線に団体列車）':''),'ok');
+  if(charterCount()<cap&&(G._charterTry||0)<14){G._charterTry=(G._charterTry||0)+1;setTimeout(()=>{try{spawnCharter();}catch(e){}},4500);}
 }
 /* 13・14番線を発車した臨時列車を、本線（各停）の列車として運転させる */
 function convertCharterToMain(a){
