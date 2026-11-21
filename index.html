@@ -440,7 +440,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.0.0)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.0.1)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -468,7 +468,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v2.0.0 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.0.1 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -666,7 +666,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.0.0)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.0.1)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -709,6 +709,24 @@ body.disp-monitor #gl{display:none!important}
       </div>
       <div class="sub">汐見環状線 3Dトレインシミュレーターの最新アップデート情報</div>
       <div class="credits-box" style="text-align:left;line-height:1.7;">
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#16a34a;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.0.1</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.0.1 (2026.11.21)</h3>
+          </div>
+          <div style="font-size:14px;color:#4ade80;font-weight:700;margin-bottom:6px;">v2.0.0の不具合を徹底修正：天候・ダイヤ・車庫出庫が反映されない不具合、13・14番線の活用、音声、コンコースの見た目</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>天候・ダイヤ・車庫出庫が選んでも反映されない不具合を修正</b>：選んだ設定がゲーム開始時に読み直されず、いつも晴れ・通常ダイヤ・駅からの開始になっていました。晴れ・曇り・雨・雪・霧、通常・臨時団体・変更ダイヤ、車庫からの出庫が、選んだとおりに始まります</li>
+            <li><b>変更ダイヤが自分の列車にも効くように修正</b>：これまではAI列車だけ停車駅が入れ替わり、運転している列車は通常の停車駅のままでした。快速は特急並み、特急は快速並みの停車駅で運転します</li>
+            <li><b>汐見駅13・14番線を実際に使うように</b>：臨時・団体列車ダイヤのとき、団体列車が13番線・14番線に停車し、発車後は本線の各停として運転を続けます。乗客モードで13・14番線から乗車できます</li>
+            <li><b>雨・雪が運転室の中に降る不具合を修正</b>：カメラのすぐ近くには雨・雪を出さないようにしました</li>
+            <li><b>追加した音声が鳴らない不具合を修正</b>：天候のお知らせ、本線合流の案内、臨時・団体列車の案内、車内マナー放送、乗り換えのご案内を、それぞれの場面で再生します</li>
+            <li><b>特急のAI列車の最高速度を修正</b>：135km/h（これまでは約119km/h）</li>
+            <li><b>改札口・コンコースの見た目を修正</b>：天井が暗く見える・自動改札機が黒い箱に見える・階段が宙に浮く問題を直し、ホームの階段から渡り通路で改札口へつながるようにしました</li>
+            <li><b>車庫から出庫は外回り専用であることを画面に表示</b>：内回りではボタンを押せないようにしました</li>
+            <li><b>細かい表示の修正</b>：特急の列車名が「undefined」と表示される箇所、指令所の特急の色分け、ホーム案内の種別名を修正</li>
+          </ul>
+        </div>
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#7c3aed;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.0.0</span>
@@ -1382,7 +1400,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.0.0)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.0.1)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1455,7 +1473,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=116', function() {});
+      loadScript('assets/js/game.js?v=117', function() {});
     });
   });
 })();
