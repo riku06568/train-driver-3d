@@ -1469,11 +1469,6 @@ body.disp-monitor #gl{display:none!important}
 <div id="condUI" class="hide"><div class="lt" id="cHint"></div><div class="lb"><button id="cExit" style="background:#34445e;color:#fff">ホームに出る</button><button id="cOpen">戸開</button><button id="cClose" style="background:#c22f28;color:#fff">戸閉</button><button id="cMelo" style="background:#e0a21a">発車メロディ</button><button id="cPromo" style="background:#f2d27a">乗降促進</button><button id="cSig" style="background:#1f7a4a;color:#fff">合図（発車）</button></div></div>
 <div id="leanUI" class="hide"><div class="lt">窓から顔を出しています：すぐ横の操作箱のボタン（戸開・戸閉・メロディ）を押します／ドラッグで見回し</div><div class="lb"><button id="leanBackB" style="background:#34445e;color:#fff">運転席に戻る</button></div></div>
 <script>
-window.__ERR=[];
-addEventListener('error',function(e){try{window.__ERR.push((e.message||'error')+' @ '+(e.filename||'')+':'+(e.lineno||0));}catch(_){}});
-addEventListener('unhandledrejection',function(e){try{window.__ERR.push('promise: '+((e.reason&&e.reason.message)||e.reason));}catch(_){}});
-</script>
-<script>
 (function(){
   function loadScript(src, cb) {
     var s = document.createElement('script');
@@ -1484,7 +1479,7 @@ addEventListener('unhandledrejection',function(e){try{window.__ERR.push('promise
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=127', function() {});
+      loadScript('assets/js/game.js?v=128', function() {});
     });
   });
 })();
