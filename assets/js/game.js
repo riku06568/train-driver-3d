@@ -11044,8 +11044,6 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     window.TUTORIAL_ENABLED = on;
     try { localStorage.setItem('shiomi_tutorial', on ? '1' : '0'); } catch(e) {}
     updTut();
-  try{refreshDailyCond();}catch(e){}
-  setInterval(()=>{try{refreshDailyCond();}catch(e){}},60000);
     if (typeof updateTutorialHUD === 'function') updateTutorialHUD();
     toast(on ? '💡 チュートリアル表示をONにしました' : '💡 チュートリアル表示をOFFにしました', 'info');
   }
@@ -11106,6 +11104,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
       location.href = location.pathname;
     }
   });
+try{refreshDailyCond();}catch(e){}
+setInterval(()=>{try{refreshDailyCond();}catch(e){}},60000);
 document.getElementById('stBack').addEventListener('click',()=>{document.getElementById('stSel').classList.add('hide');document.getElementById('home').classList.remove('hide');showHomeView(currentDutyView);});
 })();
 window.__boot=boot;
