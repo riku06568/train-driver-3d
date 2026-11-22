@@ -1571,9 +1571,7 @@ const LIMITS=CFG.limits.map(([a,b,v])=>{const m=STATIONS[a].s+sdiff(STATIONS[a].
 function limitAt(s){s=mod(s,L);for(const z of LIMITS){if(s>=z.a&&s<=z.b)return z.v;}return BASE_LIMIT;}
 function stationNear(s){let best=null,bd=1e9;for(const st of STATIONS){const d=Math.abs(sdiff(st.s,s));if(d<bd){bd=d;best=st;}}return best;}
 const TRK0=BRANCH?STATIONS[0].s-PBof(STATIONS[0])-16:0,TRK1=BRANCH?STATIONS[NST-1].s+PF+16:L; // branch: 線路は起点・終点のホームの端で終わる（車止め）
-/* 紫雲地下線：深雪駅の先へ続く単線支線（2両の対面乗り換え）の線路延長 */
-const SPUR1=(LINE_ID==='branch2')?TRK1+560:TRK1;
-const hasTrack=s=>!BRANCH||(mod(s,L)>=TRK0&&mod(s,L)<=SPUR1);
+const hasTrack=s=>!BRANCH||(mod(s,L)>=TRK0&&mod(s,L)<=TRK1);
 
 /* ================= vertical profile ================= */
 const SEC={};let secN=0;
@@ -1670,8 +1668,6 @@ for(const cp of CITYPAIRS){const st=STATIONS[cp.ci];TRACKS.push({k:'E2',off:cp.t
 if(BRANCH&&!MINI){const mk=(a,b,rev)=>({k:'X',off:s=>sepB(s)*clamp(rev?(b-s)/(b-a):(s-a)/(b-a),0,1),a,b});const s0=STATIONS[0],sN=STATIONS[NST-1];
   TRACKS.push(mk(s0.s+PF+30,s0.s+PF+95,false));TRACKS.push(mk(s0.s+PF+30,s0.s+PF+95,true)); /* 両渡り（シーサスクロッシング） */
   TRACKS.push(mk(sN.s-PB-95,sN.s-PB-30,true));TRACKS.push(mk(sN.s-PB-95,sN.s-PB-30,false));}
-/* 紫雲地下線：深雪駅の先へ続く単線支線（B線側のままトンネルを抜ける） */
-if(LINE_ID==='branch2')TRACKS.push({k:'SPUR',off:s=>sepB(s),a:TRK1-60,b:SPUR1});
 for(let j=0;j<DEPOT.n;j++)TRACKS.push({k:'Y',off:yardOff(j),a:DEPOT.a,b:j===0?DEPOT.b+165:DEPOT.b+40,yard:true});
 const soFor=k=>-(carsFor(k)*CARL+2); // 逆方向の列車はホーム後端に頭を合わせて停める
 const isIsl=st=>st.cls!=='L'&&st.cls!=='M';
@@ -2312,7 +2308,8 @@ function buildStation(st,c){
   if(HOMEDOOR.has(i))for(const k of KEYS)if(serves(st,k)&&!physDup(st,k)){buildHomeDoors(c,st,k,false);if(!BRANCH&&i===0)buildHomeDoors(c,st,k,true);}
   if(!BRANCH&&i===0)for(const k of ['I','J']){boardingMarks(c,st,k,false);if(HOMEDOOR.has(i))buildHomeDoors(c,st,k,false);}
   for(const k of KEYS)if(serves(st,k)&&!physDup(st,k)){const F=edgeFence(st,k,false);for(const [za,zb] of F.zones)fenceRun(c,za,zb,F.line);if(!BRANCH&&i===0){const Fs=edgeFence(st,k,true);for(const [za,zb] of Fs.zones)fenceRun(c,za,zb,Fs.line);}} /* ドアの来ない線路側 */
-  if(BRANCH&&(i===0||i===NST-1)){const sb2=i===0?TRK0+3:TRK1-3;const os=(LINE_ID==='branch2'&&i===NST-1)?[0]:[0,sepB(sb2)]; /* 紫雲：深雪のB線は単線支線へ続くので車止めなし */for(const o of os){inst(c,'bumper',sb2,o,0.75,2.4,0.9,0.7);inst(c,'bumper',sb2+(i===0?-0.6:0.6),o,0.45,2.6,0.25,0.5);}} /* 車止め */
+  if(BRANCH&&(i===0||i===NST-1)){const sb2=i===0?TRK0+3:TRK1-3;const os=[0,sepB(sb2)];for(const o of os){inst(c,'bumper',sb2,o,0.75,2.4,0.9,0.7);inst(c,'bumper',sb2+(i===0?-0.6:0.6),o,0.45,2.6,0.25,0.5);}
+    if(LINE_ID==='branch2'&&i===NST-1){const ew=new THREE.Mesh(boxGeo(12,7.5,1.2),cmat(c,MATS.tunnel));ew.position.copy(offsG(TRK1+4,sepB(TRK1+4)*0.5,Yat(TRK1+4)+3.75));ew.rotation.y=-P(TRK1+4)[2];addTo(c,ew);}} /* 車止め・深雪終点壁 */
   if(!BRANCH)for(const k of ['E','F','A','B'])if(serves(st,k)){const T=TK[k],sd=T.side(st),sm=st.s+T.so-T.dir*(carsFor(k)*CARL-6),om=T.off(st.s)+sd*(1.72+1.3); /* 車掌用：最後尾の横（発車メロディ箱＋ホームITVモニタ） */
     if(k==='E'||k==='F'){inst(c,'fpost',sm,om,PH+0.6,0.07,1.2,0.07);inst(c,'melo',sm,om,PH+1.28,0.2,0.26,0.12);}
     inst(c,'fpost',sm-T.dir*1.4,om,PH+1.8,0.06,3.6,0.06);
@@ -5037,47 +5034,6 @@ function updCity(dt){
       const pr=c.dir>0?sdiff(b-130,c.s):sdiff(c.s,a+130);if(pr>0){c.state='wait';c.t=rand(15,50)/Math.max(0.1,freqF(hourNow()));}c.vis=c.state!=='wait';}
     else if(c.state==='dwell'){c.t-=dt;if(c.t<=0)c.state='run';c.vis=true;}
     c.tr.grp.visible=c.vis;if(c.vis)placeTrain(c.tr,c.s,c.off);}
-}
-/* ===== 紫雲地下線：深雪駅の2両対面乗り換えの単線支線（プレイ不可・到着時は必ず停車） ===== */
-const MYS={tr:null,state:'off',s:0,v:0,t:0,arr:false,frontS:0,endS:0,built:false};
-function initMiyukiShuttle(){
-  if(LINE_ID!=='branch2'||MYS.built)return;
-  const st=STATIONS[NST-1];
-  MYS.tr=buildTrain('深雪',false,0x7a3fa0,true,[],2,false); /* 2両・紫雲地下線の電車 */
-  MYS.tr.grp.visible=false;MYS.frontS=st.s+6;MYS.endS=SPUR1-36;MYS.built=true;
-  buildMiyukiSpurDetails();
-}
-function buildMiyukiSpurDetails(){
-  try{
-    const g=new THREE.Group();scene.add(g);
-    const st=STATIONS[NST-1],y0=Yat(TRK1+6);
-    /* プレイヤーの降りたA線側のトンネルを壁で塞ぎ、B線側（支線）だけを残す */
-    const w=new THREE.Mesh(boxGeo(1,1,1),MATS.concD);w.scale.set(5.4,7,1.2);
-    w.position.copy(offsG(TRK1+8,-0.7,y0+3.5));w.rotation.y=-P(TRK1+8)[2];g.add(w);
-    /* A線とB線（支線）を仕切る壁 */
-    for(let s2=TRK1+2;s2<TRK1+80;s2+=20){const d=new THREE.Mesh(boxGeo(0.7,6.8,20),MATS.tunnel);d.position.copy(offsG(s2+10,2.55,y0+3.4));d.rotation.y=-P(s2+10)[2];g.add(d);}
-    /* 支線のトンネル終端（この先は見えない） */
-    const e=new THREE.Mesh(boxGeo(7,7.2,1.2),MATS.tunnel);e.position.copy(offsG(SPUR1-2,sepB(SPUR1-2),Yat(SPUR1-2)+3.6));e.rotation.y=-P(SPUR1-2)[2];g.add(e);
-    /* 対面乗り換えの案内板 */
-    const tex=canvasTex(512,128,(x,w2,h)=>{x.fillStyle='#0b1628';x.fillRect(0,0,w2,h);x.fillStyle='#7a3fa0';x.fillRect(0,0,w2,10);x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';x.font='700 44px '+FONT;x.fillText('のりかえ  2両  単線支線',w2/2,52);x.fillStyle='#8fd6ff';x.font='600 24px '+FONT;x.fillText('深雪駅　対面ホーム',w2/2,96);});
-    const sg=new THREE.Mesh(UNIT_PLANE,new THREE.MeshBasicMaterial({map:tex,side:DS}));sg.scale.set(3.4,0.85,1);
-    const ss=st.s-PBof(st)+18;sg.position.copy(offsG(ss,sepB(ss)-1.2,Yat(ss)+3.3));sg.rotation.y=-P(ss)[2]+Math.PI;g.add(sg);
-    MYS.g=g;
-  }catch(e){console.warn('miyuki spur',e);}
-}
-function updMiyukiShuttle(dt){
-  if(LINE_ID!=='branch2')return;
-  if(!MYS.built)initMiyukiShuttle();
-  if(!MYS.tr)return;
-  const atTerm=!PAX&&G.phase==='play'&&G.atStation!==null&&stOf(G.atStation)&&stOf(G.atStation).i===NST-1;
-  /* 折り返しで自分の電車がB線（支線側）に入ったら、支線電車は退避 */
-  if(!PAX&&G.atStation!==null&&stOf(G.atStation)&&stOf(G.atStation).i===NST-1&&G.key==='B'&&MYS.state==='wait'){MYS.state='off';MYS.tr.grp.visible=false;}
-  if(atTerm&&!MYS.arr){MYS.arr=true;MYS.state='wait';MYS.t=60;MYS.s=MYS.frontS;MYS.v=0;MYS.tr.grp.visible=true;} /* 到着時は必ずいる */
-  if(!atTerm)MYS.arr=false;
-  if(MYS.state==='off'){MYS.tr.grp.visible=false;return;}
-  if(MYS.state==='wait'){MYS.t-=dt;MYS.tr.grp.visible=true;if(MYS.t<=0)MYS.state='go';}
-  else if(MYS.state==='go'){MYS.v=Math.min(18,MYS.v+0.75*dt);MYS.s+=MYS.v*dt;if(MYS.s>MYS.endS){MYS.state='off';MYS.tr.grp.visible=false;return;}}
-  placeTrain(MYS.tr,MYS.s,s=>sepB(s),Yat);
 }
 /* ================= audio ================= */
 let rumbleBuf=null,AC=null,motor,motorFilt,motorGain,rumbleGain,master,clackBuf;
@@ -9061,7 +9017,7 @@ function update(dt,now){
     }
   }else setDoors(ownTrain,G.door.side,G.door.frac);
   updChunks((window.__DISP&&window.__DISP.on&&window.__DISP.focusS!=null)?window.__DISP.focusS:(G.walkOn?W.s:G.s));spT+=dt;if(spT>0.5){spT=0;updSpawns();}
-  updPeople(dt);updPools(dt);updFT(dt);updShin(dt);updCity(dt);updMiyukiShuttle(dt);updCrossings(dt);updHomeDoors(dt);updWeather(dt);updConditionFx(dt);
+  updPeople(dt);updPools(dt);updFT(dt);updShin(dt);updCity(dt);updCrossings(dt);updHomeDoors(dt);updWeather(dt);updConditionFx(dt);
   sigT+=dt;if(sigT>0.2){sigT=0;updSignals();const dv=Math.abs(sdiff(G.s,(DEPOT.a+DEPOT.b)/2))<2200;depotTrains.forEach(t=>t.grp.visible=dv);}
   ledT+=dt;if(ledT>0.25){ledT=0;updLEDs();drawInfoPanel();if(typeof drawWidePanel==='function')drawWidePanel();}
   adT+=dt;if(adT>0.09){adT=0;drawAds();}
@@ -9912,7 +9868,7 @@ window.__T={
   }).catch(e=>String(e)),
   annState:()=>({playing:annPlaying, queued:annQ.length, cached:annMergeCache.size}),
   annPlay:(urls)=>{ try{ playAnnQueue(urls); return true; }catch(e){ return String(e); } },
-  AVATAR,MYS,SPUR1,initMiyukiShuttle,updMiyukiShuttle,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
+  AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
 /* ================= home screen (before the world is built) ================= */
 // audio must be started inside the user's tap (iOS / Chrome autoplay rules)
@@ -10455,7 +10411,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const modeBadge = isMinatomi 
       ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン専用</span>'
       : '<span style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.12);">🌐 常時オンライン</span>';
-    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡高速線（7駅・複線・各駅停車・全長約71km・最高200km/h）。環状線と各支線終点の位置関係から距離を計算して縮尺を合わせました。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。駅間距離1kmで地下を走る複線。深雪駅では2両の対面乗り換えで先へ行く単線支線が接続します。' : S.line === 'branch3' ? '天宮から峰月まで40駅。快速は廃止し、各駅停車のみで運転します。' : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '汐見駅と主要駅だけに停車。環状線の地下を専用線で走る、全車グリーン車の最速210km/h列車です。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
+    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡高速線（7駅・複線・各駅停車・全長約71km・最高200km/h）。環状線と各支線終点の位置関係から距離を計算して縮尺を合わせました。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。駅間距離1kmで地下を走る複線。' : S.line === 'branch3' ? '天宮から峰月まで40駅。快速は廃止し、各駅停車のみで運転します。' : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '汐見駅と主要駅だけに停車。環状線の地下を専用線で走る、全車グリーン車の最速210km/h列車です。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
     b.addEventListener('click', () => {
       currentDutyView = isBranch ? 'viewBranch' : 'viewLoop';
       pickStation(id);
