@@ -6096,12 +6096,15 @@ function startAutoDepartMelody(st){
   }catch(e){console.warn('auto melody',e);G.autoMelBusy=false;}
 }
 function updBranchAutoMelody(dt){
-  if(!BRANCH||PAX||G.phase!=='play'){goto_reset_auto_melody();return;}
+  if(!BRANCH||PAX||G.phase!=='play'||G.walkOn){goto_reset_auto_melody();return;}
   if(LINE_ID!=='branch2'&&LINE_ID!=='branch3')return;
   const D=G.door,atSt=(D.state==='open'||D.state==='opening')&&G.atStation!==null;
+  /* 終点での折り返し（ホームに出て反対の運転室へ）を妨げないよう、終点停車中は自動再生・自動戸閉をしない */
+  const atTerminus=!!(G.list&&G.atStation!==null&&G.atStation>=lastStop());
   if(!atSt){if(G.autoMelOn){G.autoMelOn=false;clearAutoMelTimers();G.autoMelBusy=false;}G.autoMelFired=false;G.autoMelT=0;G.autoMelRed=null;return;}
   if(!G.autoMelOn){G.autoMelOn=true;G.autoMelT=0;G.autoMelFired=false;G.autoMelRed=null;}
   if(G.autoMelFired)return;
+  if(atTerminus){if(G.autoMelOn){G.autoMelOn=false;clearAutoMelTimers();G.autoMelBusy=false;}return;}
   const sg=nextSignal(mainAt(G.key,G.s),G.s,G.dir);
   const asp=sg?sg.asp:'G';
   if(asp==='R')G.autoMelRed=true;                 /* ドアが開いている間に赤を見たら「赤だった」 */
