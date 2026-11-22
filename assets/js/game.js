@@ -5023,6 +5023,7 @@ function updCity(dt){
   let ci=-1;for(const i of BIG){if(Math.abs(sdiff(G.s,STATIONS[i].s))<1700)ci=i;}
   if(ci!==activeCity){activeCity=ci;for(const c of CT){c.state='off';c.vis=false;c.city=ci;
     if(ci>=0){const cp=CITYPAIRS.filter(p=>p.ci===ci)[c.j];if(!cp){c.state='off';c.vis=false;c.tr.grp.visible=false;continue;}c.cp=cp;c.off=c.dir>0?cp.t1:cp.t2;c.tr.mats.liv1.color.setHex(cp.line[2]);c.tr.mats.liv2.color.setHex(cp.line[2]).lerp(new THREE.Color(0xffffff),0.45);drawDest(c.tr.dk,cp.line[0]);
+      const wantCars=(cp.line[0]==='港見支線')?3:6;c.tr.cars.forEach((car,ii)=>{car.visible=ii<wantCars;}); /* 接続路線の両数を合わせる */
       c.state='wait';c.t=rand(0,25);}}}
   for(const c of CT){
     if(ci<0){c.vis=false;c.tr.grp.visible=false;continue;}
@@ -5067,6 +5068,8 @@ function updMiyukiShuttle(dt){
   if(!MYS.built)initMiyukiShuttle();
   if(!MYS.tr)return;
   const atTerm=!PAX&&G.phase==='play'&&G.atStation!==null&&stOf(G.atStation)&&stOf(G.atStation).i===NST-1;
+  /* 折り返しで自分の電車がB線（支線側）に入ったら、支線電車は退避 */
+  if(!PAX&&G.atStation!==null&&stOf(G.atStation)&&stOf(G.atStation).i===NST-1&&G.key==='B'&&MYS.state==='wait'){MYS.state='off';MYS.tr.grp.visible=false;}
   if(atTerm&&!MYS.arr){MYS.arr=true;MYS.state='wait';MYS.t=60;MYS.s=MYS.frontS;MYS.v=0;MYS.tr.grp.visible=true;} /* 到着時は必ずいる */
   if(!atTerm)MYS.arr=false;
   if(MYS.state==='off'){MYS.tr.grp.visible=false;return;}
@@ -6044,7 +6047,7 @@ function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new mel
   const isLtdTrain=!BRANCH&&(G.key==='E'||G.key==='F'||G.key==='G'||G.key==='H');
   const cSt=n==='st'&&isLtdTrain&&G.atStation!==null?stOf(G.atStation):null;
   if(n===1){toast(PROMO_NAMES[1],'info');if(typeof broadcastEvent==='function')broadcastEvent('promo',{promoN:1,promoKey:G.key,promoDir:G.dir,promoBranch:!!BRANCH,promoSt:(G.atStation!=null?G.atStation:-1)});voice();return;}
-  toast((cSt?'発車メロディ「'+ltdSong(cSt.i).name+'」':bSt&&(n===0||n==='st')?'発車メロディ「'+(LINE_ID==='branch3'?b3MelodyFor(G.dir).name:branchSongFor(bSt).name)+'」':(n===0||n==='st')?(G.dir<0?'発車メロディ「汐鳴り（内回り音色）」':'発車メロディ「汐鳴り（外回り音色）」'):PROMO_NAMES[n])+'（もう一度押すと止まります）','info');
+  toast((cSt?'発車メロディ「'+ltdSong(cSt.i).name+'」':bSt&&LINE_ID==='branch'?'乗降促進（ベル）':bSt&&(n===0||n==='st')?'発車メロディ「'+(LINE_ID==='branch3'?b3MelodyFor(G.dir).name:branchSongFor(bSt).name)+'」':(n===0||n==='st')?(G.dir<0?'発車メロディ「汐鳴り（内回り音色）」':'発車メロディ「汐鳴り（外回り音色）」'):PROMO_NAMES[n])+'（もう一度押すと止まります）','info');
   const pctx={key:G.key,dir:G.dir,branch:!!BRANCH,stIdx:(G.atStation!=null?G.atStation:-1),stName:(G.atStation!=null&&stOf(G.atStation)?stOf(G.atStation).name:'')};
   const play=()=>{if(!G.promoLoop)return;const dur=promoPlay(b=>promoRun(n,pctx,b,1))||1;
     G.promoLoop.onePhraseDur=dur;
