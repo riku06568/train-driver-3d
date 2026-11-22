@@ -449,7 +449,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.3.0)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.4.0)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -477,7 +477,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v2.3.0 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.4.0 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -526,7 +526,7 @@ body.disp-monitor #gl{display:none!important}
         <button id="btnSelectBranch" class="duty-cat-card cat-branch">
           <div class="cat-badge">支線</div>
           <h3>🔀 各支線（5路線）</h3>
-          <p>白峰支線・紫雲地下線・天宮高架線・港見支線・四嶺連絡線。港見支線以外はオンライン対応です。</p>
+          <p>白峰支線・紫雲地下線・天宮高架線・港見支線・四嶺連絡高速線。港見支線以外はオンライン対応です。</p>
           <div class="meta"><span>5路線</span><span>4路線オンライン対応</span><span>港見支線オフライン専用</span></div>
         </button>
 
@@ -675,13 +675,13 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.3.0)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.4.0)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
           <div class="cr-item"><strong>3D描画エンジン</strong><span>three.js (WebGL)</span></div>
           <div class="cr-item"><strong>フォント</strong><span>Google Fonts（DotGothic16 / Zen Kaku Gothic New）</span></div>
-          <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線</span></div>
+          <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線、四嶺連絡高速線</span></div>
         </div>
         <p style="font-size:11.5px;opacity:0.6;margin-top:18px;">※ 本作に登場する駅名、路線名、団体名等はすべて架空のものであり、実在の人物・団体・鉄道会社とは一切関係ありません。</p>
       </div>
@@ -718,6 +718,24 @@ body.disp-monitor #gl{display:none!important}
       </div>
       <div class="sub">汐見環状線 3Dトレインシミュレーターの最新アップデート情報</div>
       <div class="credits-box" style="text-align:left;line-height:1.7;">
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.4.0</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.4.0 (2026.11.22)</h3>
+          </div>
+          <div style="font-size:14px;color:#38bdf8;font-weight:700;margin-bottom:6px;">環状線と支線のワールド統合・各支線の刷新・終点折り返し</div>
+          <ul style="margin:0 0 14px 0;padding-left:18px;font-size:13.5px;color:#cbd5e1;line-height:1.8;">
+            <li><b>環状線と支線を同じワールドに</b>：乗換駅では環状線（各停・快速・快特）と接続する支線のホーム・線路・列車がすべて並んで存在するようにし、どちらかが省略されないようにしました</li>
+            <li><b>白峰支線</b>：AI列車をラッシュ時2編成・その他の時間1編成に。乗降促進はベルだけ、ホームドアは乗換駅の白峰駅1駅だけにしました</li>
+            <li><b>紫雲地下線</b>：駅間距離を1kmに統一して作り直し、乗換駅以外の全駅にホームドアを設置。車両は環状線をベースに液晶を減らし、完全オートをなくし、乗降促進はアナウンスのみに。信号が赤のときは黄に変わった瞬間、黄・青のときはドアが開いて10秒後に、発車メロディと戸締め放送を自動で流します</li>
+            <li><b>深雪駅の新しい単線支線</b>：深雪駅の対面ホームから2両の支線電車が先へ続きます（プレイできません・到着時は必ず停車・到着の1分後に発車）。深雪駅の先のトンネルは、この支線の線路だけを残して壁で塞ぎました</li>
+            <li><b>天宮高架線</b>：快速を廃止して各駅停車のみに。発車メロディは上下線で音階の違う1つのメロディに統一し、地下鉄線と同じ信号連動の自動再生にしました</li>
+            <li><b>四嶺連絡線 → 四嶺連絡高速線</b>：名前を変更し、車両を環状線の各駅停車と同じものにして最高速度を200km/hにしました</li>
+            <li><b>支線でも駅選択時にAI列車を反映</b>：支線に乗務するときも、駅を選ぶ画面で1km以内にAI列車がいる駅は選べないようにしました</li>
+            <li><b>各支線の終点の折り返し</b>：ドアを開けたらホームに降りて反対の先頭車両へ移動し、「運転室へ」を長押しすると反対の運転室に入ってそのまま乗務できます。終点では乗客が全員降りてから、ホームで待つ人が乗ります</li>
+            <li><b>支線の駅接近放送</b>：外回り・内回りではなく、汐見駅を基準にした上り・下りに変更しました</li>
+          </ul>
+        </div>
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.3.0</span>
@@ -1505,7 +1523,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.3.0)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.4.0)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1592,7 +1610,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=144', function() {});
+      loadScript('assets/js/game.js?v=145', function() {});
     });
   });
 })();
