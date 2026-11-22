@@ -449,7 +449,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.4.4)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.4.5)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -477,7 +477,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v2.4.4 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.4.5 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -675,7 +675,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.4.4)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.4.5)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -720,7 +720,17 @@ body.disp-monitor #gl{display:none!important}
       <div class="credits-box" style="text-align:left;line-height:1.7;">
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.4.4</span>
+            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.4.5</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.4.5 (2026.11.22)</h3>
+          </div>
+          <ul style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0;padding-left:20px;">
+            <li><strong>車掌モードのリアルタイムマイク放送機能を追加</strong>：マイクをオンにして「車内放送」または「車外放送」を選択すると、喋った声がリアルタイムで乗車中またはホーム上の他プレイヤーに届きます</li>
+            <li><strong>他プレイヤー列車への乗車後移動・位置同期バグを修正</strong>：他プレイヤーの電車に乗った際に動けなくなる不具合と、相手側からドア手前に立ち止まって見える不具合を修正しました</li>
+          </ul>
+        </div>
+        <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(148,163,184,0.2);border-radius:12px;padding:16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="background:#475569;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.4.4</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v2.4.4 (2026.11.22)</h3>
           </div>
           <ul style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0;padding-left:20px;">
@@ -1561,7 +1571,7 @@ body.disp-monitor #gl{display:none!important}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
       <div>
         <div style="font-size:15.5px;font-weight:800;color:#34d399;">📲 運転士用タブレット</div>
-        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.4.4)</span></div>
+        <div id="dtDispatchBadge" style="font-size:11.5px;color:#94a3b8;margin-top:2px;">🤖 指令：自動対応中 <span style="opacity:.6;">(v2.4.5)</span></div>
       </div>
       <button id="dtClose" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
@@ -1622,7 +1632,22 @@ body.disp-monitor #gl{display:none!important}
 <div id="condBadge" class="hide" style="position:fixed;left:10px;top:calc(max(10px,env(safe-area-inset-top)) + 44px);z-index:66;pointer-events:none;background:rgba(8,18,32,0.72);border:1px solid rgba(125,211,252,0.35);border-radius:10px;padding:5px 10px;font-size:11.5px;font-weight:700;color:#dbeafe;line-height:1.35;box-shadow:0 3px 10px rgba(0,0,0,0.35);"></div>
 <div id="mascon" class="hide"><div id="mcSpd">0 km/h</div><button id="mcUp">▲ 加速</button><div id="mcVal">B4</div><button id="mcDn">▼ ブレーキ</button><button id="mcN">N</button><button id="mcEB">非常</button></div>
 <div id="dev" class="hide"><div id="devFrame"><div id="devBar"><button id="devHome">◯</button><span id="devTitle"></span><button id="devClose">✕</button></div><div id="devScreen"></div></div></div><div id="devFlash" class="hide"></div>
-<div id="condUI" class="hide"><div class="lt" id="cHint"></div><div class="lb"><button id="cExit" style="background:#34445e;color:#fff">ホームに出る</button><button id="cSal" style="background:#0f766e;color:#fff">🚶 車内を歩く</button><button id="cLean" style="background:#7a4a12;color:#fff">🪟 窓から顔を出す</button><button id="cItv" style="background:#1d4ed8;color:#fff">📺 ITVモニタ</button><button id="cView" style="background:#475569;color:#fff">👁️ 視点</button><button id="cOpen">戸開</button><button id="cClose" style="background:#c22f28;color:#fff">戸閉</button><button id="cMelo" style="background:#e0a21a">発車メロディ</button><button id="cPromo" style="background:#f2d27a">乗降促進</button><button id="cSig" style="background:#1f7a4a;color:#fff">合図（発車）</button></div></div>
+<div id="condUI" class="hide"><div class="lt" id="cHint"></div><div class="lb"><button id="cExit" style="background:#34445e;color:#fff">ホームに出る</button><button id="cSal" style="background:#0f766e;color:#fff">🚶 車内を歩く</button><button id="cLean" style="background:#7a4a12;color:#fff">🪟 窓から顔を出す</button><button id="cMic" style="background:#0e7490;color:#fff">🎤 マイク</button><button id="cItv" style="background:#1d4ed8;color:#fff">📺 ITVモニタ</button><button id="cView" style="background:#475569;color:#fff">👁️ 視点</button><button id="cOpen">戸開</button><button id="cClose" style="background:#c22f28;color:#fff">戸閉</button><button id="cMelo" style="background:#e0a21a">発車メロディ</button><button id="cPromo" style="background:#f2d27a">乗降促進</button><button id="cSig" style="background:#1f7a4a;color:#fff">合図（発車）</button></div></div>
+<div id="crewMicPanel" class="hide" style="position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:69;width:min(360px,92vw);background:rgba(10,18,34,0.95);border:2px solid #22d3ee;border-radius:14px;padding:12px;box-shadow:0 12px 32px rgba(0,0,0,0.65);color:#fff;pointer-events:auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="font-weight:800;font-size:14px;color:#67e8f9;">🎤 車掌マイク放送</div>
+    <button id="crewMicClose" style="background:#334155;color:#fff;border:none;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer;">✕ 閉じる</button>
+  </div>
+  <div id="crewMicStatus" style="font-size:12px;color:#cbd5e1;margin-bottom:8px;">マイクOFF：放送先を選んでオンにしてください</div>
+  <div style="height:8px;background:#0f172a;border-radius:999px;overflow:hidden;margin-bottom:10px;border:1px solid rgba(148,163,184,0.25);">
+    <div id="crewMicMeter" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444);transition:width 0.08s linear;"></div>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <button id="micInBtn" style="flex:1;padding:10px 6px;border:none;border-radius:10px;background:#0284c7;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">📢 車内放送</button>
+    <button id="micOutBtn" style="flex:1;padding:10px 6px;border:none;border-radius:10px;background:#d97706;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">📣 車外放送</button>
+    <button id="micOffBtn" style="padding:10px 10px;border:none;border-radius:10px;background:#475569;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">OFF</button>
+  </div>
+</div>
 <div id="crewItvPanel" class="hide" style="position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:68;width:min(440px,92vw);background:rgba(10,18,34,0.94);border:2px solid #38bdf8;border-radius:14px;padding:10px;box-shadow:0 12px 32px rgba(0,0,0,0.65);color:#fff;pointer-events:auto;">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
     <div id="crewItvTitle" style="font-weight:800;font-size:14px;color:#7dd3fc;">📺 車掌用 ITVモニタ</div>
@@ -1648,7 +1673,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=151', function() {});
+      loadScript('assets/js/game.js?v=152', function() {});
     });
   });
 })();

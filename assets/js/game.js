@@ -1,5 +1,6 @@
 (function(){
 'use strict';
+function escapeHtml(str){return String(str==null?'':str).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 /* ===== 毎日・季節連動の自動天気／毎月の自動ダイヤ（日付シード・全員同じ） =====
    プレイヤーは選ばない。日付（と季節）から決定論的に決まるので、同じ日は全員同じ天気・同じダイヤになる。
    端末の時計が同じ日付なら、サーバーなしで全員に同じ条件が出る。 */
@@ -518,6 +519,7 @@ function initOnlineClient() {
       ONLINE_CLIENT.subscribe('shiomi3d/v1/accounts/#', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/events', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/chat', { qos: 0 });
+      ONLINE_CLIENT.subscribe('shiomi3d/v1/mic', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/dispatch/#', { qos: 0 });
       ONLINE_CLIENT.subscribe('shiomi3d/v1/ai/#', { qos: 0 });
       startOnlinePublishLoop();
@@ -543,6 +545,13 @@ function initOnlineClient() {
           const chat = JSON.parse(message.toString());
           if (chat && chat.id && chat.id !== ONLINE_CLIENT_ID && chat.text) {
             handleIncomingChat(chat);
+          }
+          return;
+        }
+        if (topic === 'shiomi3d/v1/mic') {
+          const mic = JSON.parse(message.toString());
+          if (mic && mic.id && mic.id !== ONLINE_CLIENT_ID && mic.pcm) {
+            handleIncomingMic(mic);
           }
           return;
         }
@@ -1031,6 +1040,245 @@ function handleIncomingChat(chat) {
   displayChatBubble(chat.id, name, text, false);
 }
 
+/* ===== 車掌モード：リアルタイムマイク放送（車内／車外） ===== */
+const _MU_DEC = new Float32Array(256);
+for (let i = 0; i < 256; i++) {
+  let u = ~i & 0xff;
+  let t = ((u & 0x0f) << 3) + 0x84;
+  t <<= (u & 0x70) >> 4;
+  _MU_DEC[i] = ((u & 0x80) ? (0x84 - t) : (t - 0x84)) / 32768;
+}
+function _encodeMuLawSample(sample) {
+  let s = Math.max(-1, Math.min(1, sample)) * 32767 | 0;
+  let sign = (s >> 8) & 0x80;
+  if (sign) s = -s;
+  if (s > 32635) s = 32635;
+  s += 0x84;
+  let exp = 7;
+  for (let expMask = 0x4000; (s & expMask) === 0 && exp > 0; exp--, expMask >>= 1) {}
+  const mant = (s >> (exp + 3)) & 0x0f;
+  return ~(sign | (exp << 4) | mant) & 0xff;
+}
+function _u8ToB64(u8) {
+  let bin = '';
+  for (let i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]);
+  return btoa(bin);
+}
+function _b64ToU8(b64) {
+  const bin = atob(b64);
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8;
+}
+
+window.__CREW_MIC = { on: false, mode: 'in', stream: null, src: null, proc: null, zeroGain: null, seq: 0, acc: [] };
+function _updCrewMicUI() {
+  const stEl = document.getElementById('crewMicStatus');
+  const inB = document.getElementById('micInBtn');
+  const outB = document.getElementById('micOutBtn');
+  const offB = document.getElementById('micOffBtn');
+  const m = window.__CREW_MIC;
+  if (stEl) {
+    stEl.textContent = !m.on
+      ? 'マイクOFF：放送先を選んでオンにしてください'
+      : (m.mode === 'out'
+        ? '📣 車外放送中：開いているドアからホームに聞こえます'
+        : '📢 車内放送中：この電車の乗客にリアルタイムで聞こえます');
+    stEl.style.color = m.on ? '#fef08a' : '#cbd5e1';
+  }
+  if (inB) inB.style.outline = (m.on && m.mode === 'in') ? '2px solid #fff' : 'none';
+  if (outB) outB.style.outline = (m.on && m.mode === 'out') ? '2px solid #fff' : 'none';
+  if (offB) offB.style.opacity = m.on ? '1' : '0.5';
+  if (typeof updCondUI === 'function') { try { updCondUI(); } catch (e) {} }
+}
+async function startCrewMic(mode) {
+  const m = window.__CREW_MIC;
+  m.mode = mode === 'out' ? 'out' : 'in';
+  if (m.on) {
+    _updCrewMicUI();
+    if (typeof toast === 'function') toast(m.mode === 'out' ? '📣 車外放送に切り替えました' : '📢 車内放送に切り替えました', 'info');
+    return;
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (typeof toast === 'function') toast('このブラウザはマイク入力に対応していません', 'warn');
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    const ac = window.__AC;
+    if (!ac) { stream.getTracks().forEach(t => t.stop()); return; }
+    if (ac.state === 'suspended') { try { await ac.resume(); } catch (e) {} }
+    const src = ac.createMediaStreamSource(stream);
+    const proc = ac.createScriptProcessor(2048, 1, 1);
+    const zeroGain = ac.createGain();
+    zeroGain.gain.value = 0;
+    const TARGET_SR = 12000;
+    const ratio = ac.sampleRate / TARGET_SR;
+    proc.onaudioprocess = (ev) => {
+      if (!m.on || !ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
+      const inp = ev.inputBuffer.getChannelData(0);
+      let peak = 0;
+      for (let i = 0; i < inp.length; i++) {
+        const a = Math.abs(inp[i]);
+        if (a > peak) peak = a;
+      }
+      const meter = document.getElementById('crewMicMeter');
+      if (meter) meter.style.width = Math.min(100, Math.round(peak * 220)) + '%';
+      for (let p = 0; p < inp.length; p += ratio) {
+        const idx = Math.floor(p);
+        const nxt = Math.min(inp.length - 1, idx + 1);
+        const fr = p - idx;
+        m.acc.push(inp[idx] * (1 - fr) + inp[nxt] * fr);
+      }
+      if (m.acc.length >= 1024) {
+        const chunk = m.acc.splice(0, 1024);
+        let cPeak = 0;
+        for (let i = 0; i < chunk.length; i++) { const a = Math.abs(chunk[i]); if (a > cPeak) cPeak = a; }
+        if (cPeak < 0.005) return;
+        const u8 = new Uint8Array(chunk.length);
+        for (let i = 0; i < chunk.length; i++) u8[i] = _encodeMuLawSample(chunk[i]);
+        const curG = (typeof G !== 'undefined' ? G : (window.__T ? window.__T.G : null));
+        const curCfg = (typeof CFG !== 'undefined' ? CFG : (window.__T ? window.__T.CFG : null));
+        const nCar = (typeof ownTrain !== 'undefined' && ownTrain && ownTrain.cars) ? ownTrain.cars.length : 8;
+        try {
+          ONLINE_CLIENT.publish('shiomi3d/v1/mic', JSON.stringify({
+            id: ONLINE_CLIENT_ID,
+            name: MY_PLAYER_NAME,
+            mode: m.mode,
+            line: curCfg ? curCfg.id : 'loop',
+            s: curG ? curG.s : 0,
+            key: curG ? curG.key : 'A',
+            dir: curG ? curG.dir : 1,
+            nCar: nCar,
+            door: (curG && curG.door) ? curG.door.state : 'closed',
+            doorSide: (curG && curG.door) ? curG.door.side : 1,
+            sr: TARGET_SR,
+            seq: m.seq++,
+            pcm: _u8ToB64(u8)
+          }), { qos: 0 });
+        } catch (e) {}
+      }
+    };
+    src.connect(proc);
+    proc.connect(zeroGain);
+    zeroGain.connect(ac.destination);
+    m.on = true; m.stream = stream; m.src = src; m.proc = proc; m.zeroGain = zeroGain; m.acc = [];
+    _updCrewMicUI();
+    if (typeof toast === 'function') toast(m.mode === 'out' ? '📣 マイクON（車外放送）' : '📢 マイクON（車内放送）', 'ok');
+  } catch (e) {
+    if (typeof toast === 'function') toast('マイクの使用が許可されませんでした', 'warn');
+  }
+}
+function stopCrewMic() {
+  const m = window.__CREW_MIC;
+  m.on = false;
+  m.acc = [];
+  try { if (m.proc) m.proc.disconnect(); } catch (e) {}
+  try { if (m.src) m.src.disconnect(); } catch (e) {}
+  try { if (m.zeroGain) m.zeroGain.disconnect(); } catch (e) {}
+  try { if (m.stream) m.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  m.proc = null; m.src = null; m.zeroGain = null; m.stream = null;
+  const meter = document.getElementById('crewMicMeter');
+  if (meter) meter.style.width = '0%';
+  _updCrewMicUI();
+}
+const _micPlaySched = {};
+function handleIncomingMic(d) {
+  const ac = window.__AC;
+  if (!ac || ac.state !== 'running') return;
+  const T = window.__T;
+  if (!T) return;
+  const curCfg = (typeof CFG !== 'undefined' ? CFG : T.CFG);
+  if (curCfg && d.line && d.line !== curCfg.id) return;
+  const isPax = !!(typeof PAX !== 'undefined' ? PAX : window.__PAX);
+  const r = typeof T.getRide === 'function' ? T.getRide() : null;
+  const ridingThis = !!(isPax && r && r.a && r.a.p && r.a.p.id === d.id);
+
+  let vol = 0;
+  let pan = 0;
+  let isOut = d.mode === 'out';
+  if (!isOut) {
+    if (!ridingThis) return;
+    vol = 0.95;
+  } else {
+    const doorOpen = d.door === 'open' || d.door === 'opening';
+    const doorMul = doorOpen ? 1.0 : 0.08;
+    const pObj = window.ONLINE_PLAYERS ? window.ONLINE_PLAYERS[d.id] : null;
+    const trS = (pObj && pObj.smoothS != null) ? pObj.smoothS : (d.s || 0);
+    const dir = d.dir || 1;
+    const len = (d.nCar || 8) * 20;
+    const L = (curCfg && curCfg.L) ? curCfg.L : 72000;
+    const sdiffFn = (a, b) => { let x = ((b - a) % L + L) % L; if (x > L / 2) x -= L; return x; };
+
+    let myS = 0, myO = 0, myYaw = 0;
+    if (isPax) {
+      if (r && r.a) {
+        myS = r.a.s || 0;
+        myO = (T.TK && T.TK[r.a.key]) ? T.TK[r.a.key].off(myS) : 0;
+      } else if (T.W) {
+        myS = T.W.s || 0;
+        myO = T.W.o || 0;
+      }
+      myYaw = T.W ? (T.W.yaw || 0) : 0;
+    } else if (T.G) {
+      myS = T.G.s || 0;
+      myO = (T.TK && T.TK[T.G.key]) ? T.TK[T.G.key].off(myS) : 0;
+      myYaw = T.G.lookY || 0;
+    }
+
+    const rel = dir * sdiffFn(trS, myS);
+    const clampedRel = Math.max(-len, Math.min(0, rel));
+    const distS = Math.abs(rel - clampedRel);
+    const trO = (T.TK && d.key && T.TK[d.key]) ? T.TK[d.key].off(trS) : 0;
+    const doorO = trO + (d.doorSide || 1) * 1.45;
+    const distO = Math.abs(myO - doorO);
+    const dist = Math.hypot(distS, distO);
+    if (dist > 65) return;
+    vol = Math.pow(Math.max(0, 1 - dist / 65), 1.35) * doorMul * (ridingThis ? 0.45 : 1.0);
+    if (vol < 0.02) return;
+    const diffO = doorO - myO;
+    pan = Math.max(-0.85, Math.min(0.85, (diffO * Math.cos(myYaw)) / 8));
+  }
+
+  let u8;
+  try { u8 = _b64ToU8(d.pcm); } catch (e) { return; }
+  if (!u8 || !u8.length) return;
+  const sr = d.sr || 12000;
+  const buf = ac.createBuffer(1, u8.length, sr);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < u8.length; i++) ch[i] = _MU_DEC[u8[i]];
+
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+
+  const hp = ac.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = isOut ? 420 : 260;
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = isOut ? 2900 : 3600;
+  const g = ac.createGain();
+  g.gain.value = vol;
+
+  src.connect(hp);
+  hp.connect(lp);
+  if (typeof ac.createStereoPanner === 'function') {
+    const panner = ac.createStereoPanner();
+    panner.pan.value = pan;
+    lp.connect(panner);
+    panner.connect(g);
+  } else {
+    lp.connect(g);
+  }
+  g.connect(ac.destination);
+
+  const now = ac.currentTime;
+  let t = _micPlaySched[d.id] || 0;
+  if (t < now + 0.02 || t > now + 0.6) t = now + 0.06;
+  src.start(t);
+  _micPlaySched[d.id] = t + buf.duration;
+}
+
 function handleIncomingEvent(ev) {
   const p = ONLINE_PLAYERS[ev.id] || { s: ev.s, key: ev.key };
   if (ev.type === 'horn') {
@@ -1390,7 +1638,7 @@ function publishPresence(force) {
     paxWalk: (isPax && window.__T && window.__T.W) ? !!(Math.hypot(window.__T.W.mv.x, window.__T.W.mv.y) > 0.1 || window.__T.W.keys.KeyW || window.__T.W.keys.KeyS || window.__T.W.keys.KeyA || window.__T.W.keys.KeyD || window.__T.W.keys.ArrowUp || window.__T.W.keys.ArrowDown || window.__T.W.keys.ArrowLeft || window.__T.W.keys.ArrowRight) : ((isDriving && curG.walkOn && window.__T && window.__T.W) ? !!(Math.hypot(window.__T.W.mv.x, window.__T.W.mv.y) > 0.1 || window.__T.W.keys.KeyW || window.__T.W.keys.KeyS || window.__T.W.keys.KeyA || window.__T.W.keys.KeyD || window.__T.W.keys.ArrowUp || window.__T.W.keys.ArrowDown || window.__T.W.keys.ArrowLeft || window.__T.W.keys.ArrowRight) : false),
     paxRide: (isPax && window.__T && typeof window.__T.getRide === 'function' && window.__T.getRide()) ? (() => {
       const r = window.__T.getRide();
-      return { pid: (r.a && r.a.p) ? r.a.p.id : null, k: r.k, lx: r.lx, lz: r.lz, fl: r.fl, seat: r.seat, s: r.a ? r.a.s : null };
+      return { pid: (r.a && r.a.p) ? r.a.p.id : null, isAi: !(r.a && r.a.p), k: r.k, lx: r.lx, lz: r.lz, fl: r.fl, seat: r.seat, s: r.a ? r.a.s : null };
     })() : null,
     ts: Date.now()
   };
@@ -3318,14 +3566,19 @@ function updRemotePassengers(dt){
       let targetCar=null;
       if(r.pid&&ONLINE_PLAYERS[r.pid]&&ONLINE_PLAYERS[r.pid].tr&&ONLINE_PLAYERS[r.pid].tr.cars){
         targetCar=ONLINE_PLAYERS[r.pid].tr.cars[r.k||0]||ONLINE_PLAYERS[r.pid].tr.cars[0];
-      }else if(r.pid===null&&!PAX&&typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars){
+      }else if(r.pid===ONLINE_CLIENT_ID&&!PAX&&typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars){
+        targetCar=ownTrain.cars[r.k||0]||ownTrain.cars[0];
+      }else if(r.pid===null&&r.isAi===false&&!PAX&&typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars){
         targetCar=ownTrain.cars[r.k||0]||ownTrain.cars[0];
       }
       if(targetCar){
         if(g.parent!==targetCar)targetCar.add(g);
-        g.position.set(r.lx||0,1.16,r.lz||0);
+        const fy=(targetCar.userData&&targetCar.userData.green&&!targetCar.userData.gflat)?GFLOOR[r.fl||'deck']:1.16;
+        g.position.set(r.lx||0,fy,r.lz||0);
         g.rotation.set(0,(p.paxYaw||0)+Math.PI,0);
         personPose(g,r.seat!=null?'sit':(p.paxWalk?'walk':'stand'));
+      }else if(r.pid&&r.pid!==ONLINE_CLIENT_ID&&ONLINE_PLAYERS[r.pid]){
+        g.visible=false;
       }else{
         if(g.parent!==scene)scene.add(g);
         g.position.copy(offs(p.paxS,p.paxO||0,PH));
@@ -6516,9 +6769,10 @@ function updCondUI(){const ui=document.getElementById('condUI');if(!ui)return;ui
   const D=G.door,b=id=>document.getElementById(id),open=D.state==='open'||D.state==='opening',stn=G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv,d=stopDist(G.nv);
   const atStop=G.v===0&&!sigStopped()&&(G.atStation!==null||G.depCheck!==null||(d>-6.5&&d<17.9));
   const vis=(id,on)=>{const e=b(id);if(e)e.style.display=on?'':'none';};
-  vis('cExit',(!G.walkOn||G.walkArea==='train')&&canExit()&&!G.lean);vis('cSal',(!G.walkOn||(G.walkOn&&G.walkArea!=='train'))&&!G.lean);vis('cLean',!G.walkOn&&G.v<=0.05);vis('cItv',true);vis('cView',true);
+  vis('cExit',(!G.walkOn||G.walkArea==='train')&&canExit()&&!G.lean);vis('cSal',(!G.walkOn||(G.walkOn&&G.walkArea!=='train'))&&!G.lean);vis('cLean',!G.walkOn&&G.v<=0.05);vis('cMic',true);vis('cItv',true);vis('cView',true);
   vis('cOpen',atStop&&D.state==='closed'&&!(G.depCheck!==null&&G.condOK));vis('cClose',open);vis('cMelo',open&&(nearCondBox()||G.walkArea==='train'||!G.walkOn));vis('cPromo',open);
   vis('cSig',!G.walkOn&&D.state==='closed'&&G.depCheck!==null&&!G.condOK&&G.v===0);
+  const cm=b('cMic');if(cm){if(window.__CREW_MIC&&window.__CREW_MIC.on){cm.textContent=window.__CREW_MIC.mode==='out'?'📣 車外放送中':'📢 車内放送中';cm.style.background='#dc2626';}else{cm.textContent='🎤 マイク';cm.style.background='#0e7490';}}
   const cl=b('cLean');if(cl)cl.textContent=G.lean?'🪟 室内に戻る':'🪟 窓から顔を出す';
   const cs=b('cSal');if(cs)cs.textContent=(G.walkOn&&G.walkArea==='train')?'🚪 乗務員室へ':'🚶 車内を歩く';
   const cv=b('cView');if(cv)cv.textContent=AV3P?'👁️ 三人称':'👁️ 一人称';
@@ -9679,6 +9933,11 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
   on('devClose',()=>closeDev());on('devHome',()=>devHome());
   _on(window,'keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(G.phase==='play'&&e.code==='KeyV'&&(PAX||G.crew==='twoC'))toggle3P();});
   on('cExit',()=>enterWalk());on('cSal',()=>enterSalWalk());on('cLean',()=>{if(G.lean){leanBack();return;}const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);const sd=(st?localSide(st)*SIDEINV:-1)||-1;toggleLean(sd);});on('cView',()=>toggle3P());
+  on('cMic',()=>{const p=document.getElementById('crewMicPanel');if(p)p.classList.toggle('hide');});
+  on('crewMicClose',()=>{const p=document.getElementById('crewMicPanel');if(p)p.classList.add('hide');});
+  on('micInBtn',()=>startCrewMic('in'));
+  on('micOutBtn',()=>startCrewMic('out'));
+  on('micOffBtn',()=>stopCrewMic());
   on('cItv',()=>{const p=document.getElementById('crewItvPanel');if(p)p.classList.toggle('hide');});
   on('crewItvClose',()=>{const p=document.getElementById('crewItvPanel');if(p)p.classList.add('hide');});
   on('itvOpenBtn',()=>{const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);openDoor(localSide(st));});
