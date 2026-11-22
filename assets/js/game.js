@@ -4844,6 +4844,8 @@ function isAiSyncLeader(){
 }
 window.handleAiPacket=(topic,ap)=>{
   if(!ap)return;
+  const MYLN=(typeof CFG!=='undefined'&&CFG)?(CFG.id||'loop'):'loop';
+  if(topic==='shiomi3d/v1/ai/state'&&(ap.line||'loop')!==MYLN)return; /* 別の路線のAI列車の状態は適用しない */
   if(topic==='shiomi3d/v1/ai/cmd'&&ap.name){
     const a=OT.find(x=>x&&x.name===ap.name);if(!a)return;
     a._cmdTs=ap.ts||Date.now();
@@ -4915,7 +4917,7 @@ function updPools(dt){const on=G.phase==='play'||window.__DISP_MONITOR;
         /* v1.9.7：数値が欠けた列車があっても同期発信が例外で止まらないように（更新が飛んでカクつく原因） */
         const N2=x=>{const v=Number(x);return isFinite(v)?v:0;};
         const trains=OT.filter(a=>a&&a.state!=='off').map(a=>({n:a.name,k:a.key,s:+N2(a.s).toFixed(1),v:+N2(a.v).toFixed(2),st:a.state,d:a.dir,sd:a.side,f:+N2(a.frac).toFixed(2),dh:!!a.dispHold,sm:a.slowMode||null,tb:!!a.troubleActive,t:+N2(a.t).toFixed(1),q:a.sq|0,d0:+N2(a.dwellTot||0).toFixed(1)}));
-        try{ONLINE_CLIENT.publish('shiomi3d/v1/ai/state',JSON.stringify({leader:ONLINE_CLIENT_ID,ts:Date.now(),trains}),{qos:0});}catch(e){}
+        try{ONLINE_CLIENT.publish('shiomi3d/v1/ai/state',JSON.stringify({leader:ONLINE_CLIENT_ID,line:(CFG.id||'loop'),ts:Date.now(),trains}),{qos:0});}catch(e){}
       }
     }
     return;
