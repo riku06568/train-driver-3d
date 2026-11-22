@@ -6958,7 +6958,7 @@ function buildAnnouncementData(st, mode){
   if(!BRANCH && kind==='local'){
     const dname=isOuter?'outer':'inner';
     const mname=isSoon?'arr':'dep';
-    const file='assets/audio/ann/v230/loop_local_'+dname+'_'+mname+'_'+st.i+'.mp3';
+    const base='assets/audio/ann/v230/loop_local_'+dname+'_'+mname+'_'+st.i;
     const prevSt=STATIONS[mod(st.i-(dir>0?1:-1),NST)];
     const prevMajor=isMajorStation(prevSt);
     const sideStr=(sideIsLeft?'左':'右')+'側';
@@ -6973,7 +6973,7 @@ function buildAnnouncementData(st, mode){
       const trNames=(isMajor&&st.lines&&st.lines.length)?('（'+st.lines.map(l=>l[0]).join('・')+'はお乗り換え）'):'';
       text='まもなく、'+st.name+'、'+st.name+'、お出口は'+sideStr+'です。'+trNames+'（英語放送）';
     }
-    return {parts:[file],text,isLtd:false,chimeType:'local'};
+    return {parts:[base+'_ja.mp3',base+'_en.mp3'],text,isLtd:false,chimeType:'local'};
   }
 
   if(BRANCH){
