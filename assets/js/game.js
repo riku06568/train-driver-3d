@@ -6410,15 +6410,24 @@ function broadcast(n,sys){if(G.phase!=='play')return;if(G.crew==='twoD'&&!sys){t
   else{soundKey='tab_depart';tag='まもなく発車';}
   toast('放送：'+tag,'info');setTimeout(()=>playGuide(soundKey),900);} /* チャイムの後に声 */
 function turnaround(){
+  const oldDir=G.dir,st0=STATIONS[G.list[G.list.length-1]];
   const nk={A:'B',B:'A',C:'D',D:'C',E:'F',F:'E',G:'H',H:'G'}[G.key]||'A';G.key=nk;G.mainKey=nk;G.dir=TK[nk].dir;G.list=G.list.slice().reverse();G.said={};G.asked=false;
-  const st=STATIONS[G.list[0]];G.s=st.s+TK[nk].so;G.v=0;G.nv=1;G.depCheck=0;G.flowV=-1;G.depAt=G.s;G.route=Object.keys(SERVICES).find(id=>SERVICES[id].line===CFG.id&&SERVICES[id].key===nk&&SERVICES[id].kind==='branch')||(nk==='A'?'bu':'bd');
+  const st=STATIONS[G.list[0]]||st0;
+  /* 電車をワープさせず、今の最後尾の先頭位置を新しい先頭位置にする */
+  G.s=mod(G.s-oldDir*(carsFor(G.key)*CARL),L);
+  G.v=0;G.atStation=0;G.nv=1;G.depCheck=null;G.lastDepSt=null;G.flowV=(G.flowV>=0?0:-1);G.depAt=G.s;
+  G.route=Object.keys(SERVICES).find(id=>SERVICES[id].line===CFG.id&&SERVICES[id].key===nk&&SERVICES[id].kind==='branch')||(nk==='A'?'bu':'bd');
   ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;drawOwnDest();planFrom(nowMs()+20000);
   if(OWNAI&&OWNAI.insideSet)releaseInterior(OWNAI);ownTrain.cars.reverse();ownTrain.rev=!ownTrain.rev;relayoutLean(); /* 最後尾だった車両が先頭に */
-  /* 折り返し後は反対ホーム側に着くので、扉は閉めた状態から開け直す */
   if(G.promoLoop)stopPromoLoop(false);G.promoOn=false;clearAutoMelTimers();G.autoMelOn=false;G.autoMelFired=false;G.autoMelBusy=false;
-  G.door={state:'closed',frac:0,side:-1,local:-1};G.flowPending=false;setDoors(ownTrain,G.door.side,0);
-  if(SAL.on)salFill(saloonFromLoad(G.load||0,carsFor(G.key)));
-  const b=boundFor();toast('折り返し → '+b.jn+'（反対側の扉を開けて乗車扱い）','ok');setTimeout(()=>sayJE('折り返し、'+b.ja+'です。','This train is now '+b.en+'.'),300);
+  /* ドアが開いていたら閉めずに維持し、運転士から見た左右(local)だけ新しい向きへ合わせる */
+  const lsNew=localSide(st);
+  if(G.door&&(G.door.state==='open'||G.door.state==='opening')){
+    G.door.local=lsNew;G.door.side=lsNew*G.dir;setDoors(ownTrain,G.door.side,G.door.frac);
+  }else{
+    G.door={state:'closed',frac:0,side:-1,local:-1};G.flowPending=false;setDoors(ownTrain,G.door.side,0);
+  }
+  const b=boundFor();toast('折り返し → '+b.jn+'（発車メロディを鳴らして発車できます）','ok');setTimeout(()=>sayJE('折り返し、'+b.ja+'です。','This train is now '+b.en+'.'),300);
 }
 /* 手動運転（港見支線・手動切替）：マスコン・ブレーキ。停止信号の直前で止まらないとATSの非常ブレーキ */
 function manualSafety(){const sg=G.sig;if(sg&&sg.asp==='R'&&sg.dist<6&&G.v>0.3&&G.mnotch>-8){G.mnotch=-8;toast('ATS 動作：非常ブレーキ（停止信号）','warn');beepATS();updMascon();return;}
@@ -7856,7 +7865,7 @@ function ownTrainWalk(dt){
 }
 function exitWalk(){if(!G.walkOn)return;
   const wasPlat=G.walkArea==='plat',wS=W.s;
-  G.walkOn=false;G.walkArea=null;if(camera.parent)camera.parent.remove(camera);rig.add(camera);camera.layers.disable(1);camera.layers.enable(2);camera.position.copy(EYE_L.p);
+  G.walkOn=false;G.walkArea=null;if(camera.parent)camera.parent.remove(camera);rig.add(camera);camera.layers.disable(1);camera.layers.enable(2);camera.position.copy(EYE_L.p);G.lookY=0;G.lookP=0;
   document.getElementById('walkUI').classList.add('hide');W.ptr.clear();W.mv.x=W.mv.y=0;
   /* 終点：反対側の先頭車両の運転室の近くで長押し → 折り返して反対の運転室へ */
   let turned=false;
