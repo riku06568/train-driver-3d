@@ -1089,6 +1089,20 @@ function _updCrewMicUI() {
   if (inB) inB.style.outline = (m.on && m.mode === 'in') ? '2px solid #fff' : 'none';
   if (outB) outB.style.outline = (m.on && m.mode === 'out') ? '2px solid #fff' : 'none';
   if (offB) offB.style.opacity = m.on ? '1' : '0.5';
+  const fab = document.getElementById('btnCrewMicFab');
+  if (fab) {
+    if (m.on) {
+      fab.textContent = m.mode === 'out' ? '📣 車外放送中' : '📢 車内放送中';
+      fab.style.background = 'rgba(220,38,38,0.92)';
+      fab.style.borderColor = '#fca5a5';
+      fab.style.color = '#fff';
+    } else {
+      fab.textContent = '🎤 マイク';
+      fab.style.background = 'rgba(12,24,44,0.92)';
+      fab.style.borderColor = 'rgba(34,211,238,0.45)';
+      fab.style.color = '#22d3ee';
+    }
+  }
   if (typeof updCondUI === 'function') { try { updCondUI(); } catch (e) {} }
 }
 async function startCrewMic(mode) {
@@ -2373,14 +2387,15 @@ function buildHomeDoors(c,st,k,isSiding){
 function setHD(hd,f){if(Math.abs(hd.frac-f)<0.002)return;hd.frac=f;for(const l of hd.leaves){const s=l.d+l.q*(0.73+f*1.35); /* 閉：中央でぴったり、端は戸袋に重なる */l.m.position.copy(offs(s,hd.line,PH+0.65));l.m.rotation.y=-P(s)[2];}}
 /* ホームドア当たり：開いていない区間は線路側へ出られない */
 function hdDoorCenters(hd){if(hd._doors)return hd._doors;const s=new Set();for(const l of hd.leaves)s.add(l.d);return hd._doors=[...s];}
-function hdGapAt(hd,s){if(hd.frac<0.35)return false;const half=hd.frac*1.35-0.05;for(const d of hdDoorCenters(hd))if(Math.abs(s-d)<half)return true;return false;}
+function hdGapAt(hd,s){if(hd.frac<0.20)return false;const half=hd.frac*1.45+0.25;for(const d of hdDoorCenters(hd))if(Math.abs(s-d)<half)return true;return false;}
 function applyHDCollision(p){if(p.trackO===-99||!p.g.visible)return;const st=STATIONS[p.st];if(!st||!st.hd)return;
   const k=p.flow,pk=platKey(st,k);const hdKeys=(!BRANCH&&st.i===0)?[pk,'S'+pk]:(pk!==k?[pk,k]:[k]);
   for(const hk of hdKeys){const hd=st.hd[hk];if(!hd)continue;
     const sd=hd.sd!=null?hd.sd:(TK[k]?TK[k].side(st):1),line=hd.line,safe=line+sd*0.55;
-    if(Math.abs(p.o-line)>3.2&&(!BRANCH&&st.i===0))continue;
-    const isBoard=(p.kind==='board'||p.kind==='runner'||p.kind==='alight'||p.kind==='jam');
-    const allowThrough=isBoard&&hd.frac>0.30&&(hdGapAt(hd,p.s)||(p.doorS!=null&&hdGapAt(hd,p.doorS)));
+    if(Math.abs(p.o-line)>3.2)continue;
+    if(p.kind==='alight'&&hd.frac>0.15)continue;
+    const isBoard=(p.kind==='board'||p.kind==='runner'||p.kind==='jam');
+    const allowThrough=isBoard&&hd.frac>0.20&&(hdGapAt(hd,p.s)||(p.doorS!=null&&(hdGapAt(hd,p.doorS)||Math.abs(p.s-p.doorS)<1.6)));
     if(allowThrough)continue;
     if(sd>0){if(p.o<safe)p.o=safe;}else{if(p.o>safe)p.o=safe;}}}
 function applyHDPlayer(W){if(!W.st||!W.st.hd)return;
@@ -4572,9 +4587,10 @@ function updPeople(dt){sweepStranded();
       else{p.s+=ds/dist*step;p.o+=dO/dist*step;}moving=true;p.walk+=dt*p.speed*5.5;crowdPush(p,dt);}
     else{const t=P(p.s)[2];p.yaw=Math.atan2(Math.cos(t)*p.face,Math.sin(t)*p.face);crowdPush(p,dt);}
     if(moving&&Math.hypot(p.s-_mvS,p.o-_mvO)<0.004){moving=false;p._stuckT=(p._stuckT||0)+dt;}else p._stuckT=0; /* 前の人に詰まって進めないときは足踏みしない */
-    if(p._stuckT>1.2&&p.path&&p.path.length){ /* 1.2秒まったく進めない：その場に着いたことにする（戸・人・段差で詰まっても足踏みしない） */
-      if(p.kind!=='board'&&p.kind!=='runner'&&p.kind!=='alight'&&p.kind!=='jam'){p.s=p.path[0][0];p.o=p.path[0][1];p.path.length=0;}
-      p._stuckT=0;}
+    if(p._stuckT>1.2&&p.path&&p.path.length){ /* 1.2秒まったく進めない：詰まりを解消する */
+      if(p.kind==='board'||p.kind==='runner'||p.kind==='alight'){
+        if(p._stuckT>1.8){const nx=p.path.shift();if(nx){p.s=nx[0];p.o=nx[1];}p._stuckT=0;}
+      }else if(p.kind!=='jam'){p.s=p.path[0][0];p.o=p.path[0][1];p.path.length=0;p._stuckT=0;}}
     if(p.trackO!==-99&&p.st>=0){const stP=STATIONS[p.st],prP=stP&&p.flow?platRange(stP,p.flow):null;
       if(prP){const loP=Math.min(prP[0],prP[1])+0.35,hiP=Math.max(prP[0],prP[1])-0.35;
         const canCross=(p.kind==='board'||p.kind==='alight'||p.kind==='runner'||p.kind==='jam')&&(p.kind==='alight'||p.kind==='jam'||(p.train&&boardOpen(p)));
@@ -9983,6 +9999,7 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
   _on(window,'keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(G.phase==='play'&&e.code==='KeyV'&&(PAX||G.crew==='twoC'))toggle3P();});
   on('cExit',()=>enterWalk());on('cSal',()=>enterSalWalk());on('cLean',()=>{if(G.lean){leanBack();return;}const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);const sd=(st?localSide(st)*SIDEINV:-1)||-1;toggleLean(sd);});on('cView',()=>toggle3P());
   on('cMic',()=>{const p=document.getElementById('crewMicPanel');if(p)p.classList.toggle('hide');});
+  on('btnCrewMicFab',()=>{const p=document.getElementById('crewMicPanel');if(p)p.classList.toggle('hide');});
   on('crewMicClose',()=>{const p=document.getElementById('crewMicPanel');if(p)p.classList.add('hide');});
   on('micInBtn',()=>startCrewMic('in'));
   on('micOutBtn',()=>startCrewMic('out'));
@@ -10075,6 +10092,8 @@ if (IS_ONLINE) {
   if (chatFab) chatFab.classList.remove('hide');
   const dtFab = document.getElementById('btnDriverTablet');
   if (dtFab && !PAX) dtFab.classList.remove('hide');
+  const micFab = document.getElementById('btnCrewMicFab');
+  if (micFab && !PAX) micFab.classList.remove('hide');
   updateOnlineHud(true);
 }
 const btr = document.getElementById('btnTitleReturn');
@@ -11731,7 +11750,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     let _lastDispSig = '';
     const refreshDispatchDrivers = () => {
       if (!dispDriversList || !viewDispatch || viewDispatch.classList.contains('hide')) return;
-      if (window.__DISP_MONITOR) ['btnDriverTablet','btnOnlineHud','btnTitleReturn','walkUI'].forEach(id => { const e = document.getElementById(id); if (e && !e.classList.contains('hide')) e.classList.add('hide'); });
+      if (window.__DISP_MONITOR) ['btnDriverTablet','btnCrewMicFab','btnOnlineHud','btnTitleReturn','walkUI'].forEach(id => { const e = document.getElementById(id); if (e && !e.classList.contains('hide')) e.classList.add('hide'); });
       const chatFab = document.getElementById('btnChatFab');
       if (chatFab && chatFab.classList.contains('hide')) chatFab.classList.remove('hide');
       dispSimStep();
@@ -11827,7 +11846,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         try {
           boot('loop', 'lo', 0);
           window.__DISP_MONITOR = true;
-          ['btnDriverTablet','btnOnlineHud','btnTitleReturn','walkUI'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hide'); });
+          ['btnDriverTablet','btnCrewMicFab','btnOnlineHud','btnTitleReturn','walkUI'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hide'); });
           dispHideWorld(true);
           dispSetSound(false);
         } catch(e) { console.error('指令モニター起動失敗', e); }
