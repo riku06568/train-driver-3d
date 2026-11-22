@@ -1752,7 +1752,7 @@ const WXDEF={
 };
 WX=Object.assign({id:'clear'},WXDEF.clear);
 const LINENAME=BRANCH?(LINE_ID==='branch2'?'紫雲地下線':LINE_ID==='branch3'?'天宮高架線':LINE_ID==='branch4'?'港見支線':LINE_ID==='branch5'?'四嶺連絡高速線':'白峰支線'):'汐見環状線';
-const LINEEN=BRANCH?(LINE_ID==='branch2'?'Shiun Subway Line':LINE_ID==='branch3'?'Amamiya Elevated Line':LINE_ID==='branch4'?'Minatomi Branch Line':LINE_ID==='branch5'?'Shirei Connection Line':'Shiramine Branch Line'):'Shiomi Loop Line';
+const LINEEN=BRANCH?(LINE_ID==='branch2'?'Shiun Subway Line':LINE_ID==='branch3'?'Amamiya Elevated Line':LINE_ID==='branch4'?'Minatomi Branch Line':LINE_ID==='branch5'?'Shirei High-Speed Connection Line':'Shiramine Branch Line'):'Shiomi Loop Line';
 const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.12,3200);camera.rotation.order='YXZ';camera.layers.enable(2);
 const hemi=new THREE.HemisphereLight(0xb9c8e8,0x4a3a30,0.8);scene.add(hemi);
 const dirL=new THREE.DirectionalLight(0xffffff,0.8);scene.add(dirL);
@@ -5066,7 +5066,7 @@ function updMiyukiShuttle(dt){
   if(LINE_ID!=='branch2')return;
   if(!MYS.built)initMiyukiShuttle();
   if(!MYS.tr)return;
-  const atTerm=!PAX&&G.phase==='play'&&G.atStation!==null&&G.atStation>=lastStop();
+  const atTerm=!PAX&&G.phase==='play'&&G.atStation!==null&&stOf(G.atStation)&&stOf(G.atStation).i===NST-1;
   if(atTerm&&!MYS.arr){MYS.arr=true;MYS.state='wait';MYS.t=60;MYS.s=MYS.frontS;MYS.v=0;MYS.tr.grp.visible=true;} /* 到着時は必ずいる */
   if(!atTerm)MYS.arr=false;
   if(MYS.state==='off'){MYS.tr.grp.visible=false;return;}
