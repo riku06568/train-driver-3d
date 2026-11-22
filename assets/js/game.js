@@ -3259,8 +3259,8 @@ function updAvatar(dt){if(!AVG||(!PAX&&G.crew!=='twoC'))return;const g=AVG,u=g.u
     }else{
       if(g.parent!==cab)cab.add(g);
       g.position.set(XE+0.05,1.16,ZE+0.12);g.rotation.set(0,G.lookY+Math.PI,0);personPose(g,'stand');
-      g.visible=AV3P;
-      if(AV3P){camera.position.set(XE+0.05-Math.sin(G.lookY)*1.1,YE+0.42,ZE+0.12-Math.cos(G.lookY)*1.1);camera.rotation.set(-0.22,G.lookY,0);}
+      g.visible=AV3P&&!G.lean;
+      if(AV3P&&!G.lean){camera.position.set(XE+0.05-Math.sin(G.lookY)*1.1,YE+0.42,ZE+0.12-Math.cos(G.lookY)*1.1);camera.rotation.set(-0.22,G.lookY,0);}
     }
     return;
   }
@@ -3540,7 +3540,7 @@ if(!OWNOLD)for(const [k,sx] of [['WL',-1],['WR',1]]){const g=new THREE.Group();g
   cbox(0.40,0.016,0.03,CM.accentDim,0,-0.145,-0.004,g);
   const p=cplane(0.38,0.222,basic(CANV2[k].tex),0,0,0.001,g);p.userData.act='mon'+k;INTER.push(p);MON[k]={g,w:0.38,h:0.222,screens:[{p}]};}
 const LEANB={};
-if(OWNOLD)for(const [k,x,ry] of [['L',-1.335,Math.PI/2],['R',1.335,-Math.PI/2]]){const g=new THREE.Group();g.position.set(x,2.45,1.5);g.rotation.y=ry;cab.add(g);cbox(0.3,0.2,0.02,CM.frame,0,0,-0.012,g);
+if(OWNOLD||CONDV)for(const [k,x,ry] of [['L',-1.335,Math.PI/2],['R',1.335,-Math.PI/2]]){const g=new THREE.Group();g.position.set(x,2.45,1.5);g.rotation.y=ry;cab.add(g);cbox(0.3,0.2,0.02,CM.frame,0,0,-0.012,g);
   const tex=canvasTex(256,160,(c,w,h)=>{c.fillStyle='#7a4a12';c.fillRect(0,0,w,h);c.fillStyle='#fff';c.textAlign='center';c.textBaseline='middle';c.font='700 32px '+FONT;c.fillText('窓から顔を出す',w/2,58);c.font='500 19px '+FONT;c.fillStyle='#ffe2b0';c.fillText('乗降確認・戸閉・発車メロディ',w/2,104);});
   const p=cplane(0.28,0.175,new THREE.MeshBasicMaterial({map:tex}),0,0,0.001,g);p.userData.act='lean'+k;INTER.push(p);LEANB[k]=g;}
 function drawExitBtn(k,f,ok){const E=EXITB[k];const key=Math.round(f*40)+(ok?100:0);if(E.last===key)return;E.last=key;const x=E.kc.x;
@@ -6467,11 +6467,18 @@ function toggleATO(){
   toast('ATO 出発 → '+stOf(G.nv).name,'ok');
 }
 /* 窓から顔を出す（支線）：停車中だけ。ここで乗降の確認・戸開／戸閉（ドア近くのスイッチ）・発車メロディ */
-function toggleLean(side){if(!OWNOLD)return;if(G.lean){leanBack();return;}
+function toggleLean(side){if(!OWNOLD&&G.crew!=='twoC')return;if(G.lean){leanBack();return;}
   if(G.phase!=='play'||G.v>0.05||G.walkOn){toast('停車中に顔を出せます','warn');return;}
   G.lean=side;G.zoom=null;G.lookY=0;G.lookP=0;camera.layers.enable(1);camera.layers.disable(2);
-  document.getElementById('leanUI').classList.remove('hide');updLeanUI();toast((side<0?'左':'右')+'の窓から顔を出しました','info');}
-function leanBack(){if(!G.lean)return;G.lean=0;G.lookY=0;G.lookP=0;camera.layers.disable(1);camera.layers.enable(2);document.getElementById('leanUI').classList.add('hide');}
+  const lui=document.getElementById('leanUI');
+  if(lui){
+    const lt=lui.querySelector('.lt'),lb=document.getElementById('leanBackB');
+    if(G.crew==='twoC'){if(lt)lt.textContent='窓から顔を出しています：ドラッグで見回し／上のボタンで操作';if(lb)lb.textContent='乗務員室に戻る';}
+    else{if(lt)lt.textContent='窓から顔を出しています：すぐ横の操作箱のボタン（戸開・戸閉・メロディ）を押します／ドラッグで見回し';if(lb)lb.textContent='運転席に戻る';}
+    lui.classList.remove('hide');
+  }
+  updLeanUI();if(G.crew==='twoC')updCondUI();toast((side<0?'左':'右')+'の窓から顔を出しました','info');}
+function leanBack(){if(!G.lean)return;G.lean=0;G.lookY=0;G.lookP=0;camera.layers.disable(1);camera.layers.enable(2);document.getElementById('leanUI').classList.add('hide');if(G.crew==='twoC')updCondUI();}
 function updLeanUI(){const D=G.door,open=(D.state==='open'||D.state==='opening')&&D.local===G.lean,blink=Math.floor(nowMs()/400)%2===0;
   const set=(act,lvl)=>{for(const sd of [-1,1]){const B=BTN[act+sd];if(B)B.mat.color.setHex(sd!==G.lean?0x9a9a9a:lvl===2?(blink?0xffffff:0xb0b0b0):lvl===1?0xffffff:0x777777);}};
   set('lnOpen',D.state==='closed'?1:0);set('lnClose',open&&!G.promoOn?1:open?1:0);set('lnMelo',G.promoOn?2:open?1:0);}
@@ -6509,13 +6516,14 @@ function updCondUI(){const ui=document.getElementById('condUI');if(!ui)return;ui
   const D=G.door,b=id=>document.getElementById(id),open=D.state==='open'||D.state==='opening',stn=G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv,d=stopDist(G.nv);
   const atStop=G.v===0&&!sigStopped()&&(G.atStation!==null||G.depCheck!==null||(d>-6.5&&d<17.9));
   const vis=(id,on)=>{const e=b(id);if(e)e.style.display=on?'':'none';};
-  vis('cExit',(!G.walkOn||G.walkArea==='train')&&canExit());vis('cSal',!G.walkOn||(G.walkOn&&G.walkArea!=='train'));vis('cItv',true);vis('cView',true);
+  vis('cExit',(!G.walkOn||G.walkArea==='train')&&canExit()&&!G.lean);vis('cSal',(!G.walkOn||(G.walkOn&&G.walkArea!=='train'))&&!G.lean);vis('cLean',!G.walkOn&&G.v<=0.05);vis('cItv',true);vis('cView',true);
   vis('cOpen',atStop&&D.state==='closed'&&!(G.depCheck!==null&&G.condOK));vis('cClose',open);vis('cMelo',open&&(nearCondBox()||G.walkArea==='train'||!G.walkOn));vis('cPromo',open);
   vis('cSig',!G.walkOn&&D.state==='closed'&&G.depCheck!==null&&!G.condOK&&G.v===0);
+  const cl=b('cLean');if(cl)cl.textContent=G.lean?'🪟 室内に戻る':'🪟 窓から顔を出す';
   const cs=b('cSal');if(cs)cs.textContent=(G.walkOn&&G.walkArea==='train')?'🚪 乗務員室へ':'🚶 車内を歩く';
   const cv=b('cView');if(cv)cv.textContent=AV3P?'👁️ 三人称':'👁️ 一人称';
   const m=b('cMelo');if(m)m.textContent=G.promoOn?'再生中…':'発車メロディ';const h=b('cHint');
-  if(h)h.textContent=G.walkOn?(G.walkArea==='train'?('車内巡回中（'+(G.walkCar+1)+'号車）'):(open?(nearCondBox()?'メロディのボタンの前です':'ホーム確認中（ITVモニタも使えます）'):'ドアを開けてください')):(G.v>0.5?'乗務中（後ろ扉・ボタンで車内を歩けます）':open?'ホームや車内・ITVモニタで確認して戸閉→合図':G.depCheck!==null&&!G.condOK?'ドアを閉めたら運転士へ合図を送ります':'停車したらホームに出るかITVモニタを確認して戸開');}
+  if(h)h.textContent=G.lean?'窓から顔を出して確認中（ドラッグで見回し）':G.walkOn?(G.walkArea==='train'?('車内巡回中（'+(G.walkCar+1)+'号車）'):(open?(nearCondBox()?'メロディのボタンの前です':'ホーム確認中（ITVモニタも使えます）'):'ドアを開けてください')):(G.v>0.5?'乗務中（後ろ扉・ボタンで車内を歩けます）':open?'ホームや車内・ITVモニタで確認して戸閉→合図':G.depCheck!==null&&!G.condOK?'ドアを閉めたら運転士へ合図を送ります':'停車したらホームに出るかITVモニタを確認して戸開');}
 /* 停止信号で止まっている（駅の停止位置より手前）か */
 function sigStopped(){if(G.atStation!==null||G.depCheck!==null||G.v>0.3)return false;const d=stopDist(G.nv);return !!(G.sig&&G.sig.asp==='R'&&G.sig.dist<90&&d>2.5);}
 function shouldAutoNextAnn(){
@@ -9111,7 +9119,8 @@ function update(dt,now){
   updMascon3D(dt);
   monT+=dt;if(monT>0.28&&!G.walkOn&&!PAX){monT=0;if(OWNOLD){if(!G.paperT||nowMs()-G.paperT>2000){G.paperT=nowMs();drawPaper();}}else{drawSpeed();drawInfo();drawMap();drawPanel();if(typeof drawCabSide==='function')drawCabSide();if(typeof drawIndicatorLamps==='function')drawIndicatorLamps();if(!G.stafT||nowMs()-G.stafT>3000){G.stafT=nowMs();if(typeof drawStaf==='function')drawStaf();}const ms=monStation();
     drawSideOverlay('L',ms,ms&&localSide(ms)*SIDEINV<0);drawSideOverlay('R',ms,ms&&localSide(ms)*SIDEINV>0);}}
-  if(OWNOLD){updGauges(dt);if(G.lean&&G.v>0.05)leanBack();if(G.lean)updLeanUI();
+  if(G.lean&&G.v>0.05)leanBack();
+  if(OWNOLD){updGauges(dt);if(G.lean)updLeanUI();
     const mb=document.getElementById('meloBtn');if(mb){const on=nearMeloBox()&&(G.door.state==='open'||G.door.state==='opening');mb.classList.toggle('hide',!on);mb.textContent=G.promoOn?'再生中…':'発車メロディ';}}
   /* 終点のホーム：反対側の先頭車両の横では「反対の運転室へ」 */
   {const hb=document.getElementById('holdBack');
@@ -9669,7 +9678,7 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
   on('paxPhone',()=>openDev('phone'));on('paxTab',()=>openDev('tablet'));on('paxResv',()=>goReserved());
   on('devClose',()=>closeDev());on('devHome',()=>devHome());
   _on(window,'keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;if(G.phase==='play'&&e.code==='KeyV'&&(PAX||G.crew==='twoC'))toggle3P();});
-  on('cExit',()=>enterWalk());on('cSal',()=>enterSalWalk());on('cView',()=>toggle3P());
+  on('cExit',()=>enterWalk());on('cSal',()=>enterSalWalk());on('cLean',()=>{if(G.lean){leanBack();return;}const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);const sd=(st?localSide(st)*SIDEINV:-1)||-1;toggleLean(sd);});on('cView',()=>toggle3P());
   on('cItv',()=>{const p=document.getElementById('crewItvPanel');if(p)p.classList.toggle('hide');});
   on('crewItvClose',()=>{const p=document.getElementById('crewItvPanel');if(p)p.classList.add('hide');});
   on('itvOpenBtn',()=>{const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);openDoor(localSide(st));});
