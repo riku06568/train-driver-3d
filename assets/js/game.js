@@ -300,7 +300,7 @@ function updateBranchLockUI() {
     badge.style.color = '#fff';
   }
   if (meta) {
-    meta.innerHTML = `<span>4路線</span><span>条件なし</span><span>オンライン対応</span>`;
+    meta.innerHTML = `<span>5路線</span><span>条件なし</span><span>オンライン対応</span>`;
   }
 }
 
@@ -9904,7 +9904,7 @@ window.__T={
   }).catch(e=>String(e)),
   annState:()=>({playing:annPlaying, queued:annQ.length, cached:annMergeCache.size}),
   annPlay:(urls)=>{ try{ playAnnQueue(urls); return true; }catch(e){ return String(e); } },
-  AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
+  AVATAR,MYS,SPUR1,initMiyukiShuttle,updMiyukiShuttle,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
 /* ================= home screen (before the world is built) ================= */
 // audio must be started inside the user's tap (iOS / Chrome autoplay rules)
