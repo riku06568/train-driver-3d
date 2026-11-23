@@ -8358,22 +8358,42 @@ function openTransferPanel(){
   const onBtn='border-color:#38bdf8;background:rgba(56,189,248,0.22);color:#7dd3fc;';
   const online=(IS_ONLINE&&ONLINE_CLIENT&&ONLINE_CLIENT.connected);
   const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
-  const dirs=[['lo','各停 外回り'],['li','各停 内回り'],['ro','快速 外回り'],['ri','快速 内回り'],['eo','快特 外回り'],['ei','快特 内回り'],['test','試運転 外回り'],['testi','試運転 内回り']];
-  const brs=[['bu','白峰支線 奥峰行'],['bd','白峰支線 白峰行'],['b2u','紫雲地下線 深雪行'],['b2d','紫雲地下線 紫雲新都行'],['b3u','天宮高架線 峰月行'],['b3d','天宮高架線 天宮行'],['b4u','港見支線 奥港行'],['c5u','四嶺連絡線 奥港行'],['pax','乗客モード（環状線）']];
-  const grid=a=>'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;">'+a.map(([id,lb])=>'<button data-svc="'+id+'" style="'+btnStyle+(G.route===id?onBtn:'')+'">'+lb+'</button>').join('')+'</div>';
+  const curSt=STATIONS[G.atStation!=null?G.atStation:G.nv];
+  const curName=curSt?curSt.name:'';
+  const canBoardNow=PAX&&(!RIDE||RIDE.door>0||(RIDE.a&&Math.abs(RIDE.a.v||0)<0.1));
+  const matchSvc=id=>{
+    const S=SERVICES[id];if(!S||id===G.route)return false;
+    const CFG2=lineConfig(S.line||'loop');
+    const ST2=(CFG2&&CFG2.L!=null)?layoutStations(CFG2):null;
+    if(!ST2||!ST2.length)return false;
+    const ok=(S.kind==='pax'||S.kind==='staff')?ST2:stopsOf(ST2,S.kind);
+    return ok.some(st=>st.name===curName);
+  };
+  const dirs=[['lo','各停 外回り'],['li','各停 内回り'],['ro','快速 外回り'],['ri','快速 内回り'],['eo','快特 外回り'],['ei','快特 内回り'],['test','試運転 外回り'],['testi','試運転 内回り']].filter(([id])=>canBoardNow&&matchSvc(id));
+  const brs=[['bu','白峰支線 奥峰行'],['bd','白峰支線 白峰行'],['b2u','紫雲地下線 深雪行'],['b2d','紫雲地下線 紫雲新都行'],['b3u','天宮高架線 峰月行'],['b3d','天宮高架線 天宮行'],['b4u','港見支線 奥港行'],['c5u','四嶺連絡線 奥港行'],['pax','乗客モード（環状線）']].filter(([id])=>canBoardNow&&matchSvc(id));
+  const grid=a=>'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;">'+a.map(([id,lb])=>'<button data-svc="'+id+'" style="'+btnStyle+'">'+lb+'</button>').join('')+'</div>';
   const rss=[['','自動（行先表示）'],['回送','回送'],['試運転','試運転'],['臨時','臨時'],['団体','団体'],['普通','普通'],['快速','快速'],['快特','快特']];
   const dias=[['auto','自動（毎月日替わり）'],['normal','通常ダイヤ'],['extra','臨時・団体ダイヤ'],['change','変更ダイヤ']];
-  el.innerHTML='<div style="width:min(560px,100%);background:#0b1220;border:1px solid rgba(56,189,248,0.35);border-radius:16px;padding:14px;color:#e2e8f0;">'
-    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;"><div style="font-size:16px;font-weight:800;color:#7dd3fc;">🚉 乗り換え・方向幕・ダイヤ</div><button id="tpClose" style="background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;">✕</button></div>'
-    +'<div style="font-size:12px;line-height:1.6;color:'+(online?'#34d399':'#f59e0b')+';margin-bottom:10px;">'+(online?'🌐 オンライン接続中：このまま接続を保って乗り換えます（チャット・他プレイヤー表示は継続）':'📴 オフライン（港見支線など）。乗り換えてもオンラインにはなりません')+'</div>'
-    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:6px 0;">環状線の列車に乗り換え</div>'+grid(dirs)
-    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">支線・乗客モード</div>'+grid(brs)
-    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">🚃 方向幕（幕回し）／いまの表示：'+(G.rsManual||'自動')+'</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;">'+rss.map(([v,lb])=>'<button data-rs="'+v+'" style="'+btnStyle+(String(G.rsManual||'')===v?onBtn:'')+'">'+lb+'</button>').join('')+'</div>'
-    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">🗓️ ダイヤ設定（保存して再出発）</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;">'+dias.map(([v,lb])=>'<button data-dia="'+v+'" style="'+btnStyle+((man||'auto')===v?onBtn:'')+'">'+lb+'</button>').join('')+'</div>'
-    +'<div style="font-size:11px;color:#94a3b8;margin-top:8px;line-height:1.5;">※ 乗り換え・ダイヤ変更は同じ駅から再出発します。一度「⛔ 降車」してタイトルに戻る必要はありません。</div>'
-    +'</div>';
+  const titleTxt=PAX?('🚉 乗り換え（現在駅：'+(curName||'—')+'）'):'🚃 方向幕・ダイヤ';
+  let bodyHtml='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;"><div style="font-size:16px;font-weight:800;color:#7dd3fc;">'+titleTxt+'</div><button id="tpClose" style="background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;">✕</button></div>';
+  if(PAX){
+    bodyHtml+='<div style="font-size:12px;line-height:1.6;color:'+(online?'#34d399':'#f59e0b')+';margin-bottom:10px;">'+(online?'🌐 オンライン接続中：乗換駅では接続を保ったまま乗り換えできます':'📴 オフライン接続中')+'</div>';
+    if(!canBoardNow){
+      bodyHtml+='<div style="font-size:12.5px;color:#fbbf24;padding:10px;background:rgba(251,191,36,0.1);border-radius:10px;margin-bottom:10px;">走行中の列車に乗車中は乗り換えできません。駅に停車中またはホーム上でお試しください。</div>';
+    }else if(!dirs.length&&!brs.length){
+      bodyHtml+='<div style="font-size:12.5px;color:#94a3b8;padding:10px;background:rgba(148,163,184,0.1);border-radius:10px;margin-bottom:10px;">「'+(curName||'この駅')+'」には乗り換え可能な他路線・別種別がありません。乗換駅（汐見・白峰・紫雲新都・天宮など）へ移動すると乗り換えできます。</div>';
+    }else{
+      if(dirs.length)bodyHtml+='<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:6px 0;">環状線の列車に乗り換え</div>'+grid(dirs);
+      if(brs.length)bodyHtml+='<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">支線に乗り換え</div>'+grid(brs);
+    }
+  }else{
+    bodyHtml+='<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">※ 乗り換えは乗客モードで乗換駅にいるときのみ利用できます。</div>';
+    bodyHtml+='<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:8px 0 6px;">🚃 方向幕（幕回し）／いまの表示：'+(G.rsManual||'自動')+'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;">'+rss.map(([v,lb])=>'<button data-rs="'+v+'" style="'+btnStyle+(String(G.rsManual||'')===v?onBtn:'')+'">'+lb+'</button>').join('')+'</div>';
+  }
+  bodyHtml+='<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">🗓️ ダイヤ設定（保存して再出発）</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;">'+dias.map(([v,lb])=>'<button data-dia="'+v+'" style="'+btnStyle+((man||'auto')===v?onBtn:'')+'">'+lb+'</button>').join('')+'</div>';
+  el.innerHTML='<div style="width:min(560px,100%);background:#0b1220;border:1px solid rgba(56,189,248,0.35);border-radius:16px;padding:14px;color:#e2e8f0;">'+bodyHtml+'</div>';
   el.classList.remove('hide');
   const c=document.getElementById('tpClose');if(c)c.onclick=closeTransferPanel;
   el.querySelectorAll('[data-svc]').forEach(bt=>bt.onclick=()=>window.__transferTo(bt.dataset.svc));
@@ -10356,7 +10376,11 @@ if (IS_ONLINE) {
   const dtFab = document.getElementById('btnDriverTablet');
   if (dtFab && !PAX) dtFab.classList.remove('hide');
   const tfFab = document.getElementById('btnTransfer');
-  if (tfFab) { tfFab.classList.remove('hide'); tfFab.onclick = function(){ try{ openTransferPanel(); }catch(e){ console.warn(e); } }; }
+  if (tfFab) {
+    tfFab.classList.remove('hide');
+    tfFab.textContent = PAX ? '🚉 乗り換え' : '🚃 方向幕・ダイヤ';
+    tfFab.onclick = function(){ try{ openTransferPanel(); }catch(e){ console.warn(e); } };
+  }
   /* 運転条件モーダルの手動ダイヤ選択 */
   if (typeof window.__initDiaSelectUI === 'function') window.__initDiaSelectUI();
   const micFab = document.getElementById('btnCrewMicFab');
@@ -12335,7 +12359,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
         date: '2026/11/24',
         sender: '名無し運転士さん',
         q: 'そのままオンラインになってて、乗り換えができるようにして',
-        a: 'ご意見ありがとうございます！タイトルに戻らなくても、そのままのオンライン接続を保ったまま別の列車・路線に乗り換えられるようにしました。\nゲーム中に「🚉 乗り換え」ボタンが出ます。そこから環状線の各停・快速・快特・試運転、各支線、乗客モードを選ぶと、いまいる駅（同じ駅がなければ主要駅）から再出発します。乗り換えのときは前の列車のAI同期・購読・ホームドア・サウンドを片付けてから切り替えるので、ゴースト車両や二重表示は残りません。チャットや他プレイヤーとのオンライン状態はそのまま続きます。'
+        a: 'ご意見ありがとうございます！タイトルに戻らなくても、乗客モードで乗り換え駅にいるとき、そのままのオンライン接続を保ったまま別の列車・路線に乗り換えられるようにしました。\n乗客モード中に「🚉 乗り換え」ボタンから、その駅で接続している路線や別種別（環状線各停・快速・快特・試運転・各支線）を選んで乗り換えられます。乗り換え時は前の状態を片付けてから切り替えるので、チャットや他プレイヤーとのオンライン状態はそのまま続きます。'
       },
       {
         id: 16,
