@@ -2619,7 +2619,7 @@ function updParLocals(dt){
       const c=p.cars[k],cs=u-p.dir*(10.1+k*19.8);
       const q=P(cs),th=q[2];
       c.position.set(q[0]+Math.cos(th)*g.off,(p.g?g.y:g.y)+2.2,q[1]+Math.sin(th)*g.off);
-      c.rotation.y=-Math.atan2(Math.cos(th)*p.dir,Math.sin(th)*p.dir)+Math.PI/2;
+      c.rotation.y=-Math.atan2(Math.cos(th)*p.dir,-Math.sin(th)*p.dir);
       u=cs;
     }
   }
