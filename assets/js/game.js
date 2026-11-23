@@ -2669,8 +2669,10 @@ function megaStation(c,st,sb){
   const nmTex=canvasTex(1024,256,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#0b1a33');g.addColorStop(1,'#06101f');x.fillStyle=g;x.fillRect(0,0,w,h);
     x.strokeStyle='#35c6ff';x.lineWidth=10;x.strokeRect(8,8,w-16,h-16);x.fillStyle='#eaf6ff';x.font='800 118px '+FONT;x.textAlign='center';x.textBaseline='middle';
     x.fillText('天冠中央',w/2,112);x.fillStyle='#7fd4ff';x.font='700 40px '+FONT;x.fillText('TENKAN-CHUO',w/2,196);});
-  const nmMat=cmat(c,new THREE.MeshBasicMaterial({map:nmTex,side:DS}));
-  for(const sg of [-1,1]){const m=new THREE.Mesh(UNIT_PLANE,nmMat);m.scale.set(20,5,1);m.position.copy(offsG(sb+sg*88,0,yb+9));m.rotation.y=-t+(sg>0?0:Math.PI);addTo(c,m);}
+  const nmMat=cmat(c,new THREE.MeshBasicMaterial({map:nmTex,side:THREE.FrontSide}));
+  /* 進入してくる列車に向けた大看板（橋上コンコースの妻面） */
+  for(const sg of [-1,1]){const m=new THREE.Mesh(UNIT_PLANE,nmMat);m.scale.set(30,7,1);m.position.copy(offsG(st.s+sg*17.9,0,CY+8.0));m.rotation.y=-t+(sg>0?Math.PI:0);addTo(c,m);}
+  for(const sg of [-1,1]){const m=new THREE.Mesh(UNIT_PLANE,nmMat);m.scale.set(18,4.6,1);m.position.copy(offsG(sb,0,yb+10.6));m.rotation.y=-t+(sg>0?0:Math.PI);m.visible=false;addTo(c,m);}
   const clk=new THREE.Mesh(UNIT_PLANE,clockMat);clk.scale.set(1.8,1.8,1);clk.position.copy(offsG(sb,0,CY+3.2));clk.rotation.y=-t+Math.PI;addTo(c,clk);
   /* 地上の駅前ロータリー・バス乗り場・植栽 */
   strip(c,sb-130,sb+130,6,[[-190,0.04],[-30,0.04]],'road',true);
@@ -2687,7 +2689,8 @@ function megaCity(c,c0,c1){
   const NE=[new THREE.Color(0x35c6ff),new THREE.Color(0xff5fa8),new THREE.Color(0xffd166),new THREE.Color(0x8affc1),new THREE.Color(0xb28dff)];
   let n=0;
   for(let k=0;k<170&&n<54;k++){
-    const s=st.s+(R()-0.5)*2600, side=R()<0.5?-1:1, o=side*(86+Math.pow(R(),0.85)*540);
+    const s=st.s+(R()-0.5)*2600, side=R()<0.5?-1:1, o=side*(96+Math.pow(R(),0.85)*540);
+    if(Math.abs(sdiff(st.s,s))<330)continue; /* 駅の真横は空けて駅舎を見せる */
     const dd=Math.abs(sdiff(st.s,s)), near=1-smooth(300,1600,dd);
     if(near<0.12)continue;
     const w=14+R()*20, d=14+R()*22;
@@ -2913,7 +2916,7 @@ function buildChunk(c){const ch=CHUNKS[c];if(ch.built)return;ch.g=new THREE.Grou
   /* 特急（G/H）は廃止したため地下トンネル・地下駅は生成しない */
   for(let s2=c0+20;s2<c1;s2+=50){if(Yat(s2)<-6||!hasTrack(s2))continue;let [lo,hi]=ourSpan(s2);
     if(s2>DEPOT.a-20&&s2<DEPOT.b+180&&!shiomiBump(s2)){lo=-3.2;}
-    inst(c,'post',s2,lo-0.6,3.6);inst(c,'post',s2,hi+0.6,3.6);inst(c,'beam',s2,(lo+hi)/2,7.0,hi-lo+1.5,1,1);}
+    inst(c,'post',s2,lo-0.6,3.6,0.7,1,0.7);inst(c,'post',s2,hi+0.6,3.6,0.7,1,0.7);inst(c,'beam',s2,(lo+hi)/2,7.0,hi-lo+1.5,0.55,0.55);}
   // viaduct / bridges
   const ranges=[];{let st=null;for(let s2=c0;s2<=c1;s2+=4){const up=Yat(s2)>0.6;if(up&&st===null)st=s2;if((!up||s2>=c1)&&st!==null){ranges.push([st,Math.min(s2,c1)]);st=null;}}}
   for(const [a,b] of ranges){const lo=s2=>spanLo(s2)-0.3,hi=s2=>spanHi(s2)+0.3;
@@ -2954,7 +2957,12 @@ function buildChunk(c){const ch=CHUNKS[c];if(ch.built)return;ch.g=new THREE.Grou
     const om=(DEPOT.a+DEPOT.b)/2;if(chunkOf(om)===c){const off=new THREE.Mesh(boxGeo(1,1,1),lam(0xd9d4c7));off.scale.set(16,10,40);off.position.copy(offsG(om,y0-16,5));off.rotation.y=-P(om)[2];addTo(c,off);}
     for(let s2=Math.ceil(Math.max(c0,DEPOT.a+60)/120)*120;s2<Math.min(c1,DEPOT.b);s2+=120){inst(c,'lightTower',s2,y0-2,10,0.5,20,0.5);inst(c,'lightTower',s2,(y0+y1)/2,10,0.5,20,0.5);}}
   // buildings & trees (deterministic per chunk)
-  const city=SHINK?Math.min(...STATIONS.map(s2=>Math.abs(sdiff(c0+CH/2,s2.s)))):nearBig(c0+CH/2),cityF=1-smooth(300,1100,city);
+  let cityF=1-smooth(300,1100,nearBig(c0+CH/2));
+  if(SHINK){ /* 新幹線：天冠中央だけが超巨大都市。湯坂・涼風は山あいの小駅、白峰・天宮は中規模の街 */
+    let best=null,bd=1e9;for(const s2 of STATIONS){const d=Math.abs(sdiff(c0+CH/2,s2.s));if(d<bd){bd=d;best=s2;}}
+    const core=1-smooth(320,1250,bd);
+    cityF=core*(best?(best.cls==='S'?1:best.cls==='M'?0.46:0.20):0.2);
+  }
   if(BRANCH&&cityF<0.3){if(SHINK)buildParallel(c,c0,c0+CH);ruralChunk(c,c0,rnd);finalizeChunk(c);return;}
   planCity(c,c0,cityF); /* 線路に沿った道路と街区（計画的な街） */
   if(SHINK){megaCity(c,c0,c0+CH);buildParallel(c,c0,c0+CH);}
