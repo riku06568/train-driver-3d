@@ -55,15 +55,19 @@ function dailyCondText(){
   const c=(window.__DAILY_COND&&window.__DAILY_COND.wid)?window.__DAILY_COND:dailyCondition();
   const wk=['日','月','火','水','木','金','土'][c.date.getDay()];
   const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
-  return {short:WX_ICON[c.wid]+' '+c.wxName+'　'+DIA_NAME[c.dia]+(man!=='auto'?'（手動）':''),
-    long:WX_ICON[c.wid]+' 今日の天気：'+c.wxName+'（'+c.season+'・'+ (c.date.getMonth()+1)+'月'+c.date.getDate()+'日 '+wk+'）\n🚄 今日のダイヤ：'+DIA_NAME[c.dia]+(man!=='auto'?'（手動で選択中）':'（毎月自動で変わります）')};
+  const dispDia=(man==='normal'||man==='extra'||man==='change')?man:c.dia;
+  return {short:WX_ICON[c.wid]+' '+c.wxName+'　'+DIA_NAME[dispDia]+(man!=='auto'?'（手動）':''),
+    long:WX_ICON[c.wid]+' 今日の天気：'+c.wxName+'（'+c.season+'・'+ (c.date.getMonth()+1)+'月'+c.date.getDate()+'日 '+wk+'）\n🚄 今日のダイヤ：'+DIA_NAME[dispDia]+(man!=='auto'?'（手動で選択中）':'（毎月自動で変わります）')};
 }
 function refreshDailyCond(){
   let t=null;try{t=dailyCondText();}catch(e){return;}
   const a=document.getElementById('dailyCondText');if(a)a.textContent=t.short;
   const m=document.getElementById('dailyCondModal');if(m)m.textContent=t.long;
   const b=document.getElementById('condBadge');
-  if(b){b.innerHTML=WX_ICON[(window.__DAILY_COND||{}).wid||'clear']+' '+((window.__DAILY_COND||{}).wxName||'')+'<br>🚄 '+((window.__DAILY_COND||{}).diaName||'')+'<span style="opacity:.65">（'+(((window.__DAILY_COND||{}).season)||'')+'）</span>';}
+  const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
+  const dc=window.__DAILY_COND||{};
+  const dispDia=(man==='normal'||man==='extra'||man==='change')?man:(dc.dia||'normal');
+  if(b){b.innerHTML=WX_ICON[dc.wid||'clear']+' '+(dc.wxName||'')+'<br>🚄 '+(DIA_NAME[dispDia]||dc.diaName||'')+'<span style="opacity:.65">（'+(dc.season||'')+'）</span>';}
 }
 window.__refreshDailyCond=refreshDailyCond;
 /* 画質・動作の設定：extreme=最軽量 ultralight=超軽量（低スペック向け） light=軽い normal=普通 heavy=重い（最高画質） */
@@ -2033,9 +2037,8 @@ function applyConditionState(){
   window.__WEATHER=wid;
   window.__DAILY_COND=daily;
   window.__DEPOT_START=false; /* 車庫からの出庫は廃止 */
-  /* v2.5.0：手動ダイヤ設定を復活（自動／通常／臨時・団体／変更）。localStorage の td_dia に保存 */
   const man=(()=>{try{const v=localStorage.getItem('td_dia');return (v==='normal'||v==='extra'||v==='change')?v:'auto';}catch(e){return 'auto';}})();
-  const dia=(qdia==='extra'||qdia==='change'||qdia==='normal')?qdia:(man!=='auto'?man:(daily?daily.dia:'normal'));
+  const dia=(qdia==='extra'||qdia==='change'||qdia==='normal')?qdia:(daily?daily.dia:'normal');
   window.__DIA_MAN=man;
   window.__DIASH=dia;
   Object.assign(WX,WXDEF[wid],{id:wid});WXF=WX.trac;
