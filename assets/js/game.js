@@ -8318,9 +8318,15 @@ function transferSameStation(list,kind){
 window.__transferTo=function(id){
   const S=SERVICES[id];if(!S)return;
   const line=S.line||'loop';
-  const LS=(typeof LN!=='undefined'&&LN[line])?LN[line]:null;
-  if(!LS||!LS.sts||!LS.sts.length)return;
-  const si=transferSameStation(LS.sts,S.kind);
+  const CFG2=lineConfig(line);
+  const ST2=(CFG2&&CFG2.L!=null)?layoutStations(CFG2):null;
+  if(!ST2||!ST2.length)return;
+  const curSt=STATIONS[G.atStation!=null?G.atStation:G.nv];
+  const curName=curSt?curSt.name:'';
+  const ok=(S.kind==='pax'||S.kind==='staff')?ST2:stopsOf(ST2,S.kind);
+  let hit=null;for(const st of ok)if(st.name===curName){hit=st;break;}
+  if(!hit)hit=ok.find(st=>st.cls==='M')||ok.find(st=>st.cls==='X')||ok[0];
+  const si=hit?(hit.i||0):0;
   closeTransferPanel();
   try{toast('🚉 オンラインを維持したまま乗り換えます：'+S.name,'ok');}catch(e){}
   setTimeout(()=>{try{window.__boot(line,id,si);}catch(e){console.error(e);}},180);
@@ -10626,8 +10632,8 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     cv.addEventListener('dblclick',()=>{MV.z=1;MV.px=0;MV.py=0;drawHomeMap();});
     cv.addEventListener('wheel',e=>{e.preventDefault();const [cx2,cy2]=toC(e),z0=MV.z,z=Math.max(1,Math.min(5,z0*(e.deltaY<0?1.15:1/1.15)));MV.px=cx2-(cx2-MV.px)*z/z0;MV.py=cy2-(cy2-MV.py)*z/z0;MV.z=z;clampV();drawHomeMap();},{passive:false});}
   // service cards with lap time
-  const times={local:lapTime(cfg,sts,'local'),rapid:lapTime(cfg,sts,'rapid'),ltd:lapTime(cfg,sts,'ltd'),exp:lapTime(cfg,sts,'exp'),branch:lapTime(bcfg,bsts,'branch'),pax:0};
-  const timeOf=S=>S.line?lapTime(LN[S.line].cfg,LN[S.line].sts,'branch'):times[S.kind];
+  const times={local:lapTime(cfg,sts,'local'),rapid:lapTime(cfg,sts,'rapid'),ltd:lapTime(cfg,sts,'ltd'),exp:lapTime(cfg,sts,'exp'),test:lapTime(cfg,sts,'test'),branch:lapTime(bcfg,bsts,'branch'),pax:0};
+  const timeOf=S=>S.line?lapTime(LN[S.line].cfg,LN[S.line].sts,'branch'):(times[S.kind]||times.local);
   /* ランダム背景写真（ゲーム実機のスクリーンショット） */
   const BG_PHOTOS = [
     'assets/bg/game_cab_day.webp?v=2',
