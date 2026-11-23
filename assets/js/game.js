@@ -2928,7 +2928,7 @@ function cityBlock(c,sa,sb,o0,o1,side,j,cityF,R){const len=sb-sa,dep=Math.abs(o1
         else{const bc=bcols[(R()*bcols.length)|0];inst(c,key,scx,oc,h/2,ddd,h,ww,bc,0);
           if(h>35)inst(c,key,scx,oc,h+2.2,ddd*0.58,4.4,ww*0.58,bc,0);}} /* 高層ビルの屋上塔屋 */
       cur+=w+0.6;}}
-  if(j>=1&&big<0.6)for(let q=0;q<3;q++){const ts=sa+R()*len,to=om+side*(R()-0.5)*dep*0.2;if(q%2===0){inst(c,'trunk',ts,to,1.2,0.8,2.4,0.8);inst(c,'leaf',ts,to,3.1,2.0,1.8,2.0,LEAFC[q%LEAFC.length]);}else inst(c,'tree',ts,to,2.6,0.8,0.9,0.8);}
+  if(j>=1&&big<0.6)for(let q=0;q<3;q++){const ts=sa+R()*len,to=om+side*(R()-0.5)*dep*0.2;if(q%2===0){inst(c,'trunk',ts,to,1.2,0.8,2.4,0.8);inst(c,'leaf',ts,to,3.1,2.0,1.8,2.0,LEAFC[q%LEAFC.length]);}else inst(c,'tree',ts,to,2.6,0.8,0.9,0.8);}}
 const HOUSEC=[0xf1ede4,0xe6dccb,0xd9d4c7,0xcfd8dc,0xf3e6d0,0xe0d2bb].map(c=>new THREE.Color(c)),ROOFC=[0x7a2e2a,0x2f3e58,0x4a4a4a,0x6b4a2e,0x355e3b].map(c=>new THREE.Color(c)),
   FIELDC=[0x6f9a3c,0x86a84a,0xb9a95a,0x5e8a3a,0x9bb15a].map(c=>new THREE.Color(c)),LEAFC=[0x3f6b35,0x4d7a3a,0x5b8a40,0x365e2f].map(c=>new THREE.Color(c));
 /* 港見支線：軍港〜港前は海岸線に沿う（線路の左側が海）。軍港には軍艦が停泊 */
@@ -3711,7 +3711,7 @@ const OWNCREW=(SERVICES[SVC]&&(SERVICES[SVC].kind==='ltd'||SERVICES[SVC].kind===
 /* passenger saloon behind the cab: identical structure to carTemplate */
 const SM=OWNOLD?OLDI:TM;
 {const OFF=CARHALF,isRearCab=CONDV,LY=salLayout(!isRearCab,isRearCab); /* 運転台ローカル z = 車両ローカル z + 9.75 */
-  const CEIL=3.41,Z0=Z_IN=(2.63),Z1=19.4,LEN=Z1-Z0,ZC=(Z0+Z1)/2;
+  const CEIL=3.41,Z0=2.63,Z1=19.4,LEN=Z1-Z0,ZC=(Z0+Z1)/2;
   const isFlatGr=GREENFLAT&&GREENCARS.indexOf(isRearCab?OWNCARS-1:0)>=0;
   cbox(2.74,0.04,LEN,SM.ifloor,0,1.15,ZC);cbox(2.74,0.04,LEN,SM.iwall,0,CEIL,ZC);
   for(const x of (isFlatGr?[-0.55,0.55]:[-0.5,0.5])){const lt=cplane(0.12,LY.z1-LY.z0-0.9,TM.ilight,x,CEIL-0.02,(LY.z0+LY.z1)/2+OFF);lt.rotation.x=Math.PI/2;}
