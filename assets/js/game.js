@@ -2571,18 +2571,21 @@ function buildParallel(c,c0,c1){
   const segs=parSegs();if(!segs.length)return;
   for(const g of segs){
     const a=Math.max(c0,g.a),b=Math.min(c1,g.b);if(b<=a)continue;
-    const O=()=>g.off,Y=g.y;
+    const O=d=>s=>g.off+d,Y=g.y;
     if(g.y>0){
-      strip(c,a,b,6,[[O,Y-0.9],[O,Y-0.9]],'conc',true);
-      strip(c,a,b,6,[[s=>g.off-3.6,Y-0.6],[s=>g.off+3.6,Y-0.6]],'conc',true);
-      strip(c,a,b,6,[[s=>g.off-3.6,Y+0.9],[s=>g.off-3.4,Y+0.9]],'concD',true);
-      strip(c,a,b,6,[[s=>g.off+3.4,Y+0.9],[s=>g.off+3.6,Y+0.9]],'concD',true);
-      for(let s2=Math.ceil(a/30)*30;s2<b;s2+=30)inst(c,'pier',s2,g.off,Y/2,2.2,Y,2.2);
+      /* 高架橋（床版・側壁・橋脚） */
+      strip(c,a,b,6,[[O(-3.9),Y-1.1],[O(3.9),Y-1.1]],'conc',true);
+      strip(c,a,b,6,[[O(-3.9),Y-0.62],[O(3.9),Y-0.62]],'conc',true);
+      for(const e of [-1,1])strip(c,a,b,6,[[O(e*3.9),Y-1.1],[O(e*3.9),Y+0.95]],'concD',true);
+      for(let s2=Math.ceil(a/30)*30;s2<b;s2+=30)inst(c,'pier',s2,g.off,(Y-1.1)/2,2.4,Y-1.1,2.4);
     }
-    strip(c,a,b,6,[[s=>g.off-2.6,Y+0.03],[s=>g.off+2.6,Y+0.03]],'ballast',true);
-    for(const r of [-0.533,0.533])strip(c,a,b,6,[[s=>g.off+r-0.045,Y+0.36],[s=>g.off+r+0.045,Y+0.36]],'rail',true);
-    for(let s2=Math.ceil(a/40)*40;s2<b;s2+=40){inst(c,'lightTower',s2,g.off-3.2,Y+4.2,0.18,8.4,0.18);inst(c,'lightTower',s2,g.off-3.2,Y+8.2,7.2,0.22,0.22);} /* 架線柱（絶対高さ） */
-    if(g.col)for(let s2=Math.ceil(a/500)*500;s2<b;s2+=500)inst(c,'melo',s2,g.off-4.2,Y+3.4,0.5,1.2,0.5,new THREE.Color(g.col));
+    /* 道床・レール */
+    strip(c,a,b,6,[[O(-2.6),Y+0.02],[O(2.6),Y+0.02]],'ballast',true);
+    for(const r of [-0.533,0.533])strip(c,a,b,6,[[O(r-0.045),Y+0.36],[O(r+0.045),Y+0.36]],'rail',true);
+    /* 架線柱（絶対高さ） */
+    for(let s2=Math.ceil(a/40)*40;s2<b;s2+=40){inst(c,'lightTower',s2,g.off-3.2,Y+4.2,0.18,8.4,0.18);inst(c,'lightTower',s2,g.off-3.2,Y+8.2,7.2,0.22,0.22);}
+    /* 並走する路線の色帯（駅名標の代わりの目印） */
+    if(g.col)for(let s2=Math.ceil(a/400)*400;s2<b;s2+=400)inst(c,'melo',s2,g.off-4.4,Y+3.2,0.45,1.1,0.45,new THREE.Color(g.col));
   }
 }
 /* 並走する在来線の列車（2〜3両・ゆっくり往復） */
