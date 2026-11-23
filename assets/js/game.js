@@ -1964,7 +1964,7 @@ const serves=(st,k)=>{if(DIASH==='change'&&!BRANCH){
 const KIND={A:'local',B:'local',C:'rapid',D:'rapid',E:'ltd',F:'ltd',G:'exp',H:'exp',I:'local',J:'local'};
 const PARTNER={A:'C',C:'A',B:'D',D:'B'};
 const partnerAt=(st,k)=>isM(st)?({C:'E',E:'C',D:'F',F:'D'})[k]:PARTNER[k]; // who arrives across the island
-const PLATNO={A:1,C:2,E:3,F:4,D:5,B:6};
+const PLATNO={A:1,C:2,E:3,F:4,D:5,B:6,I:13,J:14};
 const mainAt=(k)=>TK[k].main,physKey=(k,s)=>{if(BRANCH)return (s!=null)?platKey(stationNear(s),k):k;return k;},inConn=()=>false;
 const onRapid=k=>!BRANCH&&(k==='C'||k==='D'||k==='E'||k==='F'||k==='G'||k==='H');
 const RAPID_LIMIT=120;
@@ -7718,9 +7718,9 @@ function physics(dt){
     const isDepartedRun = G.v > 1.2 && G.door && G.door.state === 'closed' && G.atStation === null;
     const isLtdRun = typeof G !== 'undefined' && G && G.key && KIND[G.key] === 'ltd';
     const soonDist = isLtdRun ? 1000 : 600;
-    const prevStObj = stOf(mod(G.nv - G.dir, NST));
+    const prevStObj = G.list ? stOf(Math.max(0, G.nv - 1)) : stOf(mod(G.nv - G.dir, NST));
     const segDist = (prevStObj && stOf(G.nv)) ? Math.abs(G.dir * sdiff(prevStObj.s, stOf(G.nv).s)) : 9999;
-    const tooCloseForSoon = segDist < (isLtdRun ? 1350 : 1050);
+    const tooCloseForSoon = segDist < (isLtdRun ? 1100 : 750);
     if (isDepartedRun && d > soonDist && !G.tabDepAnnDone) {
       G.tabDepAnnDone = true;
       G.tabAnnMode = 'next';
@@ -9056,7 +9056,7 @@ function updSideLEDs(dt){if(!SLED.slots.length)for(let i=0;i<SLED.N;i++)SLED.slo
             stops: p.ai && p.ai.stSt ? sledStops(p.ai.stSt, k, dir, 5) : [],
             term: false,
             promo: !!p.promoOn,
-            dest: null
+            dest: BRANCH ? (dir > 0 ? STATIONS[NST - 1] : STATIONS[0]) : null
           };
         }});
       }
@@ -9280,7 +9280,8 @@ function drawLED(led,k){const x=k.x,now=nowMs(),st=led.st,W=1024,H=288,ph=Math.f
   const bg=x.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0f1c32');bg.addColorStop(1,'#09111f');
   x.fillStyle=bg;x.fillRect(0,0,W,H);
   /* ヘッダー */
-  const k0=led.keys[0],no=BRANCH?(TK[k0]&&TK[k0].dir>0?1:2):PLATNO[k0];
+  const k0=led.keys[0];
+  const no=BRANCH?(MINI?1:(st.cls==='Q'?({A:1,C:2,D:3,B:4}[k0]||1):(led.dir<0?2:({A:1,C:1,B:2,D:2}[k0]||(TK[k0]&&TK[k0].dir>0?1:2))))):(PLATNO[k0]||1);
   const hdrCol=BRANCH?'#1f8f54':'#1565c0';
   const hdr=x.createLinearGradient(0,0,W,0);hdr.addColorStop(0,hdrCol);hdr.addColorStop(1,'#0d2547');
   x.fillStyle=hdr;x.fillRect(0,0,W,54);
@@ -9294,14 +9295,14 @@ function drawLED(led,k){const x=k.x,now=nowMs(),st=led.st,W=1024,H=288,ph=Math.f
   x.fillText(hms(now),W-18,28);x.textAlign='left';
   /* 列車の一覧（自分の電車も含む） */
   const list=[];
-  for(const a of OT){if(!a.key||a.state==='off'||!led.keys.includes(a.key))continue;
+  for(const a of OT){if(!a.key||a.state==='off')continue;const ak=physKey(a.key,st.s);if(!led.keys.includes(ak))continue;
     if(a.state==='dwell'&&a.stSt===st){list.push({D:0,key:a.key,dir:a.dir,dwell:true,dep:a.t<9.5&&a.t>3.0,tm:!!a.twoMan});continue;}
     const D=a.dir*sdiff(a.s,st.s+TK[a.key].so);if(D>-30&&D<9000)list.push({D:Math.max(0,D),key:a.key,dir:a.dir,tm:!!a.twoMan});}
   if(!PAX&&G.phase==='play'){const ok=physKey(G.key,st.s);if(led.keys.includes(ok)){
     if(G.atStation!==null&&stOf(G.atStation)===st)list.push({D:0,key:G.key,dir:G.dir,dwell:true,dep:!!G.promoOn,own:true,tm:!!G.twoMan});
     else if(stOf(G.nv)===st){const D=stopDist(G.nv);if(D>-30&&D<9000)list.push({D:Math.max(0,D),key:G.key,dir:G.dir,own:true,tm:!!G.twoMan});}}}
   list.sort((p,q)=>p.D-q.D);
-  const spd=kk=>BRANCH?(KIND[kk]==='rapid'?15:13):({local:15,rapid:19,ltd:24,exp:22})[KIND[kk]]||15;
+  const spd=kk=>BRANCH?(LINE_ID==='branch5'?48:KIND[kk]==='rapid'?16:14):({local:15,rapid:19,ltd:24,exp:22})[KIND[kk]]||15;
   const rows=list.slice(0,3).map(e=>{const sec=e.D/spd(e.key)+(e.D>0?10:0),kd=KIND[e.key]||'local';
     return {e,t:now+sec*1000,kd,dest:ledDestOf(st,e.key,TK[e.key].dir),cars:carsFor(e.key),gc:BRANCH?[]:greenCarsFor(e.key),min:Math.max(1,Math.round(sec/60)),soon:!e.dwell&&e.D<430};});
   { /* 3本先まで：まだ遠くて見えない電車は汐見駅ダイヤ（環状線）または運転間隔から時刻を出す */
