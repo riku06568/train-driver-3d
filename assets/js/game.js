@@ -1937,7 +1937,7 @@ if(BRANCH&&!MINI){const mk=(a,b,rev)=>({k:'X',off:s=>sepB(s)*clamp(rev?(b-s)/(b-
   TRACKS.push(mk(s0.s+PF+30,s0.s+PF+95,false));TRACKS.push(mk(s0.s+PF+30,s0.s+PF+95,true)); /* 両渡り（シーサスクロッシング） */
   TRACKS.push(mk(sN.s-PB-95,sN.s-PB-30,true));TRACKS.push(mk(sN.s-PB-95,sN.s-PB-30,false));}
 for(let j=0;j<DEPOT.n;j++)TRACKS.push({k:'Y',off:yardOff(j),a:DEPOT.a,b:j===0?DEPOT.b+165:DEPOT.b+40,yard:true});
-const soFor=k=>-(carsFor(k)*CARL+2); // 逆方向の列車はホーム後端に頭を合わせて停める
+const soFor=k=>-(carsFor(k)*CARL); // 逆方向の列車も正方向と同じ範囲に停め、始点・終点のホームドアとドア位置を一致させる
 const isIsl=st=>st.cls!=='L'&&st.cls!=='M';
 /* 支線：ホームが線路のどちら側か（+1＝オフセットの大きい側） A/B＝各駅停車（Q・Tでは副本線） C/D＝快速（本線） */
 const brSide=(k,st)=>{if(MINI)return st.cls==='I'?(k==='A'?1:-1):-1;if(st.i===NST-1&&(k==='A'||k==='C'))k=k==='A'?'B':'D';if(st.i===0&&(k==='B'||k==='D'))k=k==='B'?'A':'C';const c=st.cls,isl=c==='J'||c==='I';if(k==='A')return isl||c==='Q'?1:-1;if(k==='B')return isl||c==='Q'?-1:1;if(k==='C')return isl?1:-1;return isl?-1:1;};
@@ -2078,10 +2078,35 @@ for(let i=0;i<22;i++){const h=140+Math.random()*300,r=h*(1.0+Math.random()*0.6);
   const a=i/22*Math.PI*2+Math.random()*0.2,R=1850+Math.random()*450;m.position.set(Math.cos(a)*R,h/2-25,Math.sin(a)*R);m.rotation.y=Math.random()*3;m.renderOrder=-1;skyGroup.add(m);}
 const groundPlane=new THREE.Mesh(new THREE.PlaneGeometry(60000,60000),new THREE.MeshLambertMaterial({color:0x56603f,depthWrite:false}));groundPlane.rotation.x=-Math.PI/2;groundPlane.position.y=-0.3;groundPlane.renderOrder=-2;scene.add(groundPlane);
 /* ================= materials ================= */
-const winTexA=canvasTex(64,128,(x,w,h)=>{x.fillStyle='#555a66';x.fillRect(0,0,w,h);
-  for(let r=0;r<16;r++)for(let c=0;c<6;c++){x.fillStyle=Math.random()<0.4?'#ffd58a':'#262a36';x.fillRect(c*10+4,r*8+2,7,5);}});
-const winTexB=canvasTex(64,512,(x,w,h)=>{x.fillStyle='#4a5566';x.fillRect(0,0,w,h);
-  for(let r=0;r<64;r++)for(let c=0;c<5;c++){x.fillStyle=Math.random()<0.45?'#ffe0a0':'#1c2330';x.fillRect(c*12+4,r*8+2,9,5);}});
+const winTexA=canvasTex(256,512,(x,w,h)=>{x.fillStyle='#c4c8cf';x.fillRect(0,0,w,h);
+  /* 1階：店舗・エントランス */
+  x.fillStyle='#2a3442';x.fillRect(0,h-48,w,48);
+  for(let c=0;c<4;c++){x.fillStyle='#5b7c9c';x.fillRect(c*64+6,h-42,52,36);}
+  /* 2階〜：ベランダと窓 */
+  for(let r=0;r<12;r++){const y=r*38+8;x.fillStyle='rgba(0,0,0,0.12)';x.fillRect(0,y+28,w,4);
+    for(let c=0;c<4;c++){const px=c*64+8;
+      x.fillStyle='#1f2937';x.fillRect(px,y,48,22);
+      x.fillStyle=(r*7+c*13)%5===0?'#ffe29a':'#486581';x.fillRect(px+3,y+2,42,18);
+      x.fillStyle='#94a3b8';x.fillRect(px-2,y+20,52,8);}}});
+const winTexB=canvasTex(256,512,(x,w,h)=>{x.fillStyle='#3d4b5c';x.fillRect(0,0,w,h);
+  for(let r=0;r<16;r++){const y=r*32;
+    x.fillStyle='#526173';x.fillRect(0,y,w,6);
+    for(let c=0;c<6;c++){const px=c*42+4;
+      const lit=(r*11+c*7)%7===0;
+      const g=x.createLinearGradient(px,y+6,px,y+30);
+      g.addColorStop(0,lit?'#ffdf94':'#6384a8');g.addColorStop(1,lit?'#eab354':'#2f4763');
+      x.fillStyle=g;x.fillRect(px,y+6,36,24);
+      x.fillStyle='rgba(255,255,255,0.15)';x.fillRect(px+2,y+7,12,4);}}});
+const houseTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#f3f0e8';x.fillRect(0,0,w,h);
+  x.strokeStyle='rgba(0,0,0,0.08)';x.lineWidth=2;for(let y=12;y<h;y+=16){x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
+  for(const y of [38,142]){for(const px of [30,104,178]){
+    x.fillStyle='#2a3038';x.fillRect(px,y,48,44);
+    x.fillStyle='#587796';x.fillRect(px+4,y+4,40,36);
+    x.fillStyle='#cbd5e1';x.fillRect(px+22,y+4,3,36);x.fillRect(px-2,y+44,52,4);}}
+  x.fillStyle='#5c3d2e';x.fillRect(108,186,40,70);x.fillStyle='#d4a373';x.fillRect(114,194,28,24);});
+const fieldTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#d8d4c8';x.fillRect(0,0,w,h);
+  for(let i=0;i<16;i++){x.fillStyle=i%2?'rgba(0,0,0,0.10)':'rgba(255,255,255,0.08)';x.fillRect(0,i*16,w,8);}
+  x.strokeStyle='rgba(120,110,90,0.35)';x.lineWidth=8;x.strokeRect(4,4,w-8,h-8);});
 const facadeTex=canvasTex(256,64,(x,w,h)=>{x.fillStyle='#d8d6cf';x.fillRect(0,0,w,h);x.fillStyle='#2a3440';x.fillRect(0,16,w,30);
   for(let i=0;i<16;i++){x.fillStyle='#5b7390';x.fillRect(i*16+2,18,12,26);}});
 facadeTex.wrapS=THREE.RepeatWrapping;
@@ -2123,12 +2148,12 @@ const IGEO={sleeper:boxGeo(2.0,0.1,0.22),post:boxGeo(0.3,7.2,0.3),beam:boxGeo(1,
 const IMATKEY={sleeper:'sleeper',post:'pole',beam:'pole',pillar:'pillar',stair:'stair',bldA:'bldA',bldB:'bldB',tree:'tree',pier:'conc',pcap:'conc',tlamp:'tlamp',hdp:'hdp',hdpost:'hdpost',hdcap:'hdcap',lightTower:'pole',fence:'fence',fpost:'fpost',melo:'melo',bumper:'bumper'};
 const roofGeo=(()=>{const sh=new THREE.Shape();sh.moveTo(-0.5,0);sh.lineTo(0.5,0);sh.lineTo(0,1);sh.lineTo(-0.5,0);const g=new THREE.ExtrudeGeometry(sh,{depth:1,bevelEnabled:false});g.translate(0,0,-0.5);return g;})();
 Object.assign(IGEO,{house:boxGeo(1,1,1),roof:roofGeo,field:boxGeo(1,1,1),trunk:new THREE.CylinderGeometry(0.18,0.25,1,6),leaf:new THREE.SphereGeometry(1,8,6)});
-Object.assign(IMATS,{house:lam(0xffffff),roof:lam(0xffffff),field:lam(0xffffff),trunk:lam(0x5a4030),leaf:lam(0x4d7a3a)});
+Object.assign(IMATS,{house:new THREE.MeshLambertMaterial({map:houseTex}),roof:lam(0xffffff),field:new THREE.MeshLambertMaterial({map:fieldTex}),trunk:lam(0x5a4030),leaf:lam(0x4d7a3a)});
 Object.assign(IMATKEY,{house:'house',roof:'roof',field:'field',trunk:'trunk',leaf:'leaf'});
 const GROUNDK=new Set(['bldA','bldB','tree','pier','lightTower','house','roof','field','trunk','leaf']);
 
 
-for(const t of [winTexA,winTexB,facadeTex,trussTex,armTex,fenceTex])SHARED.add(t);for(const g of Object.values(IGEO))SHARED.add(g);
+for(const t of [winTexA,winTexB,houseTex,fieldTex,facadeTex,trussTex,armTex,fenceTex])SHARED.add(t);for(const g of Object.values(IGEO))SHARED.add(g);
 const WIREMAT=new THREE.LineBasicMaterial({color:0x2a2622});
 /* ================= chunks (built lazily around the train) ================= */
 const CH=500,NCH=Math.round(L/CH);
@@ -2340,7 +2365,10 @@ function mkHdLeafMesh(q){
   return g;
 }
 function buildHomeDoors(c,st,k,isSiding){
-  const T=TK[k],sd=isSiding?-T.side(st):T.side(st),base=isSiding?ownTrackOff(k,st.s):T.off(st.s),line=base+sd*(1.72+0.55);
+  const T=TK[k],sd=isSiding?-T.side(st):T.side(st);
+  const offAt=s=>isSiding?ownTrackOff(k,s):T.off(s);
+  const lineAt=s=>offAt(s)+sd*(1.72+0.55);
+  const line=lineAt(st.s);
   const flip=T.dir<0,fr=st.s+T.so,doors=[];const NC=carsFor(k),GCs=greenCarsFor(k);
   const doorMeta=[];
   for(let q=0;q<NC;q++){
@@ -2353,20 +2381,20 @@ function buildHomeDoors(c,st,k,isSiding){
   for(let q=0;q<edges.length;q+=2){
     const a=edges[q],b=edges[q+1],w=b-a;
     if(w>0.2){
-      const mid=(a+b)/2;
-      inst(c,'hdp',mid,line,PH+0.63,0.11,1.26,w);
-      inst(c,'hdcap',mid,line,PH+1.27,0.13,0.05,w+0.04);
-      inst(c,'hdpost',a,line,PH+0.65,0.15,1.30,0.14);
-      inst(c,'hdpost',b,line,PH+0.65,0.15,1.30,0.14);
+      const mid=(a+b)/2,lm=lineAt(mid);
+      inst(c,'hdp',mid,lm,PH+0.63,0.11,1.26,w);
+      inst(c,'hdcap',mid,lm,PH+1.27,0.13,0.05,w+0.04);
+      inst(c,'hdpost',a,lineAt(a),PH+0.65,0.15,1.30,0.14);
+      inst(c,'hdpost',b,lineAt(b),PH+0.65,0.15,1.30,0.14);
       /* 戸袋にみなとみらい線風の横長フルカラーLCDと開閉状態LEDランプを内蔵 */
       if(w>=1.7){
         const lcd=new THREE.Mesh(hdLcdGeo,HD_LCD_MATS.wait);
         lcd.scale.set(1.12,0.32,1);
-        lcd.position.copy(offs(mid,line+sd*0.068,PH+1.02));
+        lcd.position.copy(offs(mid,lm+sd*0.068,PH+1.02));
         lcd.rotation.y=faceSide(mid,sd);
         CHUNKS[c].g.add(lcd);lcdMeshes.push(lcd);
         const lamp=new THREE.Mesh(hdLampGeo,HD_LAMP_MATS.wait);
-        lamp.position.copy(offs(mid,line,PH+1.31));
+        lamp.position.copy(offs(mid,lm,PH+1.31));
         lamp.rotation.y=-P(mid)[2];
         CHUNKS[c].g.add(lamp);lampMeshes.push(lamp);
       }
@@ -2376,15 +2404,15 @@ function buildHomeDoors(c,st,k,isSiding){
   for(const dm of doorMeta){
     const key='bm'+(dm.green?'g':'n')+(dm.q+1);
     if(!IGEO[key])continue;
-    const ms=dm.ds+1.88;
-    inst(c,key,ms,line+sd*0.072,PH+1.02,0.72,0.32,1,0,rotPlat);
-    inst(c,key,ms,line-sd*0.072,PH+1.02,0.72,0.32,1,0,rotTrk);
+    const ms=dm.ds+1.88,lm=lineAt(ms);
+    inst(c,key,ms,lm+sd*0.072,PH+1.02,0.72,0.32,1,0,rotPlat);
+    inst(c,key,ms,lm-sd*0.072,PH+1.02,0.72,0.32,1,0,rotTrk);
   }
   for(const d of doors)for(const q of [-1,1]){const m=mkHdLeafMesh(q);CHUNKS[c].g.add(m);leaves.push({m,d,q});}
   const hdk=isSiding?('S'+k):k;
-  const hd={leaves,lcdMeshes,lampMeshes,lcdState:'wait',line,sd,frac:-1,tgt:0,st,k:hdk};(st.hd||(st.hd={}))[hdk]=hd;setHD(hd,0);
+  const hd={leaves,lcdMeshes,lampMeshes,lcdState:'wait',line,lineAt,sd,frac:-1,tgt:0,st,k:hdk};(st.hd||(st.hd={}))[hdk]=hd;setHD(hd,0);
 }
-function setHD(hd,f){if(Math.abs(hd.frac-f)<0.002)return;hd.frac=f;for(const l of hd.leaves){const s=l.d+l.q*(0.73+f*1.35); /* 閉：中央でぴったり、端は戸袋に重なる */l.m.position.copy(offs(s,hd.line,PH+0.65));l.m.rotation.y=-P(s)[2];}}
+function setHD(hd,f){if(Math.abs(hd.frac-f)<0.002)return;hd.frac=f;for(const l of hd.leaves){const s=l.d+l.q*(0.73+f*1.35); /* 閉：中央でぴったり、端は戸袋に重なる */const ln=hd.lineAt?hd.lineAt(s):hd.line;l.m.position.copy(offs(s,ln,PH+0.65));l.m.rotation.y=-P(s)[2];}}
 /* ホームドア当たり：開いていない区間は線路側へ出られない */
 function hdDoorCenters(hd){if(hd._doors)return hd._doors;const s=new Set();for(const l of hd.leaves)s.add(l.d);return hd._doors=[...s];}
 function hdGapAt(hd,s){if(hd.frac<0.20)return false;const half=hd.frac*1.45+0.25;for(const d of hdDoorCenters(hd))if(Math.abs(s-d)<half)return true;return false;}
@@ -2877,9 +2905,12 @@ function cityBlock(c,sa,sb,o0,o1,side,j,cityF,R){const len=sb-sa,dep=Math.abs(o1
   const st=stationNear(sm),sd=Math.abs(sdiff(st.s,sm)),com=1-smooth(150,650,sd),big=cityF;
   if(!clearAt(sm,om,Math.min(len,dep)*0.3))return;
   const r=R();
-  if(j===0&&sd<110){inst(c,'field',sm,om,0.03,dep,0.06,len,LOTC.plaza,0);for(let q=0;q<4;q++)inst(c,'tree',sa+len*(0.2+q*0.2),om+side*dep*0.35,3,0.9,1,0.9);return;} /* 駅前広場 */
-  if(r<0.07){inst(c,'field',sm,om,0.03,dep,0.06,len,R()<0.5?LOTC.park:LOTC.park2,0);for(let q=0;q<10;q++)inst(c,'tree',sa+R()*len,o0+side*R()*dep,3*(0.8+R()*0.6),1,1.1,1);return;} /* 公園 */
-  if(r<0.12){inst(c,'field',sm,om,0.03,dep,0.06,len,LOTC.lot,0);return;}                                                     /* 駐車場 */
+  if(j===0&&sd<110){inst(c,'field',sm,om,0.03,dep,0.06,len,LOTC.plaza,0);for(let q=0;q<4;q++){const ts=sa+len*(0.2+q*0.2),to=om+side*dep*0.35;inst(c,'trunk',ts,to,1.4,0.8,2.8,0.8);inst(c,'leaf',ts,to,3.6,2.2,2.0,2.2,LEAFC[q%LEAFC.length]);}return;} /* 駅前広場 */
+  if(r<0.07){inst(c,'field',sm,om,0.03,dep,0.06,len,R()<0.5?LOTC.park:LOTC.park2,0);
+    if(len>16&&dep>14)inst(c,'field',sm,om,0.07,dep*0.38,0.04,len*0.38,new THREE.Color(0x2a7ab8),0); /* 公園の池 */
+    for(let q=0;q<10;q++){const ts=sa+R()*len,to=o0+side*R()*dep,sc=0.8+R()*0.6;if(q%2===0){inst(c,'trunk',ts,to,1.2*sc,sc,2.4*sc,sc);inst(c,'leaf',ts,to,3.2*sc,2.1*sc,1.9*sc,2.1*sc,LEAFC[q%LEAFC.length]);}else inst(c,'tree',ts,to,3*sc,sc,1.1*sc,sc);}return;} /* 公園 */
+  if(r<0.12){inst(c,'field',sm,om,0.03,dep,0.06,len,LOTC.lot,0);
+    for(let q=0;q<3;q++){const cx=sa+len*(0.25+q*0.25),co=om+side*(R()-0.5)*dep*0.35;if(clearAt(cx,co,2.5))inst(c,'house',cx,co,0.65,2.0,1.3,4.2,bcols[(q+2)%bcols.length],0);}return;} /* 駐車場と駐車車両 */
   inst(c,'field',sm,om,0.025,dep,0.05,len,j>=2&&big<0.5?LOTC.yard:LOTC.pave,0);
   /* 道路に面した表と裏の2列に、敷地を並べる */
   const rows=[[o0,o0+side*dep*0.5],[o1,o1-side*dep*0.5]];
@@ -2894,9 +2925,10 @@ function cityBlock(c,sa,sb,o0,o1,side,j,cityF,R){const len=sb-sa,dep=Math.abs(o1
       const ww=w-1.6-R()*1.2,ddd=Math.min(dd,key==='house'?9+R()*3:dd);
       if(clearAt(scx,oc,Math.hypot(ww,ddd)/2*0.7)){
         if(key==='house'){const col=HOUSEC[(R()*HOUSEC.length)|0];inst(c,'house',scx,oc,h/2,ddd,h,ww,col,0);inst(c,'roof',scx,oc,h,ddd*1.08,2.2,ww*1.06,ROOFC[(R()*ROOFC.length)|0],0);}
-        else inst(c,key,scx,oc,h/2,ddd,h,ww,bcols[(R()*bcols.length)|0],0);}
+        else{const bc=bcols[(R()*bcols.length)|0];inst(c,key,scx,oc,h/2,ddd,h,ww,bc,0);
+          if(h>35)inst(c,key,scx,oc,h+2.2,ddd*0.58,4.4,ww*0.58,bc,0);}} /* 高層ビルの屋上塔屋 */
       cur+=w+0.6;}}
-  if(j>=1&&big<0.6)for(let q=0;q<3;q++)inst(c,'tree',sa+R()*len,om+side*(R()-0.5)*dep*0.2,2.6,0.8,0.9,0.8);}
+  if(j>=1&&big<0.6)for(let q=0;q<3;q++){const ts=sa+R()*len,to=om+side*(R()-0.5)*dep*0.2;if(q%2===0){inst(c,'trunk',ts,to,1.2,0.8,2.4,0.8);inst(c,'leaf',ts,to,3.1,2.0,1.8,2.0,LEAFC[q%LEAFC.length]);}else inst(c,'tree',ts,to,2.6,0.8,0.9,0.8);}
 const HOUSEC=[0xf1ede4,0xe6dccb,0xd9d4c7,0xcfd8dc,0xf3e6d0,0xe0d2bb].map(c=>new THREE.Color(c)),ROOFC=[0x7a2e2a,0x2f3e58,0x4a4a4a,0x6b4a2e,0x355e3b].map(c=>new THREE.Color(c)),
   FIELDC=[0x6f9a3c,0x86a84a,0xb9a95a,0x5e8a3a,0x9bb15a].map(c=>new THREE.Color(c)),LEAFC=[0x3f6b35,0x4d7a3a,0x5b8a40,0x365e2f].map(c=>new THREE.Color(c));
 /* 港見支線：軍港〜港前は海岸線に沿う（線路の左側が海）。軍港には軍艦が停泊 */
@@ -2938,7 +2970,10 @@ function ruralChunk(c,c0,rnd){ // countryside along the branch: fields, woods an
   let n=0,tries=0;while(n<(lonely?2:14)&&tries<90){tries++;const s2=c0+rnd()*CH,side=rnd()<0.5?-1:1,o=(side<0?-12:sepB(s2)+12)+side*(8+Math.pow(rnd(),1.4)*140),w=7+rnd()*3.5,d=8+rnd()*3.5,h=5+rnd()*1.6,r=Math.hypot(w,d)/2+2;
     if(!clearAt(s2,o,r))continue;const rot=rnd()<0.5?0:Math.PI/2;inst(c,'house',s2,o,h/2,w,h,d,HOUSEC[(rnd()*HOUSEC.length)|0],rot);inst(c,'roof',s2,o,h,w*1.1,2.3,d*1.06,ROOFC[(rnd()*ROOFC.length)|0],rot);n++;}
   n=0;tries=0;while(n<6&&tries<40){tries++;const s2=c0+rnd()*CH,side=rnd()<0.5?-1:1,w=25+rnd()*40,d=25+rnd()*50,o=(side<0?-10:sepB(s2)+10)+side*(w/2+8+rnd()*120);
-    if(!clearAt(s2,o,Math.max(w,d)/2))continue;inst(c,'field',s2,o,0.03,w,0.06,d,FIELDC[(rnd()*FIELDC.length)|0]);n++;}
+    if(!clearAt(s2,o,Math.max(w,d)/2))continue;inst(c,'field',s2,o,0.03,w,0.06,d,FIELDC[(rnd()*FIELDC.length)|0]);
+    if(rnd()<0.35&&clearAt(s2,o,6)){inst(c,'house',s2,o,1.1,4.5,2.2,12,new THREE.Color(0xeef6ff),0);} /* ビニールハウス */
+    n++;}
+  if(rnd()<0.65){const ps=c0+CH*0.5,po=(rnd()<0.5?-1:1)*(75+rnd()*90);if(clearAt(ps,po,5)){inst(c,'lightTower',ps,po,14,1.2,28,1.2);inst(c,'lightTower',ps,po,23,6.5,0.45,0.45);inst(c,'lightTower',ps,po,18,8.5,0.45,0.45);}} /* 送電線鉄塔 */
   n=0;tries=0;while(n<90&&tries<300){tries++;const s2=c0+rnd()*CH,side=rnd()<0.5?-1:1,o=(side<0?-9:sepB(s2)+9)+side*Math.pow(rnd(),0.8)*220,sc=0.8+rnd()*1.1;
     if(!clearAt(s2,o,1.5))continue;if(rnd()<0.45){inst(c,'tree',s2,o,3*sc,sc,sc*1.2,sc);}else{inst(c,'trunk',s2,o,1.3*sc,sc,2.6*sc,sc);inst(c,'leaf',s2,o,3.6*sc,2.2*sc,2.0*sc,2.2*sc,LEAFC[(rnd()*LEAFC.length)|0]);}n++;}
 }
@@ -3661,56 +3696,82 @@ cplane(1.46,1.05,CM.glass,-0.54,2.825,0.12);cplane(0.72,0.7,CM.glass,0.655,2.85,
 cbox(2.74,0.05,2.5,CM.shell,0,3.64,1.35);cbox(2.74,0.05,2.5,CM.floor,0,1.15,1.35);
 for(const sg of [-1,1]){const x=sg*1.37;cbox(0.06,1.05,2.5,CM.shell,x,1.675,1.35);cbox(0.06,0.42,2.5,CM.shell,x,3.43,1.35);
   cbox(0.06,1.02,0.4,CM.shell,x,2.71,0.3);cbox(0.06,1.02,0.5,CM.shell,x,2.71,2.35);const g=cplane(1.55,1.02,CM.glass,x,2.71,1.275);g.rotation.y=Math.PI/2;}
-/* partition behind the driver: wall with windows and a door */
-{const Z=2.6,door=lam(0xb9bcb5);
-  cbox(2.74,0.85,0.06,CM.shell,0,1.575,Z);cbox(2.74,0.64,0.06,CM.shell,0,3.32,Z);
-  for(const [x,w] of [[-1.335,0.07],[-0.45,0.1],[0.45,0.1],[1.335,0.07]])cbox(w,1.0,0.06,CM.shell,x,2.5,Z);
-  cbox(0.8,0.25,0.05,door,0,2.125,Z);cbox(0.8,0.05,0.05,door,0,2.975,Z);const cabDoorL=cbox(0.8,0.85,0.07,door,0,1.575,Z);cbox(0.03,0.04,0.12,CM.metal,0.3,2.1,Z);
+/* partition behind the driver: same window and door proportions as carTemplate */
+{const Z=2.6,door=TM.door;
+  cbox(2.74,0.64,0.05,CM.shell,0,1.48,Z);cbox(2.74,0.50,0.05,CM.shell,0,3.16,Z);
+  for(const sx of [-1,1])cbox(0.06,1.1,0.05,CM.shell,sx*1.33,2.35,Z);
+  const cabDoorL=cbox(0.8,1.85,0.05,door,0,2.125,Z-0.03);cbox(0.03,0.04,0.12,CM.metal,0.3,2.1,Z-0.03);
   cabDoorL.userData.act='enterSal';INTER.push(cabDoorL);const cabDoorHit=cplane(0.85,1.8,CM.hit,0,2.05,Z-0.06);cabDoorHit.userData.act='enterSal';INTER.push(cabDoorHit);
-  for(const x of [-0.9,0,0.9]){const g=cplane(x===0?0.8:0.8,x===0?0.7:1.0,CM.glass,x,x===0?2.6:2.5,Z);}
+  for(const sx of [-1,1])cplane(0.9,1.1,TM.glassC,sx*0.86,2.35,Z-0.01);
   cbox(0.5,0.1,0.5,CM.desk,-0.3,1.72,1.55);cbox(0.5,0.55,0.08,CM.desk,-0.3,2.05,1.82);cbox(0.08,0.55,0.08,CM.metal,-0.3,1.45,1.55);}
 const SALDOOR=[]; // the saloon doors slide with the real ones
 function updSalDoors(){const D=G.door,f=(D.state==='open'||D.state==='opening'||D.state==='closing')?D.frac:0;
   for(const d of SALDOOR){const open=(D.local*SIDEINV)===d.sg?f:0;d.m.position.z=d.base+d.k*(0.35+open*0.62);}}
-/* passenger saloon behind the cab: same fittings as the rest of the train */
+const OWNCREW=(SERVICES[SVC]&&(SERVICES[SVC].kind==='ltd'||SERVICES[SVC].kind==='local'))?CREWSEL:'one',CONDV=OWNCREW==='twoC',SIDEINV=CONDV?-1:1; /* 車掌：後ろ向きなので左右が逆 */
+/* passenger saloon behind the cab: identical structure to carTemplate */
 const SM=OWNOLD?OLDI:TM;
-{const OFF=CARHALF,LY=salLayout(true,false); /* 運転台ローカル z = 車両ローカル z + 9.75 */
-  const CEIL=3.41,Z0=LY.z0+OFF+0.03,Z1=19.4,LEN=Z1-Z0,ZC=(Z0+Z1)/2;
+{const OFF=CARHALF,isRearCab=CONDV,LY=salLayout(!isRearCab,isRearCab); /* 運転台ローカル z = 車両ローカル z + 9.75 */
+  const CEIL=3.41,Z0=Z_IN=(2.63),Z1=19.4,LEN=Z1-Z0,ZC=(Z0+Z1)/2;
+  const isFlatGr=GREENFLAT&&GREENCARS.indexOf(isRearCab?OWNCARS-1:0)>=0;
   cbox(2.74,0.04,LEN,SM.ifloor,0,1.15,ZC);cbox(2.74,0.04,LEN,SM.iwall,0,CEIL,ZC);
-  for(const x of [-0.5,0.5]){const lt=cplane(0.12,LY.z1-LY.z0-0.9,TM.ilight,x,CEIL-0.02,(LY.z0+LY.z1)/2+OFF);lt.rotation.x=Math.PI/2;}
-  const SEG=[];{const iv=DOORZ.map(z=>[z-0.65,z+0.65,'d']).concat(LY.seats.map(([a,b])=>[a,b,'g'])).map(([a,b,t])=>[a+OFF,b+OFF,t])
-      .filter(([a,b])=>a>=Z0-0.01&&b<=Z1+0.01).sort((p,q)=>p[0]-q[0]);
-    let cur=Z0;for(const v of iv){if(v[0]>cur+0.001)SEG.push([cur,v[0],'w']);SEG.push(v);cur=v[1];}if(cur<Z1-0.001)SEG.push([cur,Z1,'w']);}
-  const DOORC=LY.doors.map(z=>z+OFF),SEATC=LY.lcdSeat.map(z=>z+OFF);
-  for(const sg of [-1,1]){const x=sg*1.355,iry=-sg*Math.PI/2;
-    for(const [a,b,t] of SEG){const len=b-a,cz=(a+b)/2;
-      if(t==='w')cbox(0.05,2.26,len,SM.iwall,x,2.28,cz);
-      else if(t==='g'){cbox(0.05,1.12,len,SM.iwall,x,1.71,cz);cbox(0.05,0.36,len,SM.iwall,x,3.23,cz);const g=cplane(len,0.78,TM.glass,x,2.66,cz);g.rotation.y=iry;
-        cbox(0.46,0.42,len-0.3,SM.iseat,sg*1.1,1.37,cz);cbox(0.08,0.45,len-0.3,SM.iseat,sg*1.31,1.8,cz);}
-      else{for(const kk of [-1,1]){const dm=cbox(0.05,1.85,0.70,TM.door,x,2.125,cz+kk*0.35);SALDOOR.push({m:dm,base:cz,k:kk,sg});}cbox(0.05,0.36,len,SM.iwall,x,3.23,cz);cbox(0.06,0.14,len+0.1,SM.iwall,x,1.13,cz);}}
-    const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,LEN,6),TM.pole);bar.rotation.x=Math.PI/2;bar.position.set(sg*0.75,3.1,ZC);cab.add(bar);
-    for(const z of LY.poles){const p=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,2.26,8),TM.pole);p.position.set(sg*0.9,2.28,z+OFF);cab.add(p);}
-    for(const z of LY.straps){cbox(0.012,0.2,0.012,SM.iwall,sg*0.75,3.0,z+OFF);cbox(0.02,0.1,0.1,SM.iwall,sg*0.75,2.86,z+OFF);}
-    if(OWNOLD)DOORC.forEach((dz,j)=>{const lcdSide=j%2===0?1:-1; /* 古い形式：液晶1つ／向かいは電光掲示板＋ドア開閉予告灯（千鳥） */
-      if(MINI&&sg!==lcdSide)return;if(MINI){const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;return;}
-      if(sg===lcdSide){const a=cplane(0.58,0.33,TM.iled,x-sg*0.045,3.23,dz);a.rotation.y=iry;}
-      else{const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;}});
-    else{for(const dz of DOORC){ /* 新形：ドア上＋戸袋上に案内用・広告用液晶を複数配置（仕切りの内側に収める） */
-      const putLcd=(mat,w,h,zz)=>{if(zz<Z0+0.30||zz>Z1-0.30)return;const q=cplane(w,h,mat,x-sg*0.045,3.24,zz);q.rotation.y=iry;};
-      if(LCDSLIM){putLcd(TM.iledW,0.68,0.26,dz+0.26);} /* 紫雲地下線：ドア上の液晶は1枚だけ */
-      else{putLcd(TM.iad,0.46,0.24,dz-0.34);
-      putLcd(TM.iledW,0.68,0.26,dz+0.26);
-      putLcd(TM.iled,0.42,0.24,dz-0.92);
-      putLcd(TM.iad,0.42,0.24,dz+0.92);}}
-      if(!LCDSLIM)for(const [a,b] of LY.seats){let si=0;for(let z2=a+0.7;z2<=b-0.65;z2+=1.15,si++){
-        const z=z2+OFF;if(z<Z0+0.4||z>Z1-0.4)continue;
-        const m=si%2===0?TM.iad:TM.iledW,h=si%2===0?0.31:0.25,w=si%2===0?0.60:0.64;
-        const aS=cplane(w,h,m,x-sg*0.045,3.226,z);aS.rotation.y=iry;}}
-      for(const z of (LCDSLIM?[-3.2,3.2]:[-6.0,-3.2,0,3.2,6.0])){const hz=z+OFF;if(hz<Z0+0.6||hz>Z1-0.6)continue; /* 中吊りデジタルサイネージ（両面） */
-        cbox(0.68,0.38,0.045,CM.desk,0,3.15,hz);
-        const m=z===0?TM.iledW:TM.iad,h=z===0?0.24:0.32;
-        for(const face of [0,Math.PI]){const pp=cplane(0.62,h,m,0,3.15,hz+(face?-0.026:0.026));pp.rotation.y=face;}
-        cbox(0.02,0.09,0.02,CM.metal,0.26,3.38,hz);cbox(0.02,0.09,0.02,CM.metal,-0.26,3.38,hz);}}}
+  for(const x of (isFlatGr?[-0.55,0.55]:[-0.5,0.5])){const lt=cplane(0.12,LY.z1-LY.z0-0.9,TM.ilight,x,CEIL-0.02,(LY.z0+LY.z1)/2+OFF);lt.rotation.x=Math.PI/2;}
+  const SEGC=[[-9.75,-6.95],[-5.65,-0.65],[0.65,5.65],[6.95,9.75]];
+  const DOORC=LY.doors.map(z=>z+OFF);
+  for(const sg of [-1,1]){const x=sg*1.36,iry=-sg*Math.PI/2;
+    for(const [a0,b0] of SEGC){
+      const a=Math.max(Z0,a0+OFF),b=Math.min(Z1,b0+OFF);if(b-a<=0.02)continue;
+      const len=b-a,cz=(a+b)/2;
+      /* 腰板・幕板・柱（carTemplate の WINZ・pierSpansG と完全一致） */
+      cbox(0.05,1.12,len,SM.iwall,x,1.71,cz);
+      cbox(0.05,0.36,len,SM.iwall,x,3.23,cz);
+      for(const [p0,p1] of pierSpansG(a-OFF,b-OFF,WINZ)){
+        cbox(0.05,0.78,p1-p0,SM.iwall,x,2.66,(p0+p1)/2+OFF);
+      }
+      /* 窓ガラス＋窓サッシ（黒枠） */
+      for(const [wa,wb] of WINZ){
+        const ca=Math.max(a-OFF,wa),cb=Math.min(b-OFF,wb);if(cb-ca<=0.05)continue;
+        const wm=(ca+cb)/2+OFF,wl=cb-ca;
+        const g=cplane(wl,0.78,TM.glass,x+sg*0.02,2.66,wm);g.rotation.y=iry;
+        cbox(0.05,0.05,wl+0.09,CM.frame,x+sg*0.015,3.075,wm);
+        cbox(0.05,0.05,wl+0.09,CM.frame,x+sg*0.015,2.245,wm);
+        for(const zz of [ca+OFF-0.025,cb+OFF+0.025])cbox(0.05,0.88,0.05,CM.frame,x+sg*0.015,2.66,zz);
+      }
+    }
+    /* ドア＋ドア枠（grack） */
+    for(const dz of DOORC){
+      for(const kk of [-1,1]){const dm=cbox(0.05,1.85,0.70,TM.door,x+sg*0.01,2.125,dz+kk*0.35);SALDOOR.push({m:dm,base:dz,k:kk,sg});}
+      cbox(0.05,0.36,1.3,SM.iwall,x,3.23,dz);cbox(0.06,0.14,1.4,SM.iwall,x,1.13,dz);
+      for(const k2 of [-1,1])cbox(0.05,1.9,0.03,TM.grack,x+sg*0.022,2.125,dz+k2*0.665);
+      cbox(0.05,0.03,1.36,TM.grack,x+sg*0.022,3.065,dz);
+    }
+    if(isFlatGr){
+      cbox(0.30,0.07,12.4,TM.grack,sg*1.22,2.62,OFF);
+    }else{
+      for(const [a,b] of LY.seats){const ca=Math.max(Z0,a+OFF),cb=Math.min(Z1,b+OFF),slen=cb-ca;if(slen<0.4)continue;const sz=(ca+cb)/2;
+        cbox(0.46,0.42,slen-0.3,SM.iseat,sg*1.1,1.37,sz);cbox(0.08,0.45,slen-0.3,SM.iseat,sg*1.31,1.8,sz);}
+      const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,LEN,6),TM.pole);bar.rotation.x=Math.PI/2;bar.position.set(sg*0.75,3.1,ZC);cab.add(bar);
+      for(const z of LY.poles){const pz=z+OFF;if(pz<Z0+0.2||pz>Z1-0.2)continue;const p=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,2.26,8),TM.pole);p.position.set(sg*0.9,2.28,pz);cab.add(p);}
+      for(const z of LY.straps){const sz=z+OFF;if(sz<Z0+0.2||sz>Z1-0.2)continue;cbox(0.012,0.2,0.012,SM.iwall,sg*0.75,3.0,sz);cbox(0.02,0.1,0.1,SM.iwall,sg*0.75,2.86,sz);}
+      if(OWNOLD)DOORC.forEach((dz,j)=>{const lcdSide=j%2===0?1:-1;
+        if(MINI&&sg!==lcdSide)return;if(MINI){const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;return;}
+        if(sg===lcdSide){const a=cplane(0.58,0.33,TM.iled,x-sg*0.045,3.23,dz);a.rotation.y=iry;}
+        else{const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;}});
+      else{for(const dz of DOORC){
+        const putLcd=(mat,w,h,zz)=>{if(zz<Z0+0.30||zz>Z1-0.30)return;const q=cplane(w,h,mat,x-sg*0.045,3.24,zz);q.rotation.y=iry;};
+        if(LCDSLIM){putLcd(TM.iledW,0.68,0.26,dz+0.26);}
+        else{putLcd(TM.iad,0.46,0.24,dz-0.34);putLcd(TM.iledW,0.68,0.26,dz+0.26);putLcd(TM.iled,0.42,0.24,dz-0.92);putLcd(TM.iad,0.42,0.24,dz+0.92);}}
+        if(!LCDSLIM)for(const [a,b] of LY.seats){let si=0;for(let z2=a+0.7;z2<=b-0.65;z2+=1.15,si++){
+          const z=z2+OFF;if(z<Z0+0.4||z>Z1-0.4)continue;
+          const m=si%2===0?TM.iad:TM.iledW,h=si%2===0?0.31:0.25,w=si%2===0?0.60:0.64;
+          const aS=cplane(w,h,m,x-sg*0.045,3.226,z);aS.rotation.y=iry;}}
+        for(const z of (LCDSLIM?[-3.2,3.2]:[-6.0,-3.2,0,3.2,6.0])){const hz=z+OFF;if(hz<Z0+0.6||hz>Z1-0.6)continue;
+          cbox(0.68,0.38,0.045,CM.desk,0,3.15,hz);
+          const m=z===0?TM.iledW:TM.iad,h=z===0?0.24:0.32;
+          for(const face of [0,Math.PI]){const pp=cplane(0.62,h,m,0,3.15,hz+(face?-0.026:0.026));pp.rotation.y=face;}
+          cbox(0.02,0.09,0.02,CM.metal,0.26,3.38,hz);cbox(0.02,0.09,0.02,CM.metal,-0.26,3.38,hz);}}}
+  }
+  if(isFlatGr){for(let z=-5.9;z<=5.95;z+=1.05){const gz=z+OFF;if(gz<Z0+0.5||gz>Z1-0.5)continue;
+    for(const sx of [-1.00,-0.52,0.52,1.00]){cbox(0.42,0.40,0.50,TM.gseat,sx,1.38,gz);cbox(0.40,0.66,0.11,TM.gseat,sx,2.00,gz+0.27);cbox(0.38,0.16,0.13,TM.gseat,sx,2.38,gz+0.32);}}}
   if(!OWNOLD){
     const eG=cplane(0.76,0.28,TM.iledW,0,3.20,Z1-0.04);eG.rotation.y=Math.PI;
     for(const sx of [-1,1]){const eA=cplane(0.56,0.30,TM.iad,sx*0.86,2.60,Z1-0.04);eA.rotation.y=Math.PI;}
@@ -3721,7 +3782,6 @@ const SM=OWNOLD?OLDI:TM;
 cbox(2.3,0.06,0.62,CM.top,-0.2,2.12,0.62);cbox(2.3,0.95,0.06,CM.desk,-0.2,1.64,0.93);
 cbox(2.26,0.008,0.018,CM.accent,-0.2,2.154,0.315);cbox(2.26,0.006,0.018,CM.accentDim,-0.2,2.154,0.925); /* 運転台のアクセントLED */
 const XE=-0.3,YE=2.72,ZE=1.2;
-const OWNCREW=(SERVICES[SVC]&&(SERVICES[SVC].kind==='ltd'||SERVICES[SVC].kind==='local'))?CREWSEL:'one',CONDV=OWNCREW==='twoC',SIDEINV=CONDV?-1:1; /* 車掌：後ろ向きなので左右が逆 */
 { /* 椅子：運転士は座る位置、車掌室では壁ぎわにたたんで寄せてある */
   const ch=new THREE.Group();cab.add(ch);
   if(!CONDV){ch.position.set(XE,0,ZE+0.32);}else{ch.position.set(0.62,0,1.95);ch.rotation.y=-0.5;}
