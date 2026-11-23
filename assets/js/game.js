@@ -7286,6 +7286,34 @@ function buildAnnouncementData(st, mode){
     return {parts:[base+'_ja.mp3',base+'_en.mp3'],text,isLtd:false,chimeType:'local'};
   }
 
+  if(BRANCH && LINE_ID==='branch2'){
+    const isDown=(dir>0);
+    const dirName=isDown?'down':'up';
+    const mname=isSoon?'arr':'dep';
+    const idx=isDown?Math.max(1,Math.min(NST-1,st.i)):Math.max(0,Math.min(NST-2,st.i));
+    const base='assets/audio/ann/v230/b2_'+dirName+'_'+mname+'_'+idx;
+    const sideStr=sideIsLeft?'左':'右';
+    const isFirst=(isDown&&idx===1)||(!isDown&&idx===NST-2);
+    const isFinal=(isDown&&idx===NST-1)||(!isDown&&idx===0);
+    const destName=isDown?STATIONS[NST-1].name:STATIONS[0].name;
+    const prevIdx=idx-(isDown?1:-1);
+    const prevLeft=STATIONS[prevIdx]?(TK[key].side(STATIONS[prevIdx])*dir<0):sideIsLeft;
+    const chgStr=(sideIsLeft!==prevLeft)?('出口は'+sideStr+'側に変わります。'):'';
+    const trStr=idx===0?'汐見環状線、空港線、西岳線、地下鉄つばさ線はお乗り換えです。':idx===NST-1?'四嶺連絡高速線はお乗り換えです。':'';
+    if(!isSoon){
+      text=isFirst
+        ?('本日も紫雲地下線をご利用いただきまして、ありがとうございます。この電車は、'+destName+'ゆきです。次は、'+st.name+'です。（英語放送）')
+        :isFinal
+        ?('次は、'+st.name+'、終点です。'+trStr+'（英語放送）')
+        :('次は、'+st.name+'です。'+trStr+chgStr+'（英語放送）');
+    }else{
+      text=isFinal
+        ?('本日も紫雲地下線をご利用いただきまして、ありがとうございました。'+st.name+'、'+st.name+'。終点です。'+trStr+'お忘れ物のないよう、ご注意ください。'+sideStr+'側の扉が開きます。ご注意ください。（英語放送）')
+        :(st.name+'、'+st.name+'。'+sideStr+'側の扉が開きます。ご注意ください。（英語放送）');
+    }
+    return {parts:[base+'_ja.mp3',base+'_en.mp3'],text,isLtd:false,chimeType:'branch2pt'};
+  }
+
   if(BRANCH){
     const bp=LINE_ID==='branch2'?'b2':LINE_ID==='branch3'?'b3':LINE_ID==='branch4'?'b4':LINE_ID==='branch5'?'b5':'b1';
     const mname=isSoon?'arr':'dep';
