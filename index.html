@@ -453,7 +453,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.4.7)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.5.0)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -481,7 +481,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v2.4.7 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.5.0 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -517,7 +517,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>乗務路線の選択</h2>
       </div>
       <div class="sub">乗務する路線を選択してください</div>
-      <div class="menu-tut-tip">💡【チュートリアル】まずは全85駅・三複線の大動脈「本線 汐見環状線」がおすすめです！</div>
+      <div class="menu-tut-tip">💡【チュートリアル】まずは全85駅の「本線 汐見環状線」、次に最高300km/hの「東西新幹線」がおすすめです！</div>
 
       <div class="duty-cat-grid">
         <button id="btnSelectLoop" class="duty-cat-card cat-loop">
@@ -529,9 +529,9 @@ body.disp-monitor #gl{display:none!important}
 
         <button id="btnSelectBranch" class="duty-cat-card cat-branch">
           <div class="cat-badge">支線</div>
-          <h3>🔀 各支線（5路線）</h3>
-          <p>白峰支線・紫雲地下線・天宮高架線・港見支線・四嶺連絡高速線。港見支線以外はオンライン対応です。</p>
-          <div class="meta"><span>5路線</span><span>4路線オンライン対応</span><span>港見支線オフライン専用</span></div>
+          <h3>🔀 各支線・新幹線（6路線）</h3>
+          <p>白峰支線・紫雲地下線・天宮高架線・港見支線・四嶺連絡高速線、そして最高300km/hの東西新幹線。港見支線以外はオンライン対応です。</p>
+          <div class="meta"><span>6路線</span><span>5路線オンライン対応</span><span>港見支線オフライン専用</span></div>
         </button>
 
         <button id="btnSelectDispatch" class="duty-cat-card hide" style="background:linear-gradient(135deg, rgba(245,158,11,0.18), rgba(180,83,9,0.22));border:1px solid #f59e0b;">
@@ -626,7 +626,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>支線・種別選択</h2>
       </div>
       <div class="sub">乗務する支線と種別を選択してください</div>
-      <div class="menu-tut-tip">💡【チュートリアル】白峰・紫雲・天宮・四嶺の4支線はオンライン対応、港見支線はローカル単線のオフライン専用です。</div>
+      <div class="menu-tut-tip">💡【チュートリアル】白峰・紫雲・天宮・四嶺の4支線と東西新幹線はオンライン対応、港見支線はローカル単線のオフライン専用です。</div>
       <div class="cards" id="cardsBranch"></div>
     </div>
 
@@ -679,13 +679,13 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.4.7)</h3>
-        <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.5.0)</h3>
+        <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）、4つの個性的な支線、最高300km/hの東西新幹線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
           <div class="cr-item"><strong>3D描画エンジン</strong><span>three.js (WebGL)</span></div>
           <div class="cr-item"><strong>フォント</strong><span>Google Fonts（DotGothic16 / Zen Kaku Gothic New）</span></div>
-          <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線、四嶺連絡高速線</span></div>
+          <div class="cr-item"><strong>路線・種別</strong><span>汐見環状線（各停・快速・快特）、白峰支線、紫雲地下線、天宮高架線、港見支線、四嶺連絡高速線、東西新幹線（最高300km/h）</span></div>
         </div>
         <p style="font-size:11.5px;opacity:0.6;margin-top:18px;">※ 本作に登場する駅名、路線名、団体名等はすべて架空のものであり、実在の人物・団体・鉄道会社とは一切関係ありません。</p>
       </div>
@@ -724,7 +724,20 @@ body.disp-monitor #gl{display:none!important}
       <div class="credits-box" style="text-align:left;line-height:1.7;">
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.4.7</span>
+            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.5.0</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.5.0 (2026.11.23)</h3>
+          </div>
+          <ul style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0;padding-left:20px;">
+            <li><strong>高速鉄道「東西新幹線」を新設（最高300km/h）</strong>：奥峰→白峰→湯坂→天冠中央→涼風→天宮→峰月の全7駅・複線。奥峰〜白峰は白峰支線、白峰〜天宮は環状線、天宮〜峰月は天宮高架線の実寸から駅間距離を合わせ、全長約114kmです</li>
+            <li><strong>専用の流線形車両</strong>：8両・白×青の帯・連続窓・鋭いノーズと傾斜した前面ガラス・LED前照灯・パンタグラフ。運転台は0〜350km/hの速度計と300km/h運転に対応しました</li>
+            <li><strong>3つの途中駅と超巨大都市</strong>：山あいの小駅「湯坂」「涼風」と、超高層ビル群・巨大駅舎・ペデストリアンデッキのある「天冠中央」。全線を高さ16mの高架で走り、白峰支線・天宮高架線のすぐ横を並走します</li>
+            <li><strong>専用の発車メロディ「天冠」と車内チャイム</strong>：完全オリジナルのWeb Audio曲（上下線で音階違い）と4点チャイム。車内放送は日本語（Nanami）と英語（Jenny）を別録りし、途切れなく再生します</li>
+            <li><strong>乗客モードにも対応</strong>：東西新幹線の全駅のホームを歩けます</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#475569;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.4.7</span>
             <h3 style="color:#fff;margin:0;font-size:18px;">v2.4.7 (2026.11.23)</h3>
           </div>
           <ul style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0;padding-left:20px;">
@@ -1698,7 +1711,7 @@ body.disp-monitor #gl{display:none!important}
   }
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=154', function() {});
+      loadScript('assets/js/game.js?v=155', function() {});
     });
   });
 })();
