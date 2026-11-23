@@ -1739,9 +1739,28 @@ body.disp-monitor #gl{display:none!important}
     s.onerror = cb;
     document.body.appendChild(s);
   }
+  (function(){
+    var MAP={btnDiaAuto:'auto',btnDiaNormal:'normal',btnDiaExtra:'extra',btnDiaChange:'change'};
+    var NAMES={auto:'自動（毎月日替わり）',normal:'通常ダイヤ',extra:'臨時・団体ダイヤ',change:'変更ダイヤ'};
+    var man='auto';try{man=localStorage.getItem('td_dia')||'auto';}catch(e){}
+    function paint(cur){
+      for(var id in MAP){var el=document.getElementById(id);if(el)el.style.outline=(cur===MAP[id])?'3px solid #38bdf8':'none';}
+    }
+    paint(man);
+    for(var id in MAP){(function(id,val){
+      var el=document.getElementById(id);if(!el)return;
+      el.addEventListener('click',function(){
+        try{localStorage.setItem('td_dia',val);}catch(e){}
+        paint(val);
+        var note=document.getElementById('diaSelNote');
+        if(note)note.textContent='選択中：'+(NAMES[val]||val)+'（保存しました。この設定で乗務を開始します）';
+        if(typeof window.__refreshDailyCond==='function')try{window.__refreshDailyCond();}catch(e){}
+      });
+    })(id,MAP[id]);}
+  })();
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=168', function() {});
+      loadScript('assets/js/game.js?v=169', function() {});
     });
   });
 })();
