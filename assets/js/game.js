@@ -54,8 +54,9 @@ function dailyCondition(){const now=new Date();const wid=weatherForDate(now),dia
 function dailyCondText(){
   const c=(window.__DAILY_COND&&window.__DAILY_COND.wid)?window.__DAILY_COND:dailyCondition();
   const wk=['日','月','火','水','木','金','土'][c.date.getDay()];
-  return {short:WX_ICON[c.wid]+' '+c.wxName+'　'+DIA_NAME[c.dia],
-    long:WX_ICON[c.wid]+' 今日の天気：'+c.wxName+'（'+c.season+'・'+ (c.date.getMonth()+1)+'月'+c.date.getDate()+'日 '+wk+'）\n🚄 今日のダイヤ：'+DIA_NAME[c.dia]+'（毎月自動で変わります）'};
+  const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
+  return {short:WX_ICON[c.wid]+' '+c.wxName+'　'+DIA_NAME[c.dia]+(man!=='auto'?'（手動）':''),
+    long:WX_ICON[c.wid]+' 今日の天気：'+c.wxName+'（'+c.season+'・'+ (c.date.getMonth()+1)+'月'+c.date.getDate()+'日 '+wk+'）\n🚄 今日のダイヤ：'+DIA_NAME[c.dia]+(man!=='auto'?'（手動で選択中）':'（毎月自動で変わります）')};
 }
 function refreshDailyCond(){
   let t=null;try{t=dailyCondText();}catch(e){return;}
@@ -184,6 +185,7 @@ function genPath(L,R0){const px=new Float64Array(L+1),pz=new Float64Array(L+1),t
 const SERVICES={lo:{key:'A',name:'各駅停車　外回り',short:'各停 外回り',en:'Local, Outer Circle',col:'#14935f',kind:'local'},li:{key:'B',name:'各駅停車　内回り',short:'各停 内回り',en:'Local, Inner Circle',col:'#14935f',kind:'local'},
   ro:{key:'C',name:'快速　外回り',short:'快速 外回り',en:'Rapid, Outer Circle',col:'#e8731e',kind:'rapid'},ri:{key:'D',name:'快速　内回り',short:'快速 内回り',en:'Rapid, Inner Circle',col:'#e8731e',kind:'rapid'},
   eo:{key:'E',name:'快速特急　外回り',short:'快特 外回り',en:'Limited Rapid Express, Outer Circle',col:'#c8322b',kind:'ltd'},ei:{key:'F',name:'快速特急　内回り',short:'快特 内回り',en:'Limited Rapid Express, Inner Circle',col:'#c8322b',kind:'ltd'},
+  test:{key:'A',name:'試運転　外回り',short:'試運転',en:'Test Run, Outer Circle',col:'#8a939f',kind:'test',dir:1},testi:{key:'B',name:'試運転　内回り',short:'試運転',en:'Test Run, Inner Circle',col:'#8a939f',kind:'test',dir:-1},
   pax:{key:'A',name:'乗客モード　環状線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax'},paxb:{key:'A',name:'乗客モード　白峰支線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax',branch:true,line:'branch'},
   pax2:{key:'A',name:'乗客モード　紫雲地下線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax',branch:true,line:'branch2'},pax3:{key:'A',name:'乗客モード　天宮高架線',short:'乗客モード',en:'',col:'#8fd6ff',kind:'pax',branch:true,line:'branch3'},
   bu:{key:'A',name:'白峰支線　奥峰行き',short:'支線 奥峰行',en:'Shiramine Branch Line',col:'#5aa832',kind:'branch',branch:true,line:'branch',dir:1},bd:{key:'B',name:'白峰支線　白峰行き',short:'支線 白峰行',en:'Shiramine Branch Line',col:'#5aa832',kind:'branch',branch:true,line:'branch',dir:-1},
@@ -208,7 +210,7 @@ function stopsOf(stations,kind){const chg=(DIASH==='change');
     :kind==='exp'?(chg?(st.i===0||st.cls==='M'||st.cls==='X'):(st.i===0||st.cls==='M')) /* 特急は汐見と主要駅だけ（快速特急より少ない） */
     :true);}
 function lapTime(cfg,stations,kind){ // rough timetable estimate for one lap / one way
-  const stops=stopsOf(stations,kind),vc={local:21,rapid:29,ltd:40,exp:48,branch:18}[kind],dw={local:30,rapid:35,ltd:40,exp:35,branch:30}[kind];let t=0;
+  const stops=stopsOf(stations,kind),vc={local:21,rapid:29,ltd:40,exp:48,branch:18,test:21}[kind]||21,dw={local:30,rapid:35,ltd:40,exp:35,branch:30,test:30}[kind]||30;let t=0;
   for(let i=0;i<stops.length;i++){const a=stops[i],b=stops[(i+1)%stops.length];if(kind==='branch'&&i===stops.length-1)break;const d=mod(b.s-a.s,cfg.L);t+=d/vc+28+(b.cls==='M'?dw+10:dw);}return t;}
 function fmtDur(sec){const m=Math.round(sec/60);return m>=60?Math.floor(m/60)+'時間'+(m%60)+'分':m+'分';}
 
@@ -1791,6 +1793,7 @@ window.__PAX = false;
 function boot(LINE_ID,SVC,START_I){
 /* 指令モニター等で既に3Dの世界を作っているときは、古い描画ループ・イベントリスナ・前のキャンバスを片付けてから作り直す */
 const TOKEN=(window.__FRAME_TOKEN||0)+1; window.__FRAME_TOKEN=TOKEN;
+if(window.__TEST_INT){try{clearInterval(window.__TEST_INT);window.__TEST_INT=null;}catch(e){}}
 if(window.__WORLD_ABORT){try{window.__WORLD_ABORT.abort();}catch(e){}}
 if(typeof window.__AUDIO_CLEANUP==='function'){try{window.__AUDIO_CLEANUP();}catch(e){}}
 const __WORLD_ABORT=typeof AbortController!=='undefined'?new AbortController():null;
@@ -2030,7 +2033,10 @@ function applyConditionState(){
   window.__WEATHER=wid;
   window.__DAILY_COND=daily;
   window.__DEPOT_START=false; /* 車庫からの出庫は廃止 */
-  const dia=(qdia==='extra'||qdia==='change')?qdia:(daily?daily.dia:'normal');
+  /* v2.5.0：手動ダイヤ設定を復活（自動／通常／臨時・団体／変更）。localStorage の td_dia に保存 */
+  const man=(()=>{try{const v=localStorage.getItem('td_dia');return (v==='normal'||v==='extra'||v==='change')?v:'auto';}catch(e){return 'auto';}})();
+  const dia=(qdia==='extra'||qdia==='change'||qdia==='normal')?qdia:(man!=='auto'?man:(daily?daily.dia:'normal'));
+  window.__DIA_MAN=man;
   window.__DIASH=dia;
   Object.assign(WX,WXDEF[wid],{id:wid});WXF=WX.trac;
   scene.fog.color.setHex(WX.fog[0]);scene.fog.near=WX.fog[1];scene.fog.far=WX.fog[2];scene.background.setHex(WX.sky);
@@ -3109,6 +3115,7 @@ function carTemplate(front,rear,panto,staticDoors,green,old,flat){
       for(const zz of [a-0.025,b+0.025])box('dark',0.05,h2+0.1,0.05,fx,c2,zz);}
     for(const dz of (green?GDOORZ:DOORZ)){pl('body',1.3,0.2,X,1.1,dz,ry);pl('body',1.3,TOPY-3.05,X,(3.05+TOPY)/2,dz,ry);
       if(!staticDoors&&(!old||dz===0))box('dark',0.02,0.33,1.18,sg*1.405,SLED_Y,dz); /* 側面表示器の枠（古い形式は車両の真ん中に1つ） */
+      if(!staticDoors&&!green)pl('dest',1.06,0.26,X+sg*0.016,SLED_Y,dz,ry); /* v2.5.0：側面の方向幕（前面と同じ行先・種別を掲出） */
       if(!staticDoors){ /* ドア枠（内壁と外板のあいだをふさぐ：車内から見た戸の縁・上・下の隙間をなくす） */
         for(const k2 of [-1,1])box('grack',0.05,1.9,0.03,sg*1.382,2.125,dz+k2*0.665);
         box('grack',0.05,0.03,1.36,sg*1.382,3.065,dz);box('grack',0.07,0.06,1.36,sg*1.375,1.17,dz);}
@@ -3239,10 +3246,19 @@ function carTemplate(front,rear,panto,staticDoors,green,old,flat){
 /* 古い形式の前面：幕式の行先表示（白地に黒文字） */
 function drawDestRoll(k,txt){k.txt=txt;const x=k.x;x.fillStyle='#f3f1ea';x.fillRect(0,0,256,48);x.fillStyle='#16181c';x.font='700 26px '+FONT;x.textAlign='center';x.textBaseline='middle';fitText(x,txt||'',128,25,236,26,'700','center');x.strokeStyle='#8c887e';x.lineWidth=2;x.strokeRect(1,1,254,46);k.tex.needsUpdate=true;}
 function drawOwnDest(){const nm=G.list?STATIONS[G.list[G.list.length-1]].name:'',kk=KIND[G.key]||'local',rp=kk==='rapid';
+  /* v2.5.0：手動の方向幕（幕回し）が選ばれていればそれを優先。試運転は専用幕 */
+  if(G.rsManual){if(ownTrain.old)drawDestRoll(ownTrain.dk,G.rsManual);else drawDest(ownTrain.dk,G.rsManual);return;}
+  if(G.isTest){const t=(BRANCH?'試運転　'+nm+'行':'試運転');if(ownTrain.old)drawDestRoll(ownTrain.dk,t);else drawDest(ownTrain.dk,t);return;}
+  if(!BRANCH){const lab=(SVCLOOK[G.key]?SVCLOOK[G.key][1]:'普通')+' '+(TK[G.key]&&TK[G.key].dir>0?'外回り':'内回り');
+    if(ownTrain.old)drawDestRoll(ownTrain.dk,lab);else drawDest(ownTrain.dk,lab);return;}
   if(ownTrain.old)drawDestRoll(ownTrain.dk,'普通　'+nm);
   else{const pre=BRANCH?(rp?'快速 ':'普通 '):(kk==='ltd'?'快特 ':kk==='exp'?'特急 ':rp?'快速 ':'普通 ');
     drawDest(ownTrain.dk,pre+nm+(BRANCH?'行':''));}}
-function drawDest(k,txt){k.txt=txt;const x=k.x;x.fillStyle='#050403';x.fillRect(0,0,256,48);x.fillStyle='#ff9d2e';x.font='24px '+DOTF;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,128,25);k.tex.needsUpdate=true;}
+function drawDest(k,txt){k.txt=txt;const x=k.x;x.fillStyle='#050403';x.fillRect(0,0,256,48);
+  /* v2.5.0：方向幕をはっきり読めるように（自動縮小の太字） */
+  x.fillStyle='#ff9d2e';x.font='700 30px '+DOTF;x.textAlign='center';x.textBaseline='middle';
+  try{fitText(x,String(txt||''),128,25,240,30,'700','center');}catch(e){x.fillText(txt,128,25);}
+  k.tex.needsUpdate=true;}
 const glowTex=canvasTex(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,0.6)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});
 const poolTex=canvasTex(64,128,(x,w,h)=>{const g=x.createRadialGradient(32,110,4,32,80,70);g.addColorStop(0,'rgba(255,248,225,0.9)');g.addColorStop(1,'rgba(255,248,225,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});
 const GLOW={head:new THREE.SpriteMaterial({map:glowTex,color:0xfff4dc,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0.6}),
@@ -4818,7 +4834,7 @@ function nextShiomiDepMs(k,fromMs){
 }
 function aiRun(a,dt){
   const T=TK[a.key];
-  if(a.dispHold||a.troubleActive){a.v=Math.max(0,a.v-4.5*dt);a.s+=a.dir*a.v*dt;if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if(a.charter&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,'臨時');}catch(e){}}}}return;}
+  if(a.dispHold||a.troubleActive){a.v=Math.max(0,a.v-4.5*dt);a.s+=a.dir*a.v*dt;if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if((a.charter||a.test)&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,a.test?'試運転':'臨時');}catch(e){}}}}return;}
   const _isFollower=!MINI&&IS_ONLINE&&!isAiSyncLeader()&&_aiLastRx&&(Date.now()-_aiLastRx)<3500;
   if(_isFollower){
     if(a.state==='run'){
@@ -4866,7 +4882,7 @@ function aiRun(a,dt){
       }
       if(a.stSt)aiSounds(a,el,tot);
     }
-    if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if(a.charter&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,'臨時');}catch(e){}}}}
+    if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if((a.charter||a.test)&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,a.test?'試運転':'臨時');}catch(e){}}}}
     if((a.key==='I'||a.key==='J')&&a.state==='run'&&Math.abs(sdiff(SH7,a.s))>950)convertCharterToMain(a);
     return;
   }
@@ -4930,7 +4946,7 @@ function aiRun(a,dt){
     if(a.stSt)aiSounds(a,el,tot);if(!_isFollower&&a.t<=0&&BRANCH&&a.stSt&&((a.dir>0&&a.stSt.i===NST-1)||(a.dir<0&&a.stSt.i===0))&&a!==FT){aiTurn(a,a.stSt);}
     else if(!_isFollower&&a.t<=0){const leftSt=a.stSt;if(leftSt)a.last=leftSt.i;a.state='run';a.frac=0;a.forceDep=false;a.shiomiDepMs=0;}
       /* 乗っている電車の発車後放送は updRide の「次駅放送」に一本化（同じ放送を2系統から同時に鳴らさない） */}
-  if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if(a.charter&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,'臨時');}catch(e){}}}}
+  if(a.tr){a.tr.grp.visible=a.vis;if(a.vis){placeTrain(a.tr,a.s,T.off,T.y);if(a.doors)setDoors(a.tr,a.side,a.frac);if((a.charter||a.test)&&!a._cd){a._cd=1;try{drawDest(a.tr.dk,a.test?'試運転':'臨時');}catch(e){}}}}
   /* 汐見13・14番線の列車は、本線へ合流したら各停として運転を続ける */
   if((a.key==='I'||a.key==='J')&&a.state==='run'&&Math.abs(sdiff(SH7,a.s))>950)convertCharterToMain(a);
 }
@@ -5070,6 +5086,76 @@ function convertCharterToMain(a){
   if(a.key!=='I'&&a.key!=='J')return;
   const nk='A';a.key=nk;a.dir=TK[nk].dir;a.vmax=VMAX[nk];a.last=-1;a._cd=0;a.shiomiDepMs=0;
   if(a.tr){a.tr.flip=a.dir<0;a.tr.lastFrac=-1;a.tr.lastSide=0;setLook(a.tr,nk);}
+}
+/* ===== v2.5.0：試運転列車のAI運行 =====
+   各停と同じ線路・停車駅・信号・閉塞で、前面/側面の幕を「試運転」にして走る。
+   ときどき1本だけ出庫し、一定間隔で入れ替える（同時に1本までの制限）。 */
+function testCount(){let n=0;for(const a of OT)if(a&&a.test&&a.state!=='off')n++;return n;}
+function spawnTestRun(){
+  if(BRANCH||PAX||G.phase!=='play')return;
+  if(testCount()>=1)return;
+  for(const k of ['A','B']){
+    const pool=POOL[k];if(!pool)continue;
+    const a=takeFreeTrain(pool);if(!a)continue;
+    const d=TK[k].dir;
+    const p2=mod(STATIONS[0].s+TK[k].so-d*3200,L);
+    if(!hasTrack(p2)||!hasTrack(p2+d*160))continue;
+    const minSep=carsFor(k)*CARL+170;
+    if(OT.some(o=>o!==a&&o.state!=='off'&&o.key&&physKey(o.key,p2)===physKey(k,p2)&&Math.abs(sdiff(o.s,p2))<minSep))continue;
+    if(physKey(G.key,p2)===physKey(k,p2)&&Math.abs(sdiff(G.s,p2))<minSep)continue;
+    a.key=k;a.test=true;a.charter=false;a._cd=0;a.dir=d;a.vmax=VMAX[k];a.twoMan=false;a.insideSet=false;a.last=-1;a.shiomiDepMs=0;
+    aiSpawn(a,p2,0);
+    try{if(a.tr){drawDest(a.tr.dk,'試運転');a._cd=1;}}catch(e){}
+    break;
+  }
+}
+/* ===== v2.5.0：撮り鉄（カメラを構えた人）=====
+   普段は少人数。試運転・臨時・団体列車が走るとき（＝試運転/臨時ダイヤ時や
+   試運転列車の在線時）は、ホーム端（エキセン）や線路沿いの撮影地に増える。 */
+let CAMFANS=null;
+function cameraFanMesh(){
+  const p=makePerson('adult');
+  const cam=new THREE.Mesh(boxGeo(0.22,0.15,0.28),lam(0x14161a));cam.position.set(0,1.52,0.3);p.add(cam);
+  const lens=new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.065,0.18,10),lam(0x2b2f36));lens.rotation.x=Math.PI/2;lens.position.set(0,1.52,0.47);p.add(lens);
+  return p;
+}
+function buildCameraFans(heavy){
+  try{if(CAMFANS){scene.remove(CAMFANS);CAMFANS=null;}}catch(e){}
+  if(PAX||MINI)return;
+  const tk=TK.A;if(!tk||!STATIONS.length)return;
+  const grp=new THREE.Group();scene.add(grp);CAMFANS=grp;
+  const add=(s,o,y,ry)=>{try{const p=cameraFanMesh();p.position.copy(offs(s,o,y));p.rotation.y=ry;p.layers.mask=1;grp.add(p);}catch(e){}};
+  const sts=STATIONS.filter(st=>isMajorStation(st));
+  const want=Math.min(sts.length,heavy?10:4);
+  for(let i=0;i<want;i++){
+    const st=sts[(i*3+1)%sts.length];if(!st)continue;
+    const n=heavy?(st.cls==='M'?3:2):1;
+    const key=physKey('A',st.s);
+    let lo=0,hi=0;try{const r=platRange(st,key);lo=r[0];hi=r[1];}catch(e){continue;}
+    for(let j=0;j<n;j++){
+      const side=(j%2)?1:-1;
+      const s=st.s+side*(Math.max(6,PBof(st)/2-5)-j*2.4);
+      const o=side>0?hi-1.0:lo+1.0;
+      const t=P(s)[2];
+      add(s,o,PH,-t+(side>0?-Math.PI/2:Math.PI/2));
+    }
+  }
+  if(heavy){ /* 線路沿いの撮影地 */
+    for(let i=0;i<8;i++){
+      const s=mod(STATIONS[0].s+L*(0.12+i*0.105),L);
+      if(!hasTrack(s))continue;
+      const side=(i%2)?1:-1;
+      const o=TK.A.o+side*9.5;
+      const t=P(s)[2];
+      add(s,o,0,-t+(side>0?-Math.PI/2:Math.PI/2));
+    }
+  }
+}
+function refreshCameraFans(){
+  const heavy=!!(DIASH==='extra'||DIASH==='change'||testCount()>0);
+  if(CAMFANS&&CAMFANS.userData.heavy===heavy)return;
+  buildCameraFans(heavy);
+  if(CAMFANS)CAMFANS.userData.heavy=heavy;
 }
 function acquireAiTr(a){
   if(a.tr)return a.tr;
@@ -6859,13 +6945,15 @@ function updCrew(dt){if(G.phase!=='play'||!G.twoMan)return;const D=G.door;if(G.v
     if(!G.promoted[G.atStation]){if(G.cDw>=G.cMel){promote(defaultPromo(),true);G.cT=0;}return;}
     const busy=pending()||jamCount()>0,melT=G.promoLoop?(nowMs()-G.promoLoop.t0)/1000:0;
     const pDur=(G.promoLoop&&G.promoLoop.onePhraseDur)?G.promoLoop.onePhraseDur:8.0;
+    /* v2.5.0：快特のツーマン乗務でドアを閉めるまでの待ちが長すぎるというご意見に対応。
+       メロディ1回ぶん＋少しで戸閉し、乗降の滞留がなければ待たずに閉める */
     if(G.promoLoop){
-      const targetMelT=isMajor?(pDur*1.8):(pDur*0.95);
-      if((!busy&&melT>=targetMelT)||melT>(isMajor?45:16)||G.cDw>(isMajor?75:28)){promote(defaultPromo(),true);G.cT=0;}
+      const targetMelT=isMajor?(pDur*1.15):(pDur*0.80);
+      if((!busy&&melT>=targetMelT)||melT>(isMajor?26:11)||G.cDw>(isMajor?40:18)){promote(defaultPromo(),true);G.cT=0;}
       return;
     }
-    if(G.promoOn){G.cT=0;return;}if(busy&&G.cDw<75){G.cT=0;return;}
-    const closeDelay=isMajor?3.2:1.8;
+    if(G.promoOn){G.cT=0;return;}if(busy&&G.cDw<40){G.cT=0;return;}
+    const closeDelay=isMajor?1.4:0.9;
     if(G.cT>closeDelay&&!G.closeWait){closeDoor(D.local,true);G.cT=0;}return;}
   if(D.state!=='open')G.cMel=null;
   if(D.state!=='open')G.cDw=0;
@@ -8163,7 +8251,7 @@ function showTripNoticeIfNeeded(){
 function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{preloadGuides();}catch(e){}if(R.kind==='staff'){startPassenger(si);return;}
   if(R.kind!=='pax'){G.load=trainLoadFor(R.key||'A');setTimeout(()=>{if(!PAX)salFill(saloonFromLoad(G.load,carsFor(R.key||'A')));},50);}
   if(R.kind==='pax'){G.route=r;startPassenger(si);return;}
-  G.route=r;G.key=R.key;G.mainKey=G.key;G.dir=TK[G.key].dir;
+  G.route=r;G.key=R.key;G.mainKey=G.key;G.dir=TK[G.key].dir;G.isTest=(R.kind==='test');G.rsManual=null;
   {const needCars=carsFor(G.key),needGreen=greenCarsFor(G.key);
     if(ownTrain.cars.length!==needCars){disposeTrain(ownTrain);ownTrain=buildTrain('普通',false,0x14935f,true,needGreen,needCars,BRANCH?OWNOLD:undefined);ownTrain.grp.traverse(o=>o.layers.set(1));if(OWNAI)OWNAI.tr=ownTrain;}}
   if(R.branch){const idx=STATIONS.filter(s=>serves(s,R.key)).map(s=>s.i);G.list=R.dir>0?idx:idx.slice().reverse();}
@@ -8193,9 +8281,16 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
       toast(DIASH==='extra'?'臨時・団体列車ダイヤ：臨時列車が増発されています':'変更ダイヤ：停車駅が変更されています','ok');},3000);
   }
   try{preloadStationAnnounce(stOf(G.nv));}catch(e){}
+  /* v2.5.0：試運転列車のAI運行と撮り鉄（試運転・臨時ダイヤ時に増える） */
+  try{refreshCameraFans();}catch(e){}
+  if(!BRANCH&&!PAX){
+    setTimeout(()=>{try{if(G.phase==='play'&&testCount()===0)spawnTestRun();}catch(e){}},9000);
+    if(window.__TEST_INT){try{clearInterval(window.__TEST_INT);}catch(e){}}
+    window.__TEST_INT=setInterval(()=>{try{if(!G||G.phase!=='play')return;if(testCount()===0)spawnTestRun();}catch(e){}},5*60000);
+  }
   G.tabNextAnn=false;G.tabDepSwitched=false;G.tabAnnMode=null;G.tabDepAnnDone=false;G.tabSoonAnnDone=false;
   G.autoAnn = (typeof autoAnnEnabled !== 'undefined') ? autoAnnEnabled : true;
-  ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;setLook(ownTrain,G.key);if(G.list)drawOwnDest();
+  ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;setLook(ownTrain,G.key);if(G.list||G.isTest||G.rsManual)drawOwnDest();
   updChunks(G.s,true);
   if(!BRANCH&&!MINI){initSyncedAiTrains();for(const k of ALLK)for(const a of POOL[k])if(a.state!=='off'&&!a.tr)acquireAiTr(a);}
   try{if(typeof buildCabModel==='function')buildCabModel();}catch(e){}
@@ -8207,6 +8302,76 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   toast(R.name+'　'+b.jn+'　乗り降りを見て、促進・戸閉・ATOで出発','info');
   if(!G.list&&(st.cls==='M'||st.i===0))setTimeout(()=>{if(G.atStation===G.nv)askStation(st,true);},2600);
   showTripNoticeIfNeeded();}
+/* ===== v2.5.0：ゲーム内メニュー「🚉 乗り換え・方向幕・ダイヤ」 =====
+   タイトルに戻らず、オンライン接続（MQTT）を保ったまま別の列車・路線に乗り換える。
+   古い列車・AI同期・購読は boot() の先頭でクリーンアップされる。 */
+function closeTransferPanel(){const el=document.getElementById('transferPanel');if(el)el.classList.add('hide');}
+window.__closeTransfer=closeTransferPanel;
+function transferSameStation(list,kind){
+  const curSt=STATIONS[G.atStation!=null?G.atStation:G.nv];
+  const curName=curSt?curSt.name:'';
+  const ok=(kind==='pax'||kind==='staff')?list:stopsOf(list,kind);
+  let hit=null;for(const st of ok)if(st.name===curName){hit=st;break;}
+  if(!hit)hit=ok.find(st=>st.cls==='M')||ok.find(st=>st.cls==='X')||ok[0];
+  return hit?hit.i:0;
+}
+window.__transferTo=function(id){
+  const S=SERVICES[id];if(!S)return;
+  const line=S.line||'loop';
+  const LS=(typeof LN!=='undefined'&&LN[line])?LN[line]:null;
+  if(!LS||!LS.sts||!LS.sts.length)return;
+  const si=transferSameStation(LS.sts,S.kind);
+  closeTransferPanel();
+  try{toast('🚉 オンラインを維持したまま乗り換えます：'+S.name,'ok');}catch(e){}
+  setTimeout(()=>{try{window.__boot(line,id,si);}catch(e){console.error(e);}},180);
+};
+window.__setDia=function(v){
+  try{localStorage.setItem('td_dia',v);}catch(e){}
+  const curSt=STATIONS[G.atStation!=null?G.atStation:G.nv];
+  const si=curSt?curSt.i:0;
+  closeTransferPanel();
+  try{toast('🗓️ ダイヤを「'+DIA_NAME[v==='auto'?diaForDate(new Date()):v]+'」に設定して再出発します','ok');}catch(e){}
+  setTimeout(()=>{try{window.__boot(LINE_ID,G.route,si);}catch(e){console.error(e);}},180);
+};
+window.__setRollSign=function(v){
+  G.rsManual=v||null;
+  try{drawOwnDest();}catch(e){}
+  try{toast(v?('🚃 方向幕を「'+v+'」にしました'):'🚃 方向幕を自動（行先表示）に戻しました','ok');}catch(e){}
+};
+function openTransferPanel(){
+  let el=document.getElementById('transferPanel');
+  if(!el){
+    el=document.createElement('div');el.id='transferPanel';el.className='hide';
+    el.style.cssText='position:fixed;inset:0;z-index:70;background:rgba(3,7,15,0.8);display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto;';
+    document.body.appendChild(el);
+  }
+  const btnStyle='padding:9px 8px;border-radius:10px;border:1px solid rgba(148,163,184,0.35);background:#16233a;color:#e2e8f0;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;';
+  const onBtn='border-color:#38bdf8;background:rgba(56,189,248,0.22);color:#7dd3fc;';
+  const online=(IS_ONLINE&&ONLINE_CLIENT&&ONLINE_CLIENT.connected);
+  const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
+  const dirs=[['lo','各停 外回り'],['li','各停 内回り'],['ro','快速 外回り'],['ri','快速 内回り'],['eo','快特 外回り'],['ei','快特 内回り'],['test','試運転 外回り'],['testi','試運転 内回り']];
+  const brs=[['bu','白峰支線 奥峰行'],['bd','白峰支線 白峰行'],['b2u','紫雲地下線 深雪行'],['b2d','紫雲地下線 紫雲新都行'],['b3u','天宮高架線 峰月行'],['b3d','天宮高架線 天宮行'],['b4u','港見支線 奥港行'],['c5u','四嶺連絡線 奥港行'],['pax','乗客モード（環状線）']];
+  const grid=a=>'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;">'+a.map(([id,lb])=>'<button data-svc="'+id+'" style="'+btnStyle+(G.route===id?onBtn:'')+'">'+lb+'</button>').join('')+'</div>';
+  const rss=[['','自動（行先表示）'],['回送','回送'],['試運転','試運転'],['臨時','臨時'],['団体','団体'],['普通','普通'],['快速','快速'],['快特','快特']];
+  const dias=[['auto','自動（毎月日替わり）'],['normal','通常ダイヤ'],['extra','臨時・団体ダイヤ'],['change','変更ダイヤ']];
+  el.innerHTML='<div style="width:min(560px,100%);background:#0b1220;border:1px solid rgba(56,189,248,0.35);border-radius:16px;padding:14px;color:#e2e8f0;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;"><div style="font-size:16px;font-weight:800;color:#7dd3fc;">🚉 乗り換え・方向幕・ダイヤ</div><button id="tpClose" style="background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;">✕</button></div>'
+    +'<div style="font-size:12px;line-height:1.6;color:'+(online?'#34d399':'#f59e0b')+';margin-bottom:10px;">'+(online?'🌐 オンライン接続中：このまま接続を保って乗り換えます（チャット・他プレイヤー表示は継続）':'📴 オフライン（港見支線など）。乗り換えてもオンラインにはなりません')+'</div>'
+    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:6px 0;">環状線の列車に乗り換え</div>'+grid(dirs)
+    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">支線・乗客モード</div>'+grid(brs)
+    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">🚃 方向幕（幕回し）／いまの表示：'+(G.rsManual||'自動')+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;">'+rss.map(([v,lb])=>'<button data-rs="'+v+'" style="'+btnStyle+(String(G.rsManual||'')===v?onBtn:'')+'">'+lb+'</button>').join('')+'</div>'
+    +'<div style="font-size:13px;font-weight:800;color:#fbbf24;margin:12px 0 6px;">🗓️ ダイヤ設定（保存して再出発）</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;">'+dias.map(([v,lb])=>'<button data-dia="'+v+'" style="'+btnStyle+((man||'auto')===v?onBtn:'')+'">'+lb+'</button>').join('')+'</div>'
+    +'<div style="font-size:11px;color:#94a3b8;margin-top:8px;line-height:1.5;">※ 乗り換え・ダイヤ変更は同じ駅から再出発します。一度「⛔ 降車」してタイトルに戻る必要はありません。</div>'
+    +'</div>';
+  el.classList.remove('hide');
+  const c=document.getElementById('tpClose');if(c)c.onclick=closeTransferPanel;
+  el.querySelectorAll('[data-svc]').forEach(bt=>bt.onclick=()=>window.__transferTo(bt.dataset.svc));
+  el.querySelectorAll('[data-rs]').forEach(bt=>bt.onclick=()=>{window.__setRollSign(bt.dataset.rs);openTransferPanel();});
+  el.querySelectorAll('[data-dia]').forEach(bt=>bt.onclick=()=>window.__setDia(bt.dataset.dia));
+}
+window.__openTransfer=openTransferPanel;
 /* ================= walking on the platform ================= */
 const HOLD_T=1.4;
 function canExit(){return G.phase==='play'&&G.v===0&&!G.walkOn&&(G.atStation!==null||(G.depCheck!==null&&Math.abs(stopDist(G.depCheck))<20));}
@@ -10181,6 +10346,17 @@ if (IS_ONLINE) {
   if (chatFab) chatFab.classList.remove('hide');
   const dtFab = document.getElementById('btnDriverTablet');
   if (dtFab && !PAX) dtFab.classList.remove('hide');
+  const tfFab = document.getElementById('btnTransfer');
+  if (tfFab) { tfFab.classList.remove('hide'); tfFab.onclick = function(){ try{ openTransferPanel(); }catch(e){ console.warn(e); } }; }
+  /* v2.5.0：運転条件モーダルの手動ダイヤ選択 */
+  {const MAP={btnDiaAuto:'auto',btnDiaNormal:'normal',btnDiaExtra:'extra',btnDiaChange:'change'};
+   const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
+   for(const id in MAP){const e=document.getElementById(id);if(!e)continue;e.style.outline=(man===MAP[id])?'3px solid #38bdf8':'none';
+     e.onclick=()=>{const v=MAP[id];try{localStorage.setItem('td_dia',v);}catch(err){}
+       try{refreshDailyCond();}catch(err){}
+       for(const id2 in MAP){const e2=document.getElementById(id2);if(e2)e2.style.outline=(id2===id)?'3px solid #38bdf8':'none';}
+       const note=document.getElementById('diaSelNote');if(note)note.textContent='選択中：'+(v==='auto'?'自動（毎月日替わり）':DIA_NAME[v])+'（保存しました。この設定で乗務を開始します）';};
+   }}
   const micFab = document.getElementById('btnCrewMicFab');
   if (micFab && !PAX) micFab.classList.remove('hide');
   updateOnlineHud(true);
@@ -10845,7 +11021,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     const modeBadge = isMinatomi 
       ? '<span style="border-color:#f59e0b;color:#f59e0b;">📴 オフライン専用</span>'
       : '<span style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.12);">🌐 常時オンライン</span>';
-    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡高速線（7駅・複線・各駅停車・全長約71km・最高200km/h）。環状線と各支線終点の位置関係から距離を計算して縮尺を合わせました。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。駅間距離1kmで地下を走る複線。' : S.line === 'branch3' ? '天宮から峰月まで40駅。快速は廃止し、各駅停車のみで運転します。' : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '汐見駅と主要駅だけに停車。環状線の地下を専用線で走る、全車グリーン車の最速210km/h列車です。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
+    b.innerHTML = '<div class="no">' + S.short + '</div><h2>' + S.name.replace('　', ' ') + '</h2><p>' + (S.line === 'branch4' ? '港見から奥港まで4駅の単線ローカル線。港前で必ず行き違い。軍港の軍艦や海岸線を眺めて走る、3両の古い電車（路線長16kmのためオフライン専用）。' : S.line === 'branch5' ? '白峰支線の奥峰、紫雲地下線の深雪、天宮高架線の峰月、港見支線の奥港。4つの支線の終点どうしを結ぶ連絡高速線（7駅・複線・各駅停車・全長約71km・最高200km/h）。環状線と各支線終点の位置関係から距離を計算して縮尺を合わせました。' : S.line === 'branch2' ? '紫雲新都から深雪まで15駅。駅間距離1kmで地下を走る複線。' : S.line === 'branch3' ? '天宮から峰月まで40駅。快速は廃止し、各駅停車のみで運転します。' : S.branch ? '白峰〜奥峰の支線（複線・各駅停車）。' : S.kind === 'local' ? '全駅に停車。方向別三複線のいちばん外側を走ります。' : S.kind === 'rapid' ? '主要駅と快速停車駅に停車。外側から2番目の線路を最高120km/hで。' : S.kind === 'exp' ? '汐見駅と主要駅だけに停車。環状線の地下を専用線で走る、全車グリーン車の最速210km/h列車です。' : S.kind === 'test' ? '表示器・信号・閉塞・ホームドアを確認しながら走る試運転列車。各駅停車と同じ駅に停車し、前面・側面の方向幕に「試運転」を掲出します。' : '主要駅と6駅だけに停車。真ん中の線路を最高150km/hで。') + '</p><div class="meta"><span>' + n + '駅</span><span>' + (S.branch ? '片道' : '一周') + ' 約' + fmtDur(timeOf(S)) + '</span>' + modeBadge + '</div>';
     b.addEventListener('click', () => {
       currentDutyView = isBranch ? 'viewBranch' : 'viewLoop';
       pickStation(id);
@@ -12120,6 +12296,48 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
     // ご意見箱 返信コーナー（作者サトタケ / riku06568 が反映）
     window.FEEDBACK_REPLIES = [
+      {
+        id: 20,
+        date: '2026/11/24',
+        sender: '名無し運転士さん',
+        q: '主要駅に25人追加して下さい。 あと方向幕追加して下さい',
+        a: 'ご意見ありがとうございます！\n①方向幕：車両前面の行先表示器をより大きく読みやすい表示に刷新し、新たに側面（ドアの上）にも方向幕を追加しました。各停・快速・快特・試運転・臨時で種別と行先がはっきり表示され、環状線は「外回り／内回り」、支線は行先駅名が出ます。ゲーム中の「🚉 乗り換え・方向幕」ボタンから、いま掲出している方向幕の確認と手動の幕回し（回送・試運転・臨時・団体・普通・快速・快特）もできます。\n②主要駅への25人追加は、動作の軽さ（フレームレート）を保つため今回は見送りました。人が多すぎると低スペックな端末でカクついてしまうためで、今後、描画を軽くする工夫と合わせて検討します。ご了承ください。'
+      },
+      {
+        id: 19,
+        date: '2026/11/24',
+        sender: '名無し運転士さん',
+        q: '特急列車を汐見環状線に追加して下さい。',
+        a: 'ご意見ありがとうございます。特急列車については、以前に一度汐見環状線へ追加したことがあるのですが、停車駅・ダイヤ・信号・ホームドア・放送などでバグが多く、安心して遊べる状態にできなかったため、v2.1.0で廃止しました。現在は各停・快速・快速特急の3種別で安定して運行できることを優先しています。将来、余裕をもって作り直せる目処が立てば再追加を検討します。貴重なご意見をありがとうございました。'
+      },
+      {
+        id: 18,
+        date: '2026/11/24',
+        sender: '名無し運転士さん',
+        q: '快特でツーマン乗務の時ドアを閉めるまでの時間が長すぎるのでもうちょっと早くしてもよいと思います',
+        a: 'ご意見ありがとうございます！快速特急のツーマン乗務で、車掌がドアを閉めるまでの待ち時間を短縮しました。発車メロディは1回鳴らし切ったら間を置かずに戸閉し、乗降が落ち着いていれば待たずに閉めます（主要駅でも待ち時間の上限を大きく短くしました）。テンポよく発車できるようになっていますので、ぜひ確かめてみてください。'
+      },
+      {
+        id: 17,
+        date: '2026/11/24',
+        sender: '名無し運転士さん',
+        q: 'そのままオンラインになってて、乗り換えができるようにして',
+        a: 'ご意見ありがとうございます！タイトルに戻らなくても、そのままのオンライン接続を保ったまま別の列車・路線に乗り換えられるようにしました。\nゲーム中に「🚉 乗り換え」ボタンが出ます。そこから環状線の各停・快速・快特・試運転、各支線、乗客モードを選ぶと、いまいる駅（同じ駅がなければ主要駅）から再出発します。乗り換えのときは前の列車のAI同期・購読・ホームドア・サウンドを片付けてから切り替えるので、ゴースト車両や二重表示は残りません。チャットや他プレイヤーとのオンライン状態はそのまま続きます。'
+      },
+      {
+        id: 16,
+        date: '2026/11/24',
+        sender: '名無し運転士さん',
+        q: '深雪より先の駅を作ってください',
+        a: 'ご意見ありがとうございます。深雪より先（紫雲地下線の延伸）の駅について、以前に一度作ろうとしたのですが、地下トンネル・ホーム・信号・ダイヤのつながりでバグが多く、きちんと遊べる形にできませんでした。そのため今は実装できていません。将来、余裕をもって作れるようになれば挑戦したいと思います。応援ありがとうございます。'
+      },
+      {
+        id: 15,
+        date: '2026/11/24',
+        sender: '名無し運転士さん',
+        q: '試運転列車の追加、撮り鉄を追加（試運転列車や団体・臨時列車の場合はホーム端・エキセンや線路沿いの撮影地などに多めに追加）、前のアップデートのようにダイヤの設定を自分で設定できるようにしてほしい',
+        a: 'たくさんのご意見をありがとうございます！\n①試運転列車：乗務開始の路線選択に「試運転　外回り／内回り」を追加し、自分で試運転列車を運転できるようにしました。前面・側面の方向幕は「試運転」表示になり、各停と同じ線路・信号・閉塞・ホームドアで走ります。AIの試運転列車も一定間隔で出庫して走ります。\n②撮り鉄：カメラを構えた人をホーム端（エキセン）や線路沿いの撮影地に追加しました。普段は少人数ですが、試運転列車が走っているときや臨時・団体ダイヤのときは人数が増えます。\n③ダイヤの手動設定：運転条件の画面と、ゲーム中の「🚉 乗り換え・方向幕」メニューから「自動（毎月日替わり）／通常ダイヤ／臨時・団体ダイヤ／変更ダイヤ」を選べるように復活させました。自動に戻せば、これまでどおり毎月日替わりのダイヤで遊べます。'
+      },
       {
         id: 14,
         date: '2026/11/21',
