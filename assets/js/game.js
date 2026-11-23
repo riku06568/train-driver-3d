@@ -222,7 +222,9 @@ function stopsOf(stations,kind){const chg=(DIASH==='change');
     :kind==='exp'?(chg?(st.i===0||st.cls==='M'||st.cls==='X'):(st.i===0||st.cls==='M')) /* 特急は汐見と主要駅だけ（快速特急より少ない） */
     :true);}
 function lapTime(cfg,stations,kind){ // rough timetable estimate for one lap / one way
-  const stops=stopsOf(stations,kind),vc={local:21,rapid:29,ltd:40,exp:48,branch:18}[kind],dw={local:30,rapid:35,ltd:40,exp:35,branch:30}[kind];if(cfg&&cfg.id==='branch6'){vc.branch=70;dw.branch=45;}let t=0;
+  const VCT={local:21,rapid:29,ltd:40,exp:48,branch:18},DWT={local:30,rapid:35,ltd:40,exp:35,branch:30};
+  if(cfg&&cfg.id==='branch6'){VCT.branch=70;DWT.branch=45;} /* 300km/h・8両・7駅：全長114kmを約35分 */
+  const stops=stopsOf(stations,kind),vc=VCT[kind],dw=DWT[kind];let t=0;
   for(let i=0;i<stops.length;i++){const a=stops[i],b=stops[(i+1)%stops.length];if(kind==='branch'&&i===stops.length-1)break;const d=mod(b.s-a.s,cfg.L);t+=d/vc+28+(b.cls==='M'?dw+10:dw);}return t;}
 function fmtDur(sec){const m=Math.round(sec/60);return m>=60?Math.floor(m/60)+'時間'+(m%60)+'分':m+'分';}
 
