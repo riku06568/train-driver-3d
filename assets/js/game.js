@@ -10357,19 +10357,23 @@ if (IS_ONLINE) {
   if (dtFab && !PAX) dtFab.classList.remove('hide');
   const tfFab = document.getElementById('btnTransfer');
   if (tfFab) { tfFab.classList.remove('hide'); tfFab.onclick = function(){ try{ openTransferPanel(); }catch(e){ console.warn(e); } }; }
-  /* v2.5.0：運転条件モーダルの手動ダイヤ選択 */
-  {const MAP={btnDiaAuto:'auto',btnDiaNormal:'normal',btnDiaExtra:'extra',btnDiaChange:'change'};
-   const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
-   for(const id in MAP){const e=document.getElementById(id);if(!e)continue;e.style.outline=(man===MAP[id])?'3px solid #38bdf8':'none';
-     e.onclick=()=>{const v=MAP[id];try{localStorage.setItem('td_dia',v);}catch(err){}
-       try{refreshDailyCond();}catch(err){}
-       for(const id2 in MAP){const e2=document.getElementById(id2);if(e2)e2.style.outline=(id2===id)?'3px solid #38bdf8':'none';}
-       const note=document.getElementById('diaSelNote');if(note)note.textContent='選択中：'+(v==='auto'?'自動（毎月日替わり）':DIA_NAME[v])+'（保存しました。この設定で乗務を開始します）';};
-   }}
+  /* 運転条件モーダルの手動ダイヤ選択 */
+  if (typeof window.__initDiaSelectUI === 'function') window.__initDiaSelectUI();
   const micFab = document.getElementById('btnCrewMicFab');
   if (micFab && !PAX) micFab.classList.remove('hide');
   updateOnlineHud(true);
 }
+window.__initDiaSelectUI = function(){
+  const MAP={btnDiaAuto:'auto',btnDiaNormal:'normal',btnDiaExtra:'extra',btnDiaChange:'change'};
+  const man=(()=>{try{return localStorage.getItem('td_dia')||'auto';}catch(e){return 'auto';}})();
+  for(const id in MAP){const e=document.getElementById(id);if(!e)continue;e.style.outline=(man===MAP[id])?'3px solid #38bdf8':'none';
+    e.onclick=()=>{const v=MAP[id];try{localStorage.setItem('td_dia',v);}catch(err){}
+      try{refreshDailyCond();}catch(err){}
+      for(const id2 in MAP){const e2=document.getElementById(id2);if(e2)e2.style.outline=(id2===id)?'3px solid #38bdf8':'none';}
+      const note=document.getElementById('diaSelNote');if(note)note.textContent='選択中：'+(v==='auto'?'自動（毎月日替わり）':DIA_NAME[v])+'（保存しました。この設定で乗務を開始します）';};
+  }
+};
+try{ window.__initDiaSelectUI(); }catch(e){}
 const btr = document.getElementById('btnTitleReturn');
 if (btr) btr.classList.remove('hide');
 let troubleVisGrp=null,troubleVisKind=null,troubleVisT=0;
