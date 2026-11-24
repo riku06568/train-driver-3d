@@ -475,6 +475,13 @@ body.disp-monitor #gl{display:none!important}
             <span class="m-desc">キーボード操作・画質設定・自動放送</span>
           </div>
         </button>
+        <a id="btnNavYoutube" class="menu-btn" href="https://www.youtube.com/@%E6%B1%90%E8%A6%8B%E7%92%B0%E7%8A%B6%E7%B7%9A%E5%85%AC%E5%BC%8F%E3%83%81%E3%83%A3%E3%83%B3%E3%83%8D%E3%83%AB" target="_blank" rel="noopener noreferrer" style="text-decoration:none;border-color:rgba(239,68,68,0.45);">
+          <span class="m-icon" style="color:#f87171;">▶</span>
+          <div class="m-info">
+            <span class="m-title">公式YouTubeチャンネル</span>
+            <span class="m-desc">@汐見環状線公式チャンネル</span>
+          </div>
+        </a>
         <button id="btnNavFaq" class="menu-btn">
           <span class="m-icon">❓</span>
           <div class="m-info">
@@ -1542,6 +1549,7 @@ body.disp-monitor #gl{display:none!important}
             <li>スクリプトエラーや通信切断の発生情報</li>
           </ul>
           <p style="margin:0 0 8px;color:#e2e8f0;font-weight:700;">※氏名・メールアドレス・電話番号・正確な位置情報などの個人情報は一切収集・保存いたしません。</p>
+          <p style="margin:0 0 10px;">また、開発者が公式YouTubeチャンネル等で使用する動画・画像素材を収録するため、オンラインプレイ中の走行シーンや画面を撮影・録画する場合がございます。あらかじめご了承ください。</p>
           <div style="background:rgba(2,132,199,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 12px;font-size:12.5px;color:#7dd3fc;margin-top:12px;line-height:1.5;">
             💡 <b>【いつでも安心】</b>「同意しない」を選択された場合でも、ゲームのすべての機能（オンライン・全路線乗務・見学など）を一切の制限なくそのまま快適にプレイしていただけます。
           </div>
@@ -1760,7 +1768,7 @@ body.disp-monitor #gl{display:none!important}
   })();
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=170', function() {});
+      loadScript('assets/js/game.js?v=171', function() {});
     });
   });
 })();

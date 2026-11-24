@@ -6493,7 +6493,7 @@ function startAutoDepartMelody(st){
       playGuide('tab_doors');
       const tm2=setTimeout(()=>{
         if(G.phase!=='play'||PAX)return;
-        if(G.door.state==='open'&&G.atStation!==null&&!(OWNOLD&&!G.lean))closeDoor(G.door.local,true);
+        if(G.auto&&G.door.state==='open'&&G.atStation!==null&&!(OWNOLD&&!G.lean))closeDoor(G.door.local,true);
         G.autoMelBusy=false;
       },3600);
       G.autoMelTimers.push(tm2);
@@ -7555,6 +7555,7 @@ function preloadStationAnnounce(st){
 const LATEST_UPDATE_AD_FILE='assets/audio/ann/ad_latest_v198.mp3';
 const LATEST_UPDATE_AD_TEXT='最新アップデートのお知らせです。バージョン1.9.8では、ドアが閉まるときに、車内の案内画面が赤く点滅して、ドアが閉まりますと、大きくお知らせするようになりました。車内の広告画面は、デザインも表示のしかたも新しくなりました。駅のホームには、号車ごとの乗車位置案内を設置し、グリーン車の乗車口も分かりやすくしました。運転台と前面ガラスは、外から見ても、お客さまから見ても、運転士と同じ姿で、くもりのないクリアな見え方になりました。発車のタイミングも改善し、乗降促進と戸締め放送が終わると、すぐにドアが閉まります。汐見環状線を、これからもよろしくお願いいたします。';
 const RANDOM_ADS=[
+  {file:'assets/audio/ann/parts/ad_youtube.mp3',text:'汐見環状線公式YouTubeチャンネルを開設しました。走行映像や最新アップデート情報などをお届けしていく予定ですので、ホーム画面のリンクからぜひチャンネル登録をお願いいたします。'},
   {file:LATEST_UPDATE_AD_FILE,text:LATEST_UPDATE_AD_TEXT},
   {file:'assets/audio/ann/parts/ad_random_2.mp3',text:'汐見環状線より、車内マナーのお願いです。お年寄りや体の不自由なお客様には席をお譲りください。また、歩きながらのスマートフォン操作はおやめください。'},
   {file:'assets/audio/ann/parts/ad_random_3.mp3',text:'汐見環状線沿線のお出かけ情報です。碧浜の海岸プロムナードや蒼海中央の展望デッキ、白峰支線方面の渓谷温泉へは汐見一日乗車券が便利です。'},
