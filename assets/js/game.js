@@ -2424,16 +2424,13 @@ function buildHomeDoors(c,st,k,isSiding){
 function setHD(hd,f){if(Math.abs(hd.frac-f)<0.002)return;hd.frac=f;for(const l of hd.leaves){const s=l.d+l.q*(0.73+f*1.35); /* 閉：中央でぴったり、端は戸袋に重なる */const ln=hd.lineAt?hd.lineAt(s):hd.line;l.m.position.copy(offs(s,ln,PH+0.65));l.m.rotation.y=-P(s)[2];}}
 /* ホームドア当たり：開いていない区間は線路側へ出られない */
 function hdDoorCenters(hd){if(hd._doors)return hd._doors;const s=new Set();for(const l of hd.leaves)s.add(l.d);return hd._doors=[...s];}
-function hdGapAt(hd,s){if(hd.frac<0.20)return false;const half=hd.frac*1.45+0.25;for(const d of hdDoorCenters(hd))if(Math.abs(s-d)<half)return true;return false;}
+function hdGapAt(hd,s){if(hd.frac<0.45)return false;const half=Math.max(0.25,hd.frac*1.10-0.15);for(const d of hdDoorCenters(hd))if(Math.abs(sdiff(s,d))<half)return true;return false;}
 function applyHDCollision(p){if(p.trackO===-99||!p.g.visible)return;const st=STATIONS[p.st];if(!st||!st.hd)return;
   const k=p.flow,pk=platKey(st,k);const hdKeys=(!BRANCH&&st.i===0)?[pk,'S'+pk]:(pk!==k?[pk,k]:[k]);
   for(const hk of hdKeys){const hd=st.hd[hk];if(!hd)continue;
-    const sd=hd.sd!=null?hd.sd:(TK[k]?TK[k].side(st):1),line=hd.line,safe=line+sd*0.55;
+    const sd=hd.sd!=null?hd.sd:(TK[k]?TK[k].side(st):1),line=hd.lineAt?hd.lineAt(p.s):hd.line,safe=line+sd*0.55;
     if(Math.abs(p.o-line)>3.2)continue;
-    if(p.kind==='alight'&&hd.frac>0.15)continue;
-    const isBoard=(p.kind==='board'||p.kind==='runner'||p.kind==='jam');
-    const allowThrough=isBoard&&hd.frac>0.20&&(hdGapAt(hd,p.s)||(p.doorS!=null&&(hdGapAt(hd,p.doorS)||Math.abs(p.s-p.doorS)<1.6)));
-    if(allowThrough)continue;
+    if(hd.frac>=0.45&&hdGapAt(hd,p.s))continue; /* 開いているドアの開口部だけ通過できる */
     if(sd>0){if(p.o<safe)p.o=safe;}else{if(p.o>safe)p.o=safe;}}}
 function applyHDPlayer(W){if(!W.st||!W.st.hd)return;
   /* 今いるホームの番線だけ判定（G.key固定だと他ホームへ移れない） */
@@ -4599,10 +4596,14 @@ function crowdPush(p,dt){ /* 乗客同士の当たり判定：実際の体格・
   p.s+=pushS;p.o+=pushO;
   if(pr&&p.trackO!==-99&&!pMovingDoor&&Math.abs(p.o-p.trackO)>1.6)p.o=clamp(p.o,oMin,oMax);
 }
-function sweepStranded(){if(PAX||G.v<1.2||G.atStation!==null)return;
+function sweepStranded(){
+  if(!PAX&&G.v<1.2&&G.atStation!==null)return;
   for(const p of active.slice()){if(p.trackO===-99||!p.g.visible)continue;
     if(p.kind!=='board'&&p.kind!=='jam'&&p.kind!=='runner'&&p.kind!=='alight')continue;
     if(Math.abs(p.o-p.trackO)>2.0)continue;
+    const st=p.st>=0?STATIONS[p.st]:null,fk=st&&p.flow?physKey(p.flow,st.s):null;
+    if(st&&fk&&trainOpenAt(st,fk))continue;
+    if(PAX){if(p.kind==='alight')freePerson(p);else requeue(p);continue;}
     /* 発車後も線路側に残っていた人は電車と一緒（乗車） */
     absorbAsBoarded(p);}}
 function boardIntoTrain(p){
@@ -4648,9 +4649,9 @@ function updPeople(dt){sweepStranded();
       if(nearPl&&p.hidden){p.delay=0.25;p.g.visible=false;posePerson(p,false);continue;}
       p.g.visible=true;p.hidden=false;}}
     let moving=false;const _mvS=p.s,_mvO=p.o;
-    if(p.path.length){const ts=p.path[0][0],to=p.path[0][1],ds=ts-p.s,dO=to-p.o,dist=Math.hypot(ds,dO),step=p.speed*dt;
+    if(p.path.length){const ts=p.path[0][0],to=p.path[0][1],ds=sdiff(p.s,ts),dO=to-p.o,dist=Math.hypot(ds,dO),step=p.speed*dt;
       const t=P(p.s)[2];const wx=Math.sin(t)*ds+Math.cos(t)*dO,wz=-Math.cos(t)*ds+Math.sin(t)*dO;if(dist>0.01)p.yaw=Math.atan2(wx,wz);
-      if(dist<=step){p.s=ts;p.o=to;p.path.shift();if(!p.path.length&&p.end==='xfer'){xferArrive(p);continue;}
+      if(dist<=step){p.s=mod(ts,L);p.o=to;p.path.shift();if(!p.path.length&&p.end==='xfer'){xferArrive(p);continue;}
         if(!p.path.length&&(p.end==='board'||p.end==='free')){
           if(p.end==='board'){
             if(!boardOpen(p)){requeue(p);continue;} /* 列車がいない・ドアが閉まっていたら消さずに待機列へ戻す */
@@ -4665,23 +4666,24 @@ function updPeople(dt){sweepStranded();
             p.train=null;p.forceIn=false;freePerson(p);continue;}
           if(p.end==='free'){freePerson(p);continue;}}
         }
-      else{p.s+=ds/dist*step;p.o+=dO/dist*step;}moving=true;p.walk+=dt*p.speed*5.5;crowdPush(p,dt);}
+      else{p.s=mod(p.s+ds/dist*step,L);p.o+=dO/dist*step;}moving=true;p.walk+=dt*p.speed*5.5;crowdPush(p,dt);}
     else{const t=P(p.s)[2];p.yaw=Math.atan2(Math.cos(t)*p.face,Math.sin(t)*p.face);crowdPush(p,dt);}
-    if(moving&&Math.hypot(p.s-_mvS,p.o-_mvO)<0.004){moving=false;p._stuckT=(p._stuckT||0)+dt;}else p._stuckT=0; /* 前の人に詰まって進めないときは足踏みしない */
-    if(p._stuckT>1.2&&p.path&&p.path.length){ /* 1.2秒まったく進めない：詰まりを解消する */
-      if(p.kind==='board'||p.kind==='runner'||p.kind==='alight'){
-        if(p._stuckT>1.8){const nx=p.path.shift();if(nx){p.s=nx[0];p.o=nx[1];}p._stuckT=0;}
-      }else if(p.kind!=='jam'){p.s=p.path[0][0];p.o=p.path[0][1];p.path.length=0;p._stuckT=0;}}
+    if(moving&&Math.hypot(sdiff(_mvS,p.s),p.o-_mvO)<0.004){moving=false;p._stuckT=(p._stuckT||0)+dt;}else p._stuckT=0; /* 前の人に詰まって進めないときは足踏みしない */
+    if(p._stuckT>1.6&&p.path&&p.path.length){ /* 詰まり時：ホームドアを越えてワープさせず、乗車待ちは列へ戻す */
+      if(p.kind==='board'||p.kind==='runner'){requeue(p);continue;}
+      else if(p.kind!=='jam'){p.path.length=0;p._stuckT=0;}}
     if(p.trackO!==-99&&p.st>=0){const stP=STATIONS[p.st],prP=stP&&p.flow?platRange(stP,p.flow):null;
       if(prP){const loP=Math.min(prP[0],prP[1])+0.35,hiP=Math.max(prP[0],prP[1])-0.35;
-        const canCross=(p.kind==='board'||p.kind==='alight'||p.kind==='runner'||p.kind==='jam')&&(p.kind==='alight'||p.kind==='jam'||(p.train&&boardOpen(p)));
+        const canCross=(p.kind==='board'||p.kind==='runner'||p.kind==='jam')?(p.train&&boardOpen(p)):(p.kind==='alight'&&Math.abs(p.o-p.trackO)<1.75&&stP&&trainOpenAt(stP,physKey(p.flow,stP.s)));
         if(!canCross)p.o=clamp(p.o,loP,hiP);}}
     applyHDCollision(p);posePerson(p,moving);}
 }
-function posePerson(p,moving){  let onPlat=true;
+function posePerson(p,moving){let onPlat=true;
   if(p.trackO!==-99&&p.st>=0){const stP=STATIONS[p.st],prP=stP&&p.flow?platRange(stP,p.flow):null;
     if(prP){const loP=Math.min(prP[0],prP[1]),hiP=Math.max(prP[0],prP[1]);onPlat=(p.o>=loP-0.05&&p.o<=hiP+0.05);}}
-  const yPos=(!onPlat&&(p.kind==='board'||p.kind==='alight'||p.kind==='runner'||p.kind==='jam')&&Math.abs(p.o-p.trackO)<1.65)?1.15:PH;
+  const stNow=p.st>=0?STATIONS[p.st]:null;
+  const hasTrain=stNow&&p.flow&&trainOpenAt(stNow,physKey(p.flow,stNow.s));
+  const yPos=(!onPlat&&hasTrain&&(p.kind==='board'||p.kind==='alight'||p.kind==='runner'||p.kind==='jam')&&Math.abs(p.o-p.trackO)<1.65)?1.15:PH;
   p.g.position.copy(offs(p.s,p.o,yPos));p.g.rotation.y=p.yaw;
   const u=p.g.userData;personPose(p.g,moving?'walk':'stand');if(moving){const a=Math.sin(p.walk)*0.55;u.legs[0].rotation.x=a;u.legs[1].rotation.x=-a;}}
 function trainOpenAt(st,k){
@@ -5166,14 +5168,14 @@ function buildCameraFans(heavy){
       add(s,o,PH,-t+(side>0?-Math.PI/2:Math.PI/2));
     }
   }
-  if(heavy){ /* 線路沿いの撮影地 */
+  if(heavy&&!BRANCH){ /* 線路沿いの撮影地（地上区間かつ最外線のさらに外側のみ） */
     for(let i=0;i<8;i++){
       const s=mod(STATIONS[0].s+L*(0.12+i*0.105),L);
-      if(!hasTrack(s))continue;
-      const side=(i%2)?1:-1;
-      const o=TK.A.o+side*9.5;
+      if(!hasTrack(s)||Math.abs(Yat(s))>0.25)continue;
+      if(STATIONS.some(st=>Math.abs(sdiff(st.s,s))<PBof(st)+25))continue;
+      const o=TK.A.o+9.5;
       const t=P(s)[2];
-      add(s,o,0,-t+(side>0?-Math.PI/2:Math.PI/2));
+      add(s,o,0,-t-Math.PI/2);
     }
   }
 }
