@@ -4764,7 +4764,27 @@ function aspectOf(sg,cls){cls=cls||'r';const b=BND[sg.k],n=b.length,pb=sg.dir>0?
   if(blockedFor(sg.k,pb,cls))return 'R';if(blockedFor(sg.k,mod(pb+sg.dir,n),cls))return 'Y';if(blockedFor(sg.k,mod(pb+2*sg.dir,n),cls))return 'YG';return 'G';}
 function nextSignal(k,s,dir){const sk=sigKey(k),b=BND[sk];if(!b||!b.length)return null;const n=b.length;const i=blockOf(sk,s);
   const bi=dir>0?(i+1)%n:i;const x=b[bi];const dist=dir*sdiff(s,x);if(dist<0||dist>3000)return null;
-  const sg=SIGBY[sk][bi];return {x,dist,asp:sg?aspectOf(sg,trCls(k)):'G'};}
+  const sg=SIGBY[sk][bi];let asp=sg?aspectOf(sg,trCls(k)):'G';
+  if(asp!=='R'&&!PAX&&k===G.key){
+    const myCls=trCls(k);
+    for(const o of OT){
+      if(!o||o.state==='off'||!o.key||sigKey(o.key)!==sk||o.dir!==dir)continue;
+      if(B3&&sidDev(o.s)>0.3&&trCls(o.key)!==myCls)continue;
+      const dd=dir*sdiff(s,o.s);
+      if(dd>0&&dd<=dist+25){asp='R';break;}
+    }
+    if(asp!=='R'&&IS_ONLINE&&window.ONLINE_PLAYERS){
+      const curLine=(typeof CFG!=='undefined'&&CFG)?CFG.id:'loop';
+      for(const pid in ONLINE_PLAYERS){
+        const op=ONLINE_PLAYERS[pid];
+        if(!op||op.isPax||op.state!=='driving'||op.s==null||!op.key||(op.line||'loop')!==curLine)continue;
+        if(sigKey(op.key)!==sk||(op.dir||1)!==dir)continue;
+        const dd=dir*sdiff(s,op.s);
+        if(dd>0&&dd<=dist+25){asp='R';break;}
+      }
+    }
+  }
+  return {x,dist,asp};}
 function sigLimit(k,s,dir,v){const ns=nextSignal(k,s,dir);if(!ns)return 99;
   if(ns.asp==='R')return Math.sqrt(2*0.75*Math.max(ns.dist-22,0));
   if(ns.asp==='Y')return Math.sqrt(12.5*12.5+2*0.7*ns.dist);
@@ -4778,7 +4798,7 @@ const VMAX={A:22,B:22,C:31,D:31,E:34,F:34,G:58.33,H:58.33}; /* 特急は最高21
 function setLook(tr,key){const [col,nm]=SVCLOOK[key];tr.mats.liv1.color.setHex(col);tr.mats.liv2.color.setHex(col).lerp(new THREE.Color(0xffffff),0.45);
   if(tr.old){const d=TK[key].dir>0?STATIONS[NST-1]:STATIONS[0];drawDestRoll(tr.dk,(MINI?'ワンマン　':'普通　')+d.name);if(MINI){tr.mats.liv1.color.setHex(0xf0e6c8);tr.mats.liv2.color.setHex(0xf0e6c8);}}else if(BRANCH){const d=TK[key].dir>0?STATIONS[NST-1]:STATIONS[0];drawDest(tr.dk,(KIND[key]==='rapid'?'快速 ':'普通 ')+d.name+'行');}else drawDest(tr.dk,nm+' '+(TK[key].dir>0?'外回り':'内回り'));}
 function aiStop(a){let best=null,bd=1e9;const so=TK[a.key].so;
-  for(const st of STATIONS){if(!servesChg(st,a.key))continue;if(st.i===a.last)continue;const stop=st.s+so,D=a.dir*sdiff(a.s,stop);if(D>-0.5&&D<bd){bd=D;best={st,D};}}return best;}
+  for(const st of STATIONS){if(!servesChg(st,a.key))continue;if(st.i===a.last)continue;const stop=st.s+so,D=a.dir*sdiff(a.s,stop);if(D>-3.0&&D<bd){bd=D;best={st,D};}}return best;}
 /* 変更ダイヤ：快速は特急並みに、特急は快速並みに停車駅を入れ替える（AI列車に適用） */
 function servesChg(st,k){
   if(DIASH!=='change')return serves(st,k);
@@ -4891,7 +4911,7 @@ function aiRun(a,dt){
   }
   a._syncErr=0;
   if(a.state==='run'){const nx=aiStop(a);let vt=a.slowMode==='next'?Math.min(a.vmax,25/3.6):a.slowMode==='prev'?Math.min(a.vmax,20/3.6):a.vmax;
-    if(nx)vt=Math.min(vt,Math.sqrt(2*0.7*Math.max(nx.D,0))+0.05);
+    if(nx){a._appSt=nx.st.i;vt=Math.min(vt,nx.D<=0.25?0:Math.sqrt(2*0.7*Math.max(nx.D,0)));}
     if(B3&&KIND[a.key]==='rapid')vt=Math.min(vt,rapidPace(a));
     const behindUs=a.follower&&G.dir*sdiff(G.s,a.s)<0;vt=Math.min(vt,behindUs?99:sigLimit(a.key,a.s,a.dir,a.v),(limitFor(a.key,a.s))/3.6);
     { // 同じ線路の前の電車（AI・自列車・他プレイヤー）に追突しないよう先行列車の全長と閉塞で制御
@@ -4928,7 +4948,8 @@ function aiRun(a,dt){
       a._hardStop=(clearGap<=22);
     }
     const _isFollower=!MINI&&IS_ONLINE&&!isAiSyncLeader()&&_aiLastRx&&(Date.now()-_aiLastRx)<3500;
-    if(nx&&nx.D<0.2&&a.v<0.6&&!_isFollower){a.state='dwell';a.v=0;a.t=dwellSec(a,nx.st);a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;a.sq=(a.sq|0)+1;
+    if(nx&&!_isFollower&&((nx.D<=0.35&&a.v<1.3)||(nx.D<0&&a._appSt===nx.st.i&&a.v<6.0))){
+      a.s=mod(nx.st.s+T.so,L);a.state='dwell';a.v=0;a.t=dwellSec(a,nx.st);a.dwellTot=a.t;a.stSt=nx.st;a.last=nx.st.i;a.side=T.side(nx.st);a.flowed=false;a.sndF={};a.hold=0;a.boardHold=0;a.slowMode=null;a.sq=(a.sq|0)+1;
       if(!BRANCH&&nx.st.i===0&&SHIOMI_TT[a.key]){const depMs=nextShiomiDepMs(a.key,nowMs()+12000);a.shiomiDepMs=depMs;a.t=clamp((depMs-nowMs())/1000,20,180);a.dwellTot=a.t;}}
     else{const maxDec=a._emerGap?-4.5:-2.4;a.v+=clamp((vt-a.v)*2,maxDec,0.8)*dt;a.v=a._hardStop?0:Math.max(0,a.v);a.s+=a.dir*a.v*dt;}}
   else if(a.state==='dwell'){a.t-=dt;
@@ -5200,7 +5221,7 @@ function isNearPlayerSpawn(a,pos){
   const ownLen=(typeof ownTrain!=='undefined'&&ownTrain&&ownTrain.cars?ownTrain.cars.length:carsFor(G.key))*CARL;
   const aiLen=carsFor(a.key)*CARL;
   const dd=G.dir*sdiff(G.s,pos);
-  return dd>-(ownLen+aiLen+700)&&dd<(ownLen+aiLen+500);
+  return dd>-(ownLen+aiLen+750)&&dd<(ownLen+aiLen+1650);
 }
 function clearAiAroundPlayerSpawn(){
   if(PAX||G.phase!=='play')return;
@@ -5211,7 +5232,7 @@ function clearAiAroundPlayerSpawn(){
     const aiLen=carsFor(a.key)*CARL;
     if(BRANCH||MINI){aiHide(a,12);continue;}
     const dd=G.dir*sdiff(G.s,a.s);
-    const shift=(dd>=0)?(ownLen+aiLen+750):-(ownLen+aiLen+900);
+    const shift=(dd>=0)?(ownLen+aiLen+1800):-(ownLen+aiLen+950);
     a.s=mod(G.s+G.dir*shift,L);a._syncErr=0;
     if(a.state==='dwell'){a.state='run';a.stSt=null;a.frac=0;a.v=a.vmax*0.7;}
     if(a.tr)a.tr.grp.visible=false;
@@ -5386,10 +5407,10 @@ function updPools(dt){const on=G.phase==='play'||window.__DISP_MONITOR;
     const act=pool.filter(a=>a.state!=='off');
     if(LINE_ID==='branch'&&bCap<99){let tot=0;for(const kk of ALLK)for(const aa of POOL[kk])if(aa.state!=='off')tot++;if(tot>=bCap)continue;}
     if(sp>50000||act.length>=Math.min(pool.length,Math.ceil(7400/sp)+1))continue;   // 見える範囲（約7.4km）に入る本数まで
-    const minSep=carsFor(k)*CARL+200,clearAt2=p2=>act.every(a=>Math.abs(sdiff(a.s,p2))>minSep)&&(own?Math.abs(sdiff(G.s,p2))>minSep:true);
+    const minSep=carsFor(k)*CARL+220,clearAt2=p2=>act.every(a=>Math.abs(sdiff(a.s,p2))>minSep)&&(!(!PAX&&G.phase==='play'&&sameTrack({key:k,dir:d},G.key,p2,G.dir))||(G.dir*sdiff(G.s,p2)<-minSep||G.dir*sdiff(G.s,p2)>1750));
     const rels=act.map(a=>d*sdiff(G.s,a.s));
     if(own){const ahead=rels.filter(r=>r>0),near=ahead.length?Math.min(...ahead):Infinity;
-      if(near>Math.min(4100,sp*1.2)&&(sp<4100||POOLT[k]<=0)){const r=Math.min(4050,Math.max(minSep+60,sp*rand(0.95,1.08))); /* 前の電車：運転間隔ぶん先 */
+      if(near>Math.min(4100,sp*1.2)&&(sp<4100||POOLT[k]<=0)){const r=Math.min(4050,Math.max(1850,sp*rand(0.95,1.08))); /* 前の電車：最低でも閉塞2つ分以上先 */
         const p2=G.s+d*r;if(clearAt2(p2)&&hasTrack(p2)&&hasTrack(p2+d*200)){free.key=k;aiSpawn(free,p2);if(sp>=4100)POOLT[k]=hdwSec(k)*rand(0.85,1.15);}}}
     else if(B3&&KIND[k]==='rapid'){ /* 天宮支線の快速：各駅停車の1.7〜2.5km後ろにだけ出す（必ず各停の後に快速） */
       const lk=d>0?'A':'B',locs=[];for(const o of OT)if(o.state!=='off'&&o.key===lk)locs.push(o.s);if(!PAX&&G.key===lk)locs.push(G.s);
@@ -6554,7 +6575,7 @@ function clearDoorPeople(){ /* 戸閉時：実際に停車中の自列車ドア�
       absorbAsBoarded(p);continue;}
   }
 }
-function onClosed(){G.autoMel=null;say('戸閉め、よし。','drv');G.noBoard=false;G.closeWait=null;clearDoorPeople();
+function onClosed(){G.autoMel=null;say('戸閉め、よし。','drv');G.noBoard=false;G.closeWait=null;clearDoorPeople();try{if(!PAX&&typeof syncSalFromCar==='function')syncSalFromCar();}catch(_){}
   /* 列に並んだまま乗らなかった人だけホームに残す（線路側は既に回収済み） */
   abandonPending();
   /* 以前はここで車内の人を全員片付けて並べ直していたため、ドアを閉めた瞬間に人が消えて戻っていた。乗り降りは個別に反映済みなので何もしない */
@@ -6881,6 +6902,13 @@ function turnaround(){
 }
 /* 手動運転（港見支線・手動切替）：マスコン・ブレーキ。停止信号の直前で止まらないとATSの非常ブレーキ */
 function manualSafety(){const sg=G.sig;if(sg&&sg.asp==='R'&&sg.dist<6&&G.v>0.3&&G.mnotch>-8){G.mnotch=-8;toast('ATS 動作：非常ブレーキ（停止信号）','warn');beepATS();updMascon();return;}
+  if(!PAX&&G.phase==='play'&&G.v>0.3&&G.mnotch>-8){
+    for(const o of OT){
+      if(!o||o.state==='off'||!o.key||!sameTrack(o,G.key,G.s,G.dir))continue;
+      const dd=G.dir*sdiff(G.s,o.s)-(o.tr&&o.tr.cars?o.tr.cars.length:carsFor(o.key))*CARL;
+      if(dd>0&&dd<110){G.mnotch=-8;toast('ATS 動作：先行列車接近のため非常ブレーキ','warn');beepATS();updMascon();return;}
+    }
+  }
   if(G.atStation!==null){G._tascToast=false;}
   else if(G.phase==='play'&&!PAX&&G.v>0){
     const d=stopDist(G.nv),v=G.v;
@@ -9059,7 +9087,43 @@ function salPerson(body){body=body||pickKind();let p=SAL.pool.find(x=>!x.used&&x
   if(!p){const g=makePerson(body==='child'?'child':null);g.traverse(o=>o.layers.set(2));p={g,body,used:false};SAL.pool.push(p);}
   p.used=true;p.g.visible=true;p.path=null;p.sit=null;p.onDone=null;p.strapI=null;p.strapYaw=null;p.tgt=null;p.standYaw=null;cab.add(p.g);SAL.people.push(p);return p;}
 function salFree(p){pbRemove(p,false);if(p.strapI!=null&&SAL.strap[p.strapI]===p)SAL.strap[p.strapI]=null;p.strapI=null;p.strapYaw=null;p.used=false;p.g.visible=false;p.path=null;p.onDone=null;if(p.g.parent)p.g.parent.remove(p.g);const i=SAL.people.indexOf(p);if(i>=0)SAL.people.splice(i,1);}
-function salFill(n){if(!_crowdSeedDepth)return withCrowdSeed('saloon|'+LINE_ID+'|'+trainStopSeed(null)+'|'+(G.sq||0)+'|'+Math.round((G.load||0)/40),()=>salFillBody(n));return salFillBody(n);}
+function syncSalFromCar(){
+  if(PAX||!ownTrain||!ownTrain.cars||!ownTrain.cars.length)return;
+  const a=ownAI();if(!a)return;
+  const k0=CONDV?(ownTrain.cars.length-1):0;
+  if(!isPop(a,k0))populateCars(a,[k0]);
+  const sl=carSlots(a,k0);if(!sl)return;
+  SAL.on=true;for(const p of SAL.people.slice())salFree(p);SAL.seat.fill(null);SAL.stand.length=0;SAL.strap.fill(null);
+  const bl=[];
+  if(sl.seat){
+    for(let i=0;i<sl.seat.length&&i<SALSEAT.length;i++){
+      const sp=sl.seat[i];if(!sp||!sp.used||typeof sp==='string')continue;
+      const p=salPerson(sp.body);
+      copyPersonLook(p.g,sp.g);
+      sitPose(p,SALSEAT[i]);
+      SAL.seat[i]=p;bl.push(p);
+    }
+  }
+  if(sl.stand){
+    for(const sp of sl.stand){
+      if(!sp||!sp.used)continue;
+      const p=salPerson(sp.body);
+      copyPersonLook(p.g,sp.g);
+      SAL.stand.push(p);
+      if(sp.strapI!=null&&SALSTRAP[sp.strapI]&&!SAL.strap[sp.strapI]){
+        SAL.strap[sp.strapI]=p;p.strapI=sp.strapI;strapPose(p,SALSTRAP[sp.strapI],1.16);
+      }else{
+        const pz=clamp(sp.g.position.z+CARHALF,3.0,19.0);
+        p.g.position.set(sp.g.position.x,1.16,pz);
+        p.g.rotation.set(0,sp.g.rotation.y||0,0);
+        personPose(p.g,'stand');
+      }
+      bl.push(p);
+    }
+  }
+  pbAddMany(cab,bl);
+}
+function salFill(n){syncSalFromCar();}
 function salFillBody(n){n=Math.min(n,SALSEAT.length+standCap()-6);SAL.on=true;for(const p of SAL.people.slice())salFree(p);SAL.seat.fill(null);SAL.stand.length=0;
   const order=SALSEAT.map((v,i)=>[Math.random(),i]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]),seated=Math.min(n,SALSEAT.length);
   for(let i=0;i<seated;i++){const si=order[i],p=salPerson();sitPose(p,SALSEAT[si]);SAL.seat[si]=p;}
