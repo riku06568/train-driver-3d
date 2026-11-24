@@ -3203,7 +3203,10 @@ function carTemplate(front,rear,panto,staticDoors,green,old,flat){
     if(!staticDoors){for(const x of [-0.5,0.5])put('ilight',UNIT_PLANE,x,3.40,(LY.z0+LY.z1)/2,Math.PI/2,0,0,0.12,LY.z1-LY.z0-0.9,1);}
     for(const z of [-9.68,9.68]){const cabSide=(z<0&&front)||(z>0&&rear);
       if(cabSide)put('iwall',UNIT_PLANE,0,(1.15+2.37)/2,z,0,z<0?0:Math.PI,0,2.72,1.22,1); /* 運転台の前は窓の下だけ壁（前面ガラスから外が見える＝前面展望） */
-      else put('iwall',UNIT_PLANE,0,2.28,z,0,z<0?0:Math.PI,0,2.72,2.26,1);}
+      else{put('iwall',UNIT_PLANE,0,2.28,z,0,z<0?0:Math.PI,0,2.72,2.26,1);
+        if(!old&&!staticDoors){const wz=z+(z<0?0.04:-0.04),wry=z<0?0:Math.PI;
+          pl('iledW',0.76,0.28,0,3.20,wz,wry);
+          for(const sx of [-1,1])pl('iad',0.56,0.30,sx*0.86,2.60,wz,wry);}}}
     for(const [dir,cabE] of [[-1,front],[1,rear]]){const ZP=dir*(CARHALF-CABLEN);
       if(cabE){ /* 運転台：仕切り＋乗務員扉、机と運転席（客室の座席は置かない） */
         const rz=dir<0?0:Math.PI; /* 仕切り：腰から下と上は壁、目の高さは窓（客室から乗務員室と前面が見える） */
@@ -3777,13 +3780,12 @@ const SM=OWNOLD?OLDI:TM;
         else{const a=cplane(0.86,0.14,TM.ioled,x-sg*0.045,3.30,dz);a.rotation.y=iry;const l=cplane(0.44,0.05,sg>0?TM.ilampR:TM.ilampL,x-sg*0.045,3.14,dz);l.rotation.y=iry;}});
       else{for(const dz of DOORC){
         const putLcd=(mat,w,h,zz)=>{if(zz<Z0+0.30||zz>Z1-0.30)return;const q=cplane(w,h,mat,x-sg*0.045,3.24,zz);q.rotation.y=iry;};
-        if(LCDSLIM){putLcd(TM.iledW,0.68,0.26,dz+0.26);}
-        else{putLcd(TM.iad,0.46,0.24,dz-0.34);putLcd(TM.iledW,0.68,0.26,dz+0.26);putLcd(TM.iled,0.42,0.24,dz-0.92);putLcd(TM.iad,0.42,0.24,dz+0.92);}}
-        if(!LCDSLIM)for(const [a,b] of LY.seats){let si=0;for(let z2=a+0.7;z2<=b-0.65;z2+=1.15,si++){
+        putLcd(TM.iad,0.46,0.24,dz-0.34);putLcd(TM.iledW,0.68,0.26,dz+0.26);putLcd(TM.iled,0.42,0.24,dz-0.92);putLcd(TM.iad,0.42,0.24,dz+0.92);}
+        for(const [a,b] of LY.seats){let si=0;for(let z2=a+0.7;z2<=b-0.65;z2+=1.15,si++){
           const z=z2+OFF;if(z<Z0+0.4||z>Z1-0.4)continue;
           const m=si%2===0?TM.iad:TM.iledW,h=si%2===0?0.31:0.25,w=si%2===0?0.60:0.64;
           const aS=cplane(w,h,m,x-sg*0.045,3.226,z);aS.rotation.y=iry;}}
-        for(const z of (LCDSLIM?[-3.2,3.2]:[-6.0,-3.2,0,3.2,6.0])){const hz=z+OFF;if(hz<Z0+0.6||hz>Z1-0.6)continue;
+        for(const z of [-6.0,-3.2,0,3.2,6.0]){const hz=z+OFF;if(hz<Z0+0.6||hz>Z1-0.6)continue;
           cbox(0.68,0.38,0.045,CM.desk,0,3.15,hz);
           const m=z===0?TM.iledW:TM.iad,h=z===0?0.24:0.32;
           for(const face of [0,Math.PI]){const pp=cplane(0.62,h,m,0,3.15,hz+(face?-0.026:0.026));pp.rotation.y=face;}
