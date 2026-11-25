@@ -2493,6 +2493,46 @@ const TEX_MIRROR=cSign('　','#cfe0ea','#cfe0ea');
 const TEX_TOILET=cSign('トイレ Toilets','#1d3f7a','#fff'),TEX_KIDS=cSign('こどもトイレ','#2e7d4f','#fff'),
   TEX_GATE=cSign('改札口 Gates','#14935f','#fff'),TEX_SHOP=cSign('売店 SHOP','#b3202a','#fff'),TEX_EXIT=cSign('出口 Exit','#f0c419','#222');
 const CONC_Y=7.2;
+/* ===== v2.5.1：改札まわりの案内板（のりば・方面・駅構内案内）=====
+   改札の手前に立つ案内板。駅名・のりば（番線／方面／種別）・出口やトイレなどの構内案内を
+   1枚のキャンバスに描き、既存の駅名サインと同じ書式で3D看板にする。 */
+const KNJ={local:'各停',rapid:'快速',ltd:'快特',exp:'特急'};
+function guideBoardRows(st){
+  const byNo=new Map();
+  for(const k of KEYS){if(!serves(st,k))continue;
+    const no=BRANCH?(MINI?1:(st.cls==='Q'?({A:1,C:2,D:3,B:4}[k]||1):(TK[k].dir<0?2:({A:1,C:1,B:2,D:2}[k]||1)))):(PLATNO[k]||1);
+    if(!byNo.has(no)){const d=TK[k].dir;byNo.set(no,{no,dir:BRANCH?((d>0?STATIONS[NST-1]:STATIONS[0]).name+'方面'):(d>0?'外回り':'内回り'),dest:BRANCH?'':destLoop(st,d),kinds:[]});}
+    else{const r0=byNo.get(no),dd=BRANCH?((TK[k].dir>0?STATIONS[NST-1]:STATIONS[0]).name+'方面'):(TK[k].dir>0?'外回り':'内回り');if(!r0.dir.split('／').includes(dd))r0.dir+='／'+dd;} /* 単線・共用ホームは両方向を1行に */
+    const r=byNo.get(no),kj=KNJ[KIND[k]]||'各停';if(!r.kinds.includes(kj))r.kinds.push(kj);}
+  return [...byNo.values()].sort((a,b)=>a.no-b.no);
+}
+function guideBoardTex(st){const rows=guideBoardRows(st).slice(0,6),step=rows.length>4?26:30,top=rows.length>5?80:84;
+  return canvasTex(512,288,(x,w,h)=>{x.textBaseline='middle';
+    x.fillStyle='#f7f6f1';x.fillRect(0,0,w,h);
+    x.fillStyle='#12365e';x.fillRect(0,0,w,56);x.fillStyle='#14935f';x.fillRect(0,52,w,4);
+    x.textAlign='left';x.fillStyle='#ffffff';x.font='700 30px '+FONT;x.fillText(st.name+'駅',18,29);
+    x.textAlign='right';x.fillStyle='#cfe2ff';x.font='700 15px '+FONT;x.fillText('構内案内 / Station Guide',496,19);
+    x.fillStyle='#9fc0e8';x.font='500 13px '+FONT;x.fillText(LINENAME,496,40);
+    x.textAlign='left';x.fillStyle='#14935f';x.fillRect(18,68,5,16);
+    x.fillStyle='#12365e';x.font='700 16px '+FONT;x.fillText('のりば　Platforms',30,77);
+    rows.forEach((r,i)=>{const y=top+i*step;
+      rrect(x,18,y-11,34,22,5);x.fillStyle='#12365e';x.fill();
+      x.fillStyle='#ffffff';x.font='700 15px '+FONT;x.textAlign='center';x.fillText(String(r.no),35,y);
+      x.textAlign='left';x.fillStyle='#17202b';x.font='700 15px '+FONT;x.fillText(r.dir,60,y-5);
+      x.fillStyle='#5d6b78';x.font='500 12px '+FONT;x.fillText((r.dest?r.dest+'　':'')+r.kinds.join('・'),60,y+8);});
+    rrect(x,336,66,158,200,10);x.fillStyle='#e9eef5';x.fill();x.strokeStyle='#c7d4e4';x.lineWidth=2;x.stroke();
+    x.fillStyle='#12365e';x.font='700 15px '+FONT;x.fillText('駅構内',350,84);
+    x.strokeStyle='#c7d4e4';x.lineWidth=1;x.beginPath();x.moveTo(350,96);x.lineTo(480,96);x.stroke();
+    const FAC=[['出口 Exit','→'],['トイレ Toilets','←']];if(st.big)FAC.push(['売店 Shop','↑']);FAC.push(['のりば Platforms','←']);
+    FAC.forEach(([t,a],i)=>{const y=122+i*36;
+      x.fillStyle='#12365e';x.font='700 14px '+FONT;x.textAlign='left';x.fillText(t,350,y);
+      x.fillStyle='#14935f';x.font='700 20px '+FONT;x.textAlign='right';x.fillText(a,486,y);});
+    x.textAlign='left';x.fillStyle='#8b97a5';x.font='500 11px '+FONT;x.fillText('お忘れ物のないようお気をつけください',18,280);});}
+function guideBoard(c,st,C,B){const mw=2.85,mh=1.6,cy=B+1.4,s=C.sc-12.2,o=C.o0-7.0;
+  const g=new THREE.Group();g.position.copy(offsG(s,o,cy));g.rotation.y=faceSide(s,1);addTo(c,g);
+  const fr=new THREE.Mesh(boxGeo(mw+0.10,mh+0.10,0.06),cmat(c,lam(0x8e959d)));fr.position.z=-0.035;g.add(fr);
+  const face=new THREE.Mesh(UNIT_PLANE,cmat(c,new THREE.MeshBasicMaterial({map:guideBoardTex(st)})));face.scale.set(mw,mh,1);face.position.z=0.004;g.add(face);
+  for(const px of [-mw/2+0.22,mw/2-0.22]){const post=new THREE.Mesh(boxGeo(0.08,0.68,0.08),cmat(c,lam(0x9aa1a9)));post.position.set(px,-1.14,-0.05);g.add(post);}}
 function concourseGeom(st){const o0=-12,len=46;return {sc:st.s-75,o0,o1:o0-26,len};}
 function buildConcourse(c,st){const C=concourseGeom(st),B=(st.concY!=null?st.concY:CONC_Y),H=3.4,om=(C.o0+C.o1)/2;
   const mWall=cmat(c,lam(0xe6e2d8)),mFloor=cmat(c,lam(0xbdb7a8)),mDark=cmat(c,lam(0x2b3038)),mTile=cmat(c,lam(0xdfe6e8)),
@@ -2518,6 +2558,7 @@ function buildConcourse(c,st){const C=concourseGeom(st),B=(st.concY!=null?st.con
   put(2.6,0.95,0.62,mSt,C.sc+2.0,C.o0-9,B+0.48);put(2.66,0.10,0.68,lam(0x2b3038),C.sc+2.0,C.o0-9,B+0.98);
   {const p1=sign(gateTex,C.sc+2.0,C.o0-9,B+1.04,1.6,0.42);p1.rotation.x=-Math.PI/2;}
   sign(TEX_GATE,C.sc-3,C.o0-8.4,B+2.9,3.4,0.85);
+  guideBoard(c,st,C,B); /* v2.5.1：改札の手前の案内板（のりば・方面・構内案内） */
   { // トイレ（入口・洗面・個室）
     const s0=C.sc+8,s1=C.sc+18,oF=C.o0-6,oB=C.o0-16,sm=(s0+s1)/2;
     put(0.25,2.7,C.len*0+ (s1-s0),mWall,sm,oB,B+1.35);                                         // 奥の壁
@@ -9687,7 +9728,7 @@ function updLEDs(){const here=G.s,gkOf=l=>l.st.i+'|'+l.keys.join(','),groups=new
     drawLED(ls[0],k);}}
 /* ================= main loop ================= */
 applyView();updEnv();
-let last=performance.now(),envT=0,clkT=0,frameN=0,monT=0,spT=0,audT=0,sigT=0,bellT=0,ledT=0,intT=0,adT=0;
+let last=performance.now(),envT=0,clkT=0,frameN=0,monT=0,spT=0,audT=0,sigT=0,bellT=0,ledT=0,panT=0,intT=0,adT=0;
 function update(dt,now){
   try{sweepPeople(dt);}catch(e){console.error(e);}
   envT+=dt;if(envT>3){envT=0;updEnv();}
@@ -9702,7 +9743,8 @@ function update(dt,now){
   updChunks((window.__DISP&&window.__DISP.on&&window.__DISP.focusS!=null)?window.__DISP.focusS:(G.walkOn?W.s:G.s));spT+=dt;if(spT>0.5){spT=0;updSpawns();}
   updPeople(dt);updPools(dt);updFT(dt);updShin(dt);updCity(dt);updCrossings(dt);updHomeDoors(dt);updWeather(dt);updConditionFx(dt);
   sigT+=dt;if(sigT>0.2){sigT=0;updSignals();const dv=Math.abs(sdiff(G.s,(DEPOT.a+DEPOT.b)/2))<2200;depotTrains.forEach(t=>t.grp.visible=dv);}
-  ledT+=dt;if(ledT>0.25){ledT=0;updLEDs();drawInfoPanel();if(typeof drawWidePanel==='function')drawWidePanel();}
+  ledT+=dt;if(ledT>0.5){ledT=0;updLEDs();} /* v2.5.1：駅の電光掲示板は2Hzに（1024×288の描画＋テクスチャ転送を半減） */
+  panT+=dt;if(panT>0.25){panT=0;drawInfoPanel();if(typeof drawWidePanel==='function')drawWidePanel();}
   adT+=dt;if(adT>0.09){adT=0;drawAds();}
   if(G.promoLoop&&!(G.door.state==='open'||G.door.state==='opening'))stopPromoLoop(false);
   try{updLive();}catch(e){}
@@ -10182,8 +10224,17 @@ const ms=monStation(),side=ms?localSide(ms):0;
   const itvPanelEl=document.getElementById('crewItvPanel');
   const itvOpen=!!(itvPanelEl&&!itvPanelEl.classList.contains('hide'));
   if(ms&&(!G.walkOn||itvOpen)&&!PAX&&!OWNOLD){const k=side*SIDEINV<0?'L':'R',zoomed=G.zoom==='L'||G.zoom==='R'||itvOpen;let n=0;
-    const stride=QMODE==='heavy'?1:QMODE==='normal'?2:(QUAL.pr<QUAL.max*0.8?4:2); /* 軽い：重いときはカメラ映像を1枚ずつ順番に更新／重い：毎フレーム全部 */
-    for(let q=0;q<4;q++){if(!MQ[q]||(!zoomed&&q%stride!==frameN%stride))continue;aimCamQ(ms,MQ[q]);cullFor(monCam);renderer.setRenderTarget(RT[k+q]);renderer.render(scene,monCam);n++;}
+    /* v2.5.1：ホームカメラ（側面モニター／ITV）の実写更新を間引く。
+       駅の手前260m〜停車中は、全景をもう1〜4回描いていたため、汐見環状線の駅接近時だけ
+       フレーム時間が跳ね上がっていた（支線の旧型車はモニター自体がないので発生しない）。
+       モニターを見ているとき（ズーム・ITV・見回し）だけ高頻度に更新し、正面を向いて運転して
+       いる間は数フレームに1枚に落とす。駅が変わった直後は1枚ずつ順に全画面を撮り直す。 */
+    if(window.__MONST!==ms){window.__MONST=ms;window.__MONC=0;}
+    const look=Math.abs(G.lookY||0),warm=(window.__MONC|0),per=zoomed?2:(look>0.5?5:14);
+    for(let q=0;q<4;q++){if(!MQ[q])continue;
+      if(warm<4){if(q!==warm)continue;}else if((frameN+q)%per!==0)continue;
+      aimCamQ(ms,MQ[q]);cullFor(monCam);renderer.setRenderTarget(RT[k+q]);renderer.render(scene,monCam);n++;}
+    window.__MONC=Math.min(4,warm+1);
     if(n)renderer.setRenderTarget(null);}
   if(itvOpen&&frameN%8===0){try{drawCrewItvPanel(ms,side,MQ);}catch(e){}}
   if(window.__DISP&&window.__DISP.on){ if(window.__DISP.camOn!==false&&dispCamFrame(now)) return; }
@@ -10584,7 +10635,7 @@ window.__T={
   }).catch(e=>String(e)),
   annState:()=>({playing:annPlaying, queued:annQ.length, cached:annMergeCache.size}),
   annPlay:(urls)=>{ try{ playAnnQueue(urls); return true; }catch(e){ return String(e); } },
-  AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
+  AVATAR,enterConcourse,leaveConcourse,nearFacility,useFacility,concourseGeom,guideBoardTex,guideBoardRows,updStaff,doStaffTask,getTask:()=>staffTask,goFloor,greenCar,ownAI,updInterior,VD,VDC,NVAR,NVARC,upcomingStops,etaList,stationInfo,drawInfoPanel,ownTrain,PBof,carsFor,POOL,SALDOOR,sitDown,standUp,seatNear,seatsOf,SAL,INTW,isPop,doAct,camTouchOn,nearTrainDoor,boardTrain,alightTrain,getRide:()=>RIDE,INTP,PX,platformsOf,paxPlace,gotoStation,G,OT,POOL,STATIONS,CHUNKS,startRoute,toggleAuto,toggleATO,openDoor,closeDoor,promote,broadcast,active,pending,inZone,stopDist,stOf,localSide,SIGNALS,CROSS,Yat,enterWalk,exitWalk,canExit,W,FT,startWaiting,endWaiting,LEDS,SHIN,SH,serves,TK,CFG,updChunks,updChunksForce:()=>updChunks(),startClosing,drawPanel};
 }
 /* ================= home screen (before the world is built) ================= */
 // audio must be started inside the user's tap (iOS / Chrome autoplay rules)
@@ -12402,6 +12453,48 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
 
     // ご意見箱 返信コーナー（作者サトタケ / riku06568 が反映）
     window.FEEDBACK_REPLIES = [
+      {
+        id: 26,
+        date: '2026/11/25',
+        sender: '天才運転士さん',
+        q: '汐見環状線を運転しているとき発車してからは普通にぬるぬる動くのに駅に到着する前から映像がカクカクになります 各支線を運転しているときはなりません',
+        a: 'ご報告ありがとうございます。原因を調べて修正しました。\n汐見環状線で駅の手前260mに入ると、運転台の側面モニター（ホームカメラ・ITV）に映す映像を作るため、3Dの全景をもう1〜4回描き直していました。支線の旧型車にはこのモニターがないため、支線では起きていませんでした。発車して260mほど走ると描き直しが止まるので、走行中はなめらかに見えていた、という形です。\nv2.5.1で、モニターを見ているとき（拡大・ITV・見回し）だけ高い頻度で更新し、正面を向いて運転している間は数フレームに1枚へ間引くようにしました（全景の描き直しは最大4回/フレーム → 平均0.3回/フレーム程度）。あわせて、駅の電光掲示板の再描画も每秒4回→2回に減らしています。駅の接近・停車・発車時の引っかかりが減っているはずなので、もう一度試してみてください。貴重なご報告をありがとうございました。'
+      },
+      {
+        id: 25,
+        date: '2026/11/25',
+        sender: '天才運転士さん',
+        q: 'ミッション要素などを追加してみたらどうでしょうか',
+        a: 'ご意見ありがとうございます。ミッション要素の追加は、今後の検討候補として受け取りました。\nいまのゲームは決まったダイヤで定時に運転することが中心なので、たとえば「時間内に指定の駅まで運転する」「乗降を遅らせずに発車する」といった目標を出す形が考えられます。運転・放送・乗降の流れを壊さずに入れられるか、設計から検討します。貴重なご意見をありがとうございました。'
+      },
+      {
+        id: 24,
+        date: '2026/11/25',
+        sender: '運転手30番さん',
+        q: '峰月から紫雲新都を結ぶ路線を作ってください',
+        a: 'ご意見ありがとうございます。峰月（天宮高架線）と紫雲新都（汐見環状線）を結ぶ路線は、今後の路線拡張の候補として検討します。\n新しい路線は、線路・駅・信号・ダイヤ・ホームの位置関係をゼロから作る必要があるため、すぐにとはいきません。ただ、四嶺連絡高速線のように、既存の支線の終点どうしを結ぶ形なら作りやすいので、その方向も含めて考えます。貴重なご意見をありがとうございました。'
+      },
+      {
+        id: 23,
+        date: '2026/11/24',
+        sender: '肉っちさん',
+        q: 'もっと路線を増やしてほしいです。 あと特急専用の列車などを追加してほしいです（成田エクスプレスみたいな？） よろしくお願いします',
+        a: 'ご意見ありがとうございます。新しい路線の追加と、成田エクスプレスのような特急専用車両の追加は、今後の検討課題として受け取りました。\n特急は以前に一度汐見環状線へ入れましたが、停車駅・ダイヤ・信号・ホームドア・放送で不具合が多く、安心して遊べる状態にできなかったためv2.1.0でいったん廃止した経緯があります。作り直して安定して走らせられる目処が立ったら再挑戦したいと思っています。路線の追加も、まず今ある路線の動作を軽く・安定させてから進めたいです。貴重なご意見をありがとうございました。'
+      },
+      {
+        id: 22,
+        date: '2026/11/24',
+        sender: '運転手30番さん',
+        q: '改札に案内板をつけてください',
+        a: 'ご意見ありがとうございます。各駅の改札口（コンコース）に案内板を設置しました（v2.5.1）。\n駅名と路線名、○番線ごとの方面（環状線は外回り・内回り、支線は行先）と種別（各停・快速・快特）、出口・トイレ・売店・のりばの構内案内を1枚にまとめて表示しています。環状線も支線も、すべての駅の改札の手前で見られます（ホーム見学モードで階段を上がった改札口・コンコース）。貴重なご意見をありがとうございました。'
+      },
+      {
+        id: 21,
+        date: '2026/11/24',
+        sender: '運転手30番さん',
+        q: '紫雲地下線に快速を追加してください',
+        a: 'ご意見ありがとうございます。紫雲地下線への快速の追加は、今後のアップデート候補として検討します。\n快速を入れるには、停車駅・ダイヤ・信号・行き違いの設備を作り直す必要があるため、まずは現在の各駅停車が安定して走れることを優先しています。余裕をもって作れる目処が立ったら対応します。貴重なご意見をありがとうございました。'
+      },
       {
         id: 20,
         date: '2026/11/24',

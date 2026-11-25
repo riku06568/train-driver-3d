@@ -458,7 +458,7 @@ body.disp-monitor #gl{display:none!important}
               <button id="btnTitleTutOn" class="q-tut-btn on" style="height:32px;min-width:52px;font-size:12px;border-radius:6px;padding:0 8px;">ON</button>
             </div>
           </div>
-          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.5.0)を強制再読込</button>
+          <button id="btnForceReload" style="background:#0f172a;border:1px solid rgba(56,189,248,0.5);color:#38bdf8;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;">🔄 最新版(v2.5.1)を強制再読込</button>
         </div>
 
         <button id="btnNavDuty" class="menu-btn primary-menu-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border-color:#38bdf8;">
@@ -493,7 +493,7 @@ body.disp-monitor #gl{display:none!important}
           <span class="m-icon">📜</span>
           <div class="m-info">
             <span class="m-title">アプデ履歴</span>
-            <span class="m-desc">v2.5.0 更新情報・修正内容一覧</span>
+            <span class="m-desc">v2.5.1 更新情報・修正内容一覧</span>
           </div>
         </button>
         <button id="btnNavCredits" class="menu-btn">
@@ -691,7 +691,7 @@ body.disp-monitor #gl{display:none!important}
         <h2>クレジット</h2>
       </div>
       <div class="credits-box">
-        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.5.0)</h3>
+        <h3 style="color:#fff;margin:0 0 6px;font-size:18px;">汐見環状線 3Dトレインシミュレーター (v2.5.1)</h3>
         <p style="margin:0 0 14px;color:var(--dim);font-size:13.5px;">方向別三複線の大環状線（全85駅）および4つの個性的な支線を舞台にした、ブラウザで遊べる3D電車運転シミュレーターです。</p>
         <div class="credit-list">
           <div class="cr-item"><strong>車内放送音声</strong><span>多言語案内（日本語・英語・韓国語・中国語・フランス語・ドイツ語 / 全駅全路線事前録音）</span></div>
@@ -734,6 +734,17 @@ body.disp-monitor #gl{display:none!important}
       </div>
       <div class="sub">汐見環状線 3Dトレインシミュレーターの最新アップデート情報</div>
       <div class="credits-box" style="text-align:left;line-height:1.7;">
+        <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.5.1</span>
+            <h3 style="color:#fff;margin:0;font-size:18px;">v2.5.1 (2026.11.25)</h3>
+          </div>
+          <ul style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0;padding-left:20px;">
+            <li><strong>改札口に案内板を設置</strong>：各駅のコンコース（改札の手前）に、駅名・路線名・○番線ごとの方面（環状線は外回り／内回り、支線は行先）と種別、出口・トイレ・売店・のりばの構内案内をまとめた案内板を追加しました</li>
+            <li><strong>汐見環状線の駅接近時のカクつきを修正</strong>：駅の手前260m〜停車中に、運転台の側面モニター（ホームカメラ／ITV）の映像を作るために3Dの全景を毎フレーム1〜4回描き直していたのを、見ているとき（拡大・ITV・見回し）以外は間引くようにしました（全景の描き直しは最大4回/フレーム → 平均0.3回/フレーム程度）。あわせて駅の電光掲示板の再描画を4回/秒→2回/秒にしました</li>
+            <li><strong>ご意見箱の返信を更新</strong>：新しいご意見6件への返信を追加しました</li>
+          </ul>
+        </div>
         <div style="margin-bottom:20px;border-bottom:1px solid rgba(56,189,248,0.25);padding-bottom:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <span style="background:#10b981;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">v2.5.0</span>
@@ -1768,7 +1779,7 @@ body.disp-monitor #gl{display:none!important}
   })();
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=174', function() {});
+      loadScript('assets/js/game.js?v=175', function() {});
     });
   });
 })();
