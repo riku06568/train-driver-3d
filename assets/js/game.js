@@ -5031,7 +5031,7 @@ function aiSounds(a,el,tot){
   if(a.sndF.m0&&a.t>6.6){const now=AC.currentTime;
     if((!a.sndF.mEnd||now>a.sndF.mEnd)&&(a.sndF.mLastM==null||now-a.sndF.mLastM>11)){
       const kd=BRANCH?'branch':KIND[a.key];let dur=6;
-      playAt(a.tr.cars[1].position,dest=>{dur=kd==='branch'?playSong(branchSongFor(a.stSt),dest,0.85):kd==='rapid'?playSong(SONG_A,dest,0.85):kd==='ltd'?playSong(ltdSong(a.stSt.i),dest,0.85):melody(dest,0.85,undefined,a.dir);return dur;});
+      playAt(a.tr.cars[1].position,dest=>{dur=kd==='branch'?(LINE_ID==='branch2'?playB2Melody(a.dir,dest,0.85):playSong(branchSongFor(a.stSt),dest,0.85)):kd==='rapid'?playSong(SONG_A,dest,0.85):kd==='ltd'?playSong(ltdSong(a.stSt.i),dest,0.85):melody(dest,0.85,undefined,a.dir);return dur;});
       a.sndF.mLastM=now;a.sndF.mEnd=now+Math.max(2,dur||6)+0.25;}}
   if(!a.sndF.c&&a.t<4.1){a.sndF.c=1;playAt(a.tr.cars[1].position,doorCloseSnd);}}
 /* station PA: simple approach announcement for the platform the player is on */
@@ -5848,9 +5848,50 @@ function chime(dest, type){
     });
   }
 }
-function doorOpenSnd(dest){if(!dest)airHiss(0.2,0.9);tone(1175,0,0.25,'sine',0.32,dest);tone(880,0.25,0.45,'sine',0.32,dest);}
-function doorCloseSnd(dest){if(!dest)airHiss(0.2,1.1);tone(880,0,0.22,'sine',0.32,dest);tone(880,0.28,0.22,'sine',0.32,dest);tone(660,0.55,0.55,'triangle',0.22,dest);}
-function hdSnd(open,dest){[1568,1319,1047].forEach((f,i)=>tone(open?f:[1047,1319,1568][i],i*0.16,0.22,'sine',0.22,dest));
+function b2BellNote(f,dt,dur,vol,dest,triMix){
+  if(!AC)return;
+  const out=dest||master,t=AC.currentTime+0.02+dt,V=vol||0.3;
+  const parts=triMix?[[1.0,0.65,'triangle'],[1.0,0.35,'sine']]:[[1.0,0.70,'sine'],[2.0,0.22,'sine'],[3.0,0.08,'sine']];
+  for(const [mul,w,tp] of parts){
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type=tp;o.frequency.value=f*mul;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,V*w),t+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(out);
+    o.start(t);o.stop(t+dur+0.03);
+  }
+}
+function doorOpenSnd(dest){
+  if(!dest)airHiss(0.2,0.9);
+  if(typeof LINE_ID!=='undefined'&&LINE_ID==='branch2'){
+    [84,79,81,76].forEach((m,j)=>{
+      const f=mF(m);
+      b2BellNote(f,j*0.115,0.20,0.34,dest,false);
+      b2BellNote(f,0.56+j*0.115,0.20,0.34,dest,false);
+    });
+    return;
+  }
+  tone(1175,0,0.25,'sine',0.32,dest);tone(880,0.25,0.45,'sine',0.32,dest);
+}
+function doorCloseSnd(dest){
+  if(!dest)airHiss(0.2,1.1);
+  if(typeof LINE_ID!=='undefined'&&LINE_ID==='branch2'){
+    b2BellNote(mF(81),0,0.48,0.38,dest,false);
+    b2BellNote(mF(76),0.33,0.75,0.36,dest,false);
+    return;
+  }
+  tone(880,0,0.22,'sine',0.32,dest);tone(880,0.28,0.22,'sine',0.32,dest);tone(660,0.55,0.55,'triangle',0.22,dest);
+}
+function hdSnd(open,dest){
+  if(typeof LINE_ID!=='undefined'&&LINE_ID==='branch2'){
+    for(let i=0;i<8;i++){
+      tone(2400,i*0.125,0.075,'sine',0.24,dest);
+      tone(4800,i*0.125,0.075,'sine',0.08,dest);
+    }
+  }else{
+    [1568,1319,1047].forEach((f,i)=>tone(open?f:[1047,1319,1568][i],i*0.16,0.22,'sine',0.22,dest));
+  }
   if(!AC)return;const src=AC.createBufferSource();src.buffer=rumbleBuf;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1800;const g=AC.createGain();
   const t=AC.currentTime+0.5;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.22,t+0.2);g.gain.linearRampToValueAtTime(0,t+1.4);src.connect(f);f.connect(g);g.connect(dest||master);src.start(t);src.stop(t+1.5);}
 function clickSnd(){tone(1800,0,0.04,'square',0.12);}
@@ -6170,6 +6211,38 @@ function transposeSong(S,st){const sh=n=>n+st;
 const B3_SONG_BASE=branchSong(3900);B3_SONG_BASE.name='天宮高架線 発車メロディ（下り）';
 const B3_SONG_UP=transposeSong(B3_SONG_BASE,5);B3_SONG_UP.name='天宮高架線 発車メロディ（上り）';
 function b3MelodyFor(dir){return (dir<0)?B3_SONG_UP:B3_SONG_BASE;}
+function b2MelodyName(dir){return (dir<0)?'紫雲地下線 発車メロディ（紫雲新都行）':'紫雲地下線 発車メロディ（深雪行）';}
+function playB2Melody(dir,dest,vol){
+  if(!AC)return 0;
+  const out=dest||master,V=(vol==null?1:vol);
+  let t=0.02;
+  if(dir<0){
+    const pat=[[74,0.12],[78,0.12],[81,0.12],[78,0.12],[81,0.12],[86,0.24]];
+    for(let rep=0;rep<3;rep++){
+      for(const [m,d] of pat){
+        b2BellNote(mF(m),t,d+0.18,0.30*V,out,false);
+        b2BellNote(mF(m-12),t,d+0.18,0.12*V,out,true);
+        t+=d;
+      }
+    }
+    for(const [m,d] of [[78,0.12],[81,0.12],[86,0.12],[90,0.65]]){
+      b2BellNote(mF(m),t,d+0.25,0.32*V,out,false);
+      b2BellNote(mF(m-12),t,d+0.25,0.14*V,out,true);
+      t+=d;
+    }
+    return t+0.25;
+  }else{
+    const phrases=[[[86,0.42],[81,0.21],[83,0.48]],[[86,0.42],[81,0.21],[78,0.48]],[[83,0.42],[78,0.21],[81,0.48]],[[86,0.85]]];
+    for(const phr of phrases){
+      for(const [m,d] of phr){
+        b2BellNote(mF(m),t,d+0.22,0.28*V,out,true);
+        b2BellNote(mF(m-12),t,d+0.22,0.15*V,out,true);
+        t+=d;
+      }
+    }
+    return t+0.25;
+  }
+}
 function promoPlay(fn){if(!AC)return 0;promoCut();const b=AC.createGain();b.gain.value=1;b.connect(master);b.connect(getReverb());promoOnce=b;return fn(b);}
 function promoCut(){if(promoOnce){const b=promoOnce;promoOnce=null;try{b.gain.setTargetAtTime(0,AC.currentTime,0.06);setTimeout(()=>{try{b.disconnect();}catch(e){}},800);}catch(e){}}}
 // music horn: a short brass fanfare with harmony, like the real thing
@@ -6482,7 +6555,7 @@ function promoRun(n,ctx,dest,vol){
     const ping=(at)=>{const t0=AC.currentTime+at;[[760,0,0.22,'square',0.2],[1520,0,0.16,'sine',0.14]].forEach(([f,dt,dur,tp,v])=>{const o=AC.createOscillator(),g=AC.createGain();o.type=tp;o.frequency.value=f;g.gain.setValueAtTime(0.0001,t0+dt);g.gain.exponentialRampToValueAtTime(v,t0+dt+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+dur);o.connect(g);g.connect(d);o.start(t0+dt);o.stop(t0+dt+dur+0.03);});};
     ping(0);ping(1.05);return 1.9;
   }
-  if(branch&&LINE_ID==='branch2')return 0;             /* 紫雲地下線：乗降促進はアナウンスのみ（メロディなし） */
+  if(branch&&LINE_ID==='branch2')return playB2Melody(dir,d,V); /* 紫雲地下線：御堂筋線風の上下別メロディ */
   if(branch&&LINE_ID==='branch3')return playSong(b3MelodyFor(dir),d,V); /* 天宮高架線：上下線共通メロディ・音階違い */
   if(branch&&stIdx!=null&&STATIONS[stIdx])return playSong(branchSongFor(STATIONS[stIdx]),d,V);
   if(ltd&&n==='st'&&stIdx!=null&&STATIONS[stIdx])return playSong(ltdSong(stIdx),d,V);
@@ -6504,7 +6577,6 @@ function defaultPromo(){
 let promoVoiceT=0;
 function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new melodies (+voice), 'st' 駅ごとのメロディ
   if(G.phase!=='play')return;n=n||0;
-  if(LINE_ID==='branch2')n=1; /* 紫雲地下線：乗降促進はアナウンスのみ */
   if(G.autoMelOn&&!G.autoMelFired){G.autoMelFired=true;clearAutoMelTimers();} /* 手動で鳴らしたら自動再生は行わない */
   if(G.crew==='twoD'&&!sys){toast('ツーマン運転：乗降促進は車掌が扱います','warn');return;}
   if(OWNOLD&&!G.lean&&!nearMeloBox()){toast('発車メロディのボタンはホームにあります（外に出るか、窓から顔を出して押す）','warn');return;}
@@ -6521,7 +6593,7 @@ function promote(n,sys){ // n: 0 classic melody+voice, 1 voice only, 2/3 new mel
   const isLtdTrain=!BRANCH&&(G.key==='E'||G.key==='F'||G.key==='G'||G.key==='H');
   const cSt=n==='st'&&isLtdTrain&&G.atStation!==null?stOf(G.atStation):null;
   if(n===1){toast(PROMO_NAMES[1],'info');if(typeof broadcastEvent==='function')broadcastEvent('promo',{promoN:1,promoKey:G.key,promoDir:G.dir,promoBranch:!!BRANCH,promoSt:(G.atStation!=null?G.atStation:-1)});voice();return;}
-  toast((cSt?'発車メロディ「'+ltdSong(cSt.i).name+'」':bSt&&LINE_ID==='branch'?'乗降促進（ベル）':bSt&&(n===0||n==='st')?'発車メロディ「'+(LINE_ID==='branch3'?b3MelodyFor(G.dir).name:branchSongFor(bSt).name)+'」':(n===0||n==='st')?(G.dir<0?'発車メロディ「汐鳴り（内回り音色）」':'発車メロディ「汐鳴り（外回り音色）」'):PROMO_NAMES[n])+'（もう一度押すと止まります）','info');
+  toast((cSt?'発車メロディ「'+ltdSong(cSt.i).name+'」':bSt&&LINE_ID==='branch'?'乗降促進（ベル）':bSt&&(n===0||n==='st')?'発車メロディ「'+(LINE_ID==='branch3'?b3MelodyFor(G.dir).name:LINE_ID==='branch2'?b2MelodyName(G.dir):branchSongFor(bSt).name)+'」':(n===0||n==='st')?(G.dir<0?'発車メロディ「汐鳴り（内回り音色）」':'発車メロディ「汐鳴り（外回り音色）」'):PROMO_NAMES[n])+'（もう一度押すと止まります）','info');
   const pctx={key:G.key,dir:G.dir,branch:!!BRANCH,stIdx:(G.atStation!=null?G.atStation:-1),stName:(G.atStation!=null&&stOf(G.atStation)?stOf(G.atStation).name:'')};
   const play=()=>{if(!G.promoLoop)return;const dur=promoPlay(b=>promoRun(n,pctx,b,1))||1;
     G.promoLoop.onePhraseDur=dur;
@@ -6549,9 +6621,16 @@ function startAutoDepartMelody(st){
   promoCut();
   try{
     const bus=AC.createGain();bus.gain.value=1;bus.connect(master);bus.connect(getReverb());promoOnce=bus;
-    const song=(LINE_ID==='branch3')?b3MelodyFor(G.dir):branchSongFor(st);
-    const dur=playSong(song,bus,1)||6;
-    toast('発車メロディ「'+song.name+'」を自動再生','info');
+    let songName='',dur=6;
+    if(LINE_ID==='branch2'){
+      songName=b2MelodyName(G.dir);
+      dur=playB2Melody(G.dir,bus,1)||4.5;
+    }else{
+      const song=(LINE_ID==='branch3')?b3MelodyFor(G.dir):branchSongFor(st);
+      songName=song.name;
+      dur=playSong(song,bus,1)||6;
+    }
+    toast('発車メロディ「'+songName+'」を自動再生','info');
     if(typeof broadcastEvent==='function')broadcastEvent('promo',{promoN:0,promoPlay:1,promoKey:G.key,promoDir:G.dir,promoBranch:true,promoSt:st.i,stName:st.name});
     const tm=setTimeout(()=>{
       if(G.phase!=='play'||PAX)return;
