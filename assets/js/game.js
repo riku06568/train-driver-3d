@@ -2506,27 +2506,27 @@ function guideBoardRows(st){
     const r=byNo.get(no),kj=KNJ[KIND[k]]||'各停';if(!r.kinds.includes(kj))r.kinds.push(kj);}
   return [...byNo.values()].sort((a,b)=>a.no-b.no);
 }
-function guideBoardTex(st){const rows=guideBoardRows(st).slice(0,6),step=rows.length>4?26:30,top=rows.length>5?80:84;
+function guideBoardTex(st){const rows=guideBoardRows(st).slice(0,6),step=30,top=104;
   return canvasTex(512,288,(x,w,h)=>{x.textBaseline='middle';
     x.fillStyle='#f7f6f1';x.fillRect(0,0,w,h);
     x.fillStyle='#12365e';x.fillRect(0,0,w,56);x.fillStyle='#14935f';x.fillRect(0,52,w,4);
     x.textAlign='left';x.fillStyle='#ffffff';x.font='700 30px '+FONT;x.fillText(st.name+'駅',18,29);
     x.textAlign='right';x.fillStyle='#cfe2ff';x.font='700 15px '+FONT;x.fillText('構内案内 / Station Guide',496,19);
     x.fillStyle='#9fc0e8';x.font='500 13px '+FONT;x.fillText(LINENAME,496,40);
-    x.textAlign='left';x.fillStyle='#14935f';x.fillRect(18,68,5,16);
-    x.fillStyle='#12365e';x.font='700 16px '+FONT;x.fillText('のりば　Platforms',30,77);
+    x.textAlign='left';x.fillStyle='#14935f';x.fillRect(16,68,5,18);
+    x.fillStyle='#12365e';x.font='700 17px '+FONT;x.fillText('のりば　Platforms',30,78);
     rows.forEach((r,i)=>{const y=top+i*step;
-      rrect(x,18,y-11,34,22,5);x.fillStyle='#12365e';x.fill();
-      x.fillStyle='#ffffff';x.font='700 15px '+FONT;x.textAlign='center';x.fillText(String(r.no),35,y);
-      x.textAlign='left';x.fillStyle='#17202b';x.font='700 15px '+FONT;x.fillText(r.dir,60,y-5);
-      x.fillStyle='#5d6b78';x.font='500 12px '+FONT;x.fillText((r.dest?r.dest+'　':'')+r.kinds.join('・'),60,y+8);});
-    rrect(x,336,66,158,200,10);x.fillStyle='#e9eef5';x.fill();x.strokeStyle='#c7d4e4';x.lineWidth=2;x.stroke();
-    x.fillStyle='#12365e';x.font='700 15px '+FONT;x.fillText('駅構内',350,84);
-    x.strokeStyle='#c7d4e4';x.lineWidth=1;x.beginPath();x.moveTo(350,96);x.lineTo(480,96);x.stroke();
+      rrect(x,18,y-12,36,24,5);x.fillStyle='#12365e';x.fill();
+      x.fillStyle='#ffffff';x.font='700 16px '+FONT;x.textAlign='center';x.fillText(String(r.no),36,y);
+      x.textAlign='left';x.fillStyle='#17202b';x.font='700 16px '+FONT;x.fillText(r.dir,64,y-8);
+      x.fillStyle='#5d6b78';x.font='500 13px '+FONT;x.fillText((r.dest?r.dest+'　':'')+r.kinds.join('・'),64,y+9);});
+    rrect(x,336,64,158,208,10);x.fillStyle='#e9eef5';x.fill();x.strokeStyle='#c7d4e4';x.lineWidth=2;x.stroke();
+    x.fillStyle='#12365e';x.font='700 16px '+FONT;x.fillText('駅構内',350,83);
+    x.strokeStyle='#c7d4e4';x.lineWidth=1;x.beginPath();x.moveTo(348,96);x.lineTo(482,96);x.stroke();
     const FAC=[['出口 Exit','→'],['トイレ Toilets','←']];if(st.big)FAC.push(['売店 Shop','↑']);FAC.push(['のりば Platforms','←']);
-    FAC.forEach(([t,a],i)=>{const y=122+i*36;
+    FAC.forEach(([t,a],i)=>{const y=120+i*38;
       x.fillStyle='#12365e';x.font='700 14px '+FONT;x.textAlign='left';x.fillText(t,350,y);
-      x.fillStyle='#14935f';x.font='700 20px '+FONT;x.textAlign='right';x.fillText(a,486,y);});
+      x.fillStyle='#14935f';x.font='700 20px '+FONT;x.textAlign='right';x.fillText(a,484,y);});
     x.textAlign='left';x.fillStyle='#8b97a5';x.font='500 11px '+FONT;x.fillText('お忘れ物のないようお気をつけください',18,280);});}
 function guideBoard(c,st,C,B){const mw=2.85,mh=1.6,cy=B+1.4,s=C.sc-12.2,o=C.o0-7.0;
   const g=new THREE.Group();g.position.copy(offsG(s,o,cy));g.rotation.y=faceSide(s,1);addTo(c,g);
