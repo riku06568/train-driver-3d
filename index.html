@@ -741,7 +741,7 @@ body.disp-monitor #gl{display:none!important}
           </div>
           <ul style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0;padding-left:20px;">
             <li><strong>改札口に案内板を設置</strong>：各駅のコンコース（改札の手前）に、駅名・路線名・○番線ごとの方面（環状線は外回り／内回り、支線は行先）と種別、出口・トイレ・売店・のりばの構内案内をまとめた案内板を追加しました</li>
-            <li><strong>汐見環状線の駅接近時のカクつきを修正</strong>：駅の手前260m〜停車中に、運転台の側面モニター（ホームカメラ／ITV）の映像を作るために3Dの全景を毎フレーム1〜4回描き直していたのを、見ているとき（拡大・ITV・見回し）以外は間引くようにしました（全景の描き直しは最大4回/フレーム → 平均0.3回/フレーム程度）。あわせて駅の電光掲示板の再描画を4回/秒→2回/秒にしました</li>
+            <li><strong>汐見環状線の駅接近時のカクつきを修正</strong>：駅の手前260m〜停車中に、運転台の側面モニター（ホームカメラ／ITV）の映像を作るために3Dの全景を毎フレーム1〜4回描き直していたのを、見ているとき（拡大・ITV・見回し）以外は間引くようにしました（全景の描き直しは最大4回/フレーム → 平均0.3〜0.4回/フレーム程度）。あわせて駅の電光掲示板の再描画を4回/秒→2回/秒にしました</li>
             <li><strong>ご意見箱の返信を更新</strong>：新しいご意見6件への返信を追加しました</li>
           </ul>
         </div>
@@ -1779,7 +1779,7 @@ body.disp-monitor #gl{display:none!important}
   })();
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=176', function() {});
+      loadScript('assets/js/game.js?v=177', function() {});
     });
   });
 })();
