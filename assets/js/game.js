@@ -8428,14 +8428,10 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
     setTimeout(()=>{if(G.phase!=='play')return;toast('汐見車両基地から出庫しました。信号を確認して汐見駅へ','ok','車庫から、出庫します。');},1400);
     setTimeout(()=>{if(G.phase==='play'){try{playGuide('depot_out');}catch(e){}}},2300);
   }
-  /* 天候のお知らせ（選んだ天候のときに一度放送する） */
-  if(WX.id!=='clear'&&!PAX)setTimeout(()=>{if(G.phase==='play'){try{playGuide('wx_'+WX.id);}catch(e){}}},5600);
-  /* ダイヤモード（臨時・団体／変更ダイヤ） */
+  /* ダイヤモード（臨時・団体／変更ダイヤ）：音声案内なし */
   if(DIASH==='extra'&&!PAX)setTimeout(()=>{try{spawnCharter();}catch(e){}},2600);
-  if(DIASH==='extra'&&!PAX)setTimeout(()=>{if(G.phase==='play'){try{playGuide('dia_charter');}catch(e){}}},16000);
   if(DIASH!=='normal'&&!PAX){
     setTimeout(()=>{if(G.phase!=='play')return;
-      try{playGuide(DIASH==='extra'?'dia_extra':'dia_change');}catch(e){}
       toast(DIASH==='extra'?'臨時・団体列車ダイヤ：臨時列車が増発されています':'変更ダイヤ：停車駅が変更されています','ok');},3000);
   }
   try{preloadStationAnnounce(stOf(G.nv));}catch(e){}
