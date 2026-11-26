@@ -2288,12 +2288,19 @@ function applyFencePlayer(W){if(!W.st)return;let keys=[];
     const checks=(!BRANCH&&W.st.i===0)?[[k,false],[k,true]]:[[k,false]];
     for(const [ck,isSid] of checks){const F=edgeFence(W.st,ck,isSid);if(Math.abs(W.o-F.line)>3)continue;
       for(const [za,zb] of F.zones)if(W.s>za-0.3&&W.s<zb+0.3){const safe=F.line+F.sd*0.35;if(F.sd>0){if(W.o<safe)W.o=safe;}else{if(W.o>safe)W.o=safe;}}}}}
+let CUR_ROOFS_TARGET=null;
+function addRoofBox(target,s0,s1,o0,o1,y0,y1){
+  if(!target)return;
+  const sc=mod((s0+s1)/2,L),hs=Math.abs(s1-s0)/2;
+  target.push({sc,hs,o0:Math.min(o0,o1),o1:Math.max(o0,o1),y0,y1});
+}
 function platform(c,s0,s1,edge,dir,wd,opts){
   const e=d=>s=>ov(edge,s)+dir*d;
   strip(c,s0,s1,3,[[e(0),PH],[e(wd),PH]],'plat');strip(c,s0,s1,3,[[e(0),0.25],[e(0),PH]],'platWall');strip(c,s0,s1,3,[[e(wd),0.02],[e(wd),PH]],'platWall');
   strip(c,s0,s1,3,[[e(0.08),PH+0.005],[e(0.32),PH+0.005]],'white');strip(c,s0,s1,3,[[e(0.42),PH+0.006],[e(0.72),PH+0.006]],'tactile');
   if(opts.roof){strip(c,s0+12,s1-2,3,[[e(0.6),4.95],[e(wd+0.4),5.3]],'roof');strip(c,s0+12,s1-2,3,[[e(2.0),4.93],[e(2.3),4.93]],'lamp');
-    for(let s=s0+16;s<s1-3;s+=10)inst(c,'pillar',s,e(3.9),PH+(4.95-PH)/2+0.1,1,4.0,1);}
+    for(let s=s0+16;s<s1-3;s+=10)inst(c,'pillar',s,e(3.9),PH+(4.95-PH)/2+0.1,1,4.0,1);
+    const sm=(s0+s1)/2,ym=Yat(sm);addRoofBox(CUR_ROOFS_TARGET,s0+12,s1-2,ov(edge,sm)+dir*0.6,ov(edge,sm)+dir*(wd+0.4),ym-0.5,ym+5.4);}
   else strip(c,s0+4,s1-2,3,[[e(2.0),6.9],[e(2.3),6.9]],'lampU');
   fenceRun(c,s0+0.3,s1-0.3,e(wd-0.12));                                  // 向かいにホームがない側（ホームの裏）
   fenceAcross(c,s0+0.25,e(0.15),e(wd-0.12));fenceAcross(c,s1-0.25,e(0.15),e(wd-0.12)); // ホームの端
@@ -2305,7 +2312,8 @@ function islandPlat(c,s0,s1,eA,eB,roof){
   strip(c,s0,s1,3,[[s=>ea(s)+0.08,PH+0.005],[s=>ea(s)+0.32,PH+0.005]],'white');strip(c,s0,s1,3,[[s=>ea(s)+0.42,PH+0.006],[s=>ea(s)+0.72,PH+0.006]],'tactile');
   strip(c,s0,s1,3,[[s=>eb(s)-0.32,PH+0.005],[s=>eb(s)-0.08,PH+0.005]],'white');strip(c,s0,s1,3,[[s=>eb(s)-0.72,PH+0.006],[s=>eb(s)-0.42,PH+0.006]],'tactile');
   if(roof){strip(c,s0+12,s1-2,3,[[s=>ea(s)+0.6,5.1],[mid(0),5.35],[s=>eb(s)-0.6,5.1]],'roof');
-    for(let s=s0+16;s<s1-3;s+=10)inst(c,'pillar',s,mid(0),PH+(5.3-PH)/2,1,4.2,1);}
+    for(let s=s0+16;s<s1-3;s+=10)inst(c,'pillar',s,mid(0),PH+(5.3-PH)/2,1,4.2,1);
+    const sm=(s0+s1)/2,ym=Yat(sm);addRoofBox(CUR_ROOFS_TARGET,s0+12,s1-2,ea(sm)+0.6,eb(sm)-0.6,ym-0.5,ym+5.45);}
   const ly=roof?5.02:6.9,lm=roof?'lamp':'lampU';strip(c,s0+12,s1-2,3,[[mid(-1.9),ly],[mid(-1.6),ly]],lm);strip(c,s0+12,s1-2,3,[[mid(1.6),ly],[mid(1.9),ly]],lm);
   fenceAcross(c,s0+0.25,s=>ea(s)+0.15,s=>eb(s)-0.15);fenceAcross(c,s1-0.25,s=>ea(s)+0.15,s=>eb(s)-0.15); // ホームの端
   return mid;
@@ -2611,6 +2619,7 @@ for(const st of STATIONS){st.extra=[];if(!st.lines)continue;
   for(const ex of st.extra)ex.mid=d=>s=>(ex.lo(s)+ex.hi(s))/2+d;}
 const KINDNAME={A:'普通',B:'普通',C:'快速',D:'快速',E:'快特',F:'快特',G:'特急',H:'特急'};
 function buildStation(st,c){
+  st.roofs=[];CUR_ROOFS_TARGET=st.roofs;
   const i=st.i,s0=st.s-PBof(st),s1=st.s+PF,prevN=STATIONS[(i+NST-1)%NST].name,nextN=STATIONS[(i+1)%NST].name,sb=st.s-75;
   const pv=BRANCH&&i===0?'':prevN,nx=BRANCH&&i===NST-1?'':nextN;
   const ys=Yat(st.s),elev=ys>5,under=ys<-5,roof=!under;st.elev=elev;st.under=under;const stairH=elev?3.0:under?5.6:6.3;
@@ -2666,7 +2675,7 @@ function buildStation(st,c){
   if(BRANCH)for(const k of KEYS)if(serves(st,k)&&!physDup(st,k)){const T=TK[k],sd=T.side(st),sm=st.s+T.so-T.dir*2,om=T.off(st.s)+sd*(1.72+1.3); /* 発車メロディのボタン箱（運転台のすぐ横） */
     inst(c,'fpost',sm,om,PH+0.6,0.07,1.2,0.07);inst(c,'melo',sm,om,PH+1.28,0.2,0.26,0.12);}
   const [lo,hi]=ourSpan(sb);
-  if(elev)stationBuilding(c,sb,lo+1,hi-1,0,Math.max(4,ys-1.6),false,true);
+  if(elev){stationBuilding(c,sb,lo+1,hi-1,0,Math.max(4,ys-1.6),false,true);addRoofBox(st.roofs,sb-8,sb+8,lo+1,hi-1,0,Math.max(4,ys-1.6)+0.3);}
   else if(under){ /* 地下駅：ホームの柱・天井照明・壁面の駅名サイン（トンネルの中の駅） */
     const cols=[];for(const k of KEYS)if(serves(st,k)&&!physDup(st,k)){const r=platRange(st,k);cols.push((r[0]+r[1])/2);}
     if(!cols.length)cols.push((lo+hi)/2);
@@ -2676,10 +2685,13 @@ function buildStation(st,c){
     plane(c,sgn,2.4,0.8,st.s-26,lo-0.8,4.4,faceSide(st.s-26,1));
     plane(c,sgn,2.4,0.8,st.s-26,hi+0.8,4.4,faceSide(st.s-26,-1));}
   else if(BRANCH&&st.cls!=='J'&&st.cls!=='I'&&st.cls!=='Q'){const t=P(st.s-45)[2],hs=new THREE.Mesh(boxGeo(1,1,1),cmat(c,lam(0xe8e0cf)));hs.scale.set(9,4.2,7);const hx=-12.5-sidDev(st.s-45);hs.position.copy(offsG(st.s-45,hx,2.1));hs.rotation.y=-t;addTo(c,hs);
-    const rf=new THREE.Mesh(roofGeo,cmat(c,lam(0x6b3a2a)));rf.scale.set(10,2.4,8);rf.position.copy(offsG(st.s-45,hx,4.2));rf.rotation.y=-t+Math.PI/2;addTo(c,rf);}
-  else stationBuilding(c,sb,lo-2,hi+2,7.4,st.big?16:12,st.big,false);
+    const rf=new THREE.Mesh(roofGeo,cmat(c,lam(0x6b3a2a)));rf.scale.set(10,2.4,8);rf.position.copy(offsG(st.s-45,hx,4.2));rf.rotation.y=-t+Math.PI/2;addTo(c,rf);
+    addRoofBox(st.roofs,st.s-49,st.s-41,hx-5,hx+5,0,6.7);}
+  else{stationBuilding(c,sb,lo-2,hi+2,7.4,st.big?16:12,st.big,false);const bd=st.big?12:8;addRoofBox(st.roofs,sb-bd-0.8,sb+bd+0.8,lo-2.8,hi+2.8,7.4,(st.big?16:12)+0.5);}
   /* 改札口・コンコース（階段の上） */
   st.concY=Yat(st.s)+PH+stairH;
+  {const C=concourseGeom(st);addRoofBox(st.roofs,C.sc-C.len/2,C.sc+C.len/2,C.o1,C.o0,st.concY-0.3,st.concY+3.65);}
+  CUR_ROOFS_TARGET=null;
   try{buildConcourse(c,st);}catch(e){console.warn(e);}
   if(!BRANCH&&CFG.shin===i)buildShinkansen(st,c);
 }
@@ -6975,11 +6987,37 @@ function initWeatherFx(){
 function updWeather(dt){
   initWeatherFx();if(!WXPTS)return;
   const p=WXPOS,n=p.length/3;camera.getWorldPosition(camW);
+  const camS=mod((PAX?(PX.on&&PX.train?PX.train.s:W.s):(G.walkOn?W.s:G.s))||0,L);
+  const inUg=camW.y<-2.2||inTunnel(camS)||(!PAX&&!G.walkOn&&!BRANCH&&(G.key==='G'||G.key==='H'))||(PAX&&PX.plats&&PX.plats[PX.pi]&&PX.plats[PX.pi].keys&&(PX.plats[PX.pi].keys.includes('G')||PX.plats[PX.pi].keys.includes('H')))||(W.on&&W.st&&W.st.under);
+  if(inUg){WXPTS.visible=false;return;}
+  WXPTS.visible=true;
+  const p0=P(camS),p1=P(camS+1),nx=Math.cos(p0[2]),nz=Math.sin(p0[2]),tx0=p1[0]-p0[0],tz0=p1[1]-p0[1],tl=Math.hypot(tx0,tz0)||1,tx=tx0/tl,tz=tz0/tl;
+  const activeRoofs=[];
+  for(const st of STATIONS)if(st.roofs&&Math.abs(sdiff(camS,st.s))<260)for(const r of st.roofs)activeRoofs.push(r);
+  if(DEPOT.n&&camS>DEPOT.a-80&&camS<DEPOT.b+120){
+    for(const [sa,sb2,j0,j1] of [[DEPOT.a+40,DEPOT.a+260,0,7],[DEPOT.a+40,DEPOT.a+230,9,15],[DEPOT.a+300,DEPOT.a+470,18,25]]){
+      activeRoofs.push({sc:(sa+sb2)/2,hs:(sb2-sa)/2,o0:-(DEPOT.base+j1*DEPOT.gap+3),o1:-(DEPOT.base+j0*DEPOT.gap-3),y0:0,y1:10.3});
+    }
+  }
+  const activeCars=[];
+  const collectCars=tr=>{if(!tr||!tr.cars)return;for(const car of tr.cars){const cx=car.position.x,cz=car.position.z;if(Math.abs(cx-camW.x)<75&&Math.abs(cz-camW.z)<75)activeCars.push({x:cx,y:car.position.y,z:cz,c:Math.cos(car.rotation.y),s:Math.sin(car.rotation.y)});}};
+  if(typeof ownTrain!=='undefined')collectCars(ownTrain);
+  if(typeof OT!=='undefined')for(const o of OT)if(o&&o.state!=='off'&&o.tr)collectCars(o.tr);
+  if(window.ONLINE_PLAYERS)for(const pid in ONLINE_PLAYERS){const op=ONLINE_PLAYERS[pid];if(op&&op.tr)collectCars(op.tr);}
+  const isCovered=(x,y,z)=>{
+    const ddx=x-p0[0],ddz=z-p0[1],ps=mod(camS+ddx*tx+ddz*tz,L),pp=P(ps),po=(x-pp[0])*Math.cos(pp[2])+(z-pp[1])*Math.sin(pp[2]);
+    if(inTunnel(ps)&&y<=Yat(ps)+7.4)return true;
+    for(let r=0;r<activeRoofs.length;r++){const R=activeRoofs[r];if(Math.abs(sdiff(R.sc,ps))<=R.hs&&po>=R.o0&&po<=R.o1&&y>=R.y0&&y<=R.y1)return true;}
+    for(let k=0;k<activeCars.length;k++){const C=activeCars[k],dyc=y-C.y;if(dyc<0||dyc>4.2)continue;const vx=x-C.x,vz=z-C.z;if(vx*vx+vz*vz>106)continue;const lx=vx*C.c-vz*C.s,lz=vx*C.s+vz*C.c;if(Math.abs(lx)<=1.65&&Math.abs(lz)<=10.1)return true;}
+    return false;
+  };
   const fall=(WX.id==='rain'?40:WX.id==='snow'?3.4:0.7)*dt,wob=WX.id==='snow'?Math.sin(performance.now()/700)*0.6*dt:0;
   for(let i=0;i<n;i++){p[i*3+1]-=fall;p[i*3]+=wob;
-    const dx=p[i*3]-camW.x,dy=p[i*3+1]-camW.y,dz=p[i*3+2]-camW.z;
-    if(p[i*3+1]<camW.y-6||Math.abs(dx)>95||Math.abs(dz)>95||dx*dx+dy*dy+dz*dz<18){ /* カメラの近く（＝運転室内）は雨・雪を降らせない */
-      p[i*3]=camW.x+(Math.random()-0.5)*115;p[i*3+1]=camW.y+rand(10,50);p[i*3+2]=camW.z+(Math.random()-0.5)*115;}}
+    const x=p[i*3],y=p[i*3+1],z=p[i*3+2],dx=x-camW.x,dy=y-camW.y,dz=z-camW.z;
+    if(y<camW.y-6||Math.abs(dx)>95||Math.abs(dz)>95||dx*dx+dy*dy+dz*dz<12||isCovered(x,y,z)){
+      let rx=camW.x+(Math.random()-0.5)*115,ry=camW.y+rand(10,50),rz=camW.z+(Math.random()-0.5)*115;
+      if(isCovered(rx,ry,rz))ry=camW.y+rand(22,55);
+      p[i*3]=rx;p[i*3+1]=ry;p[i*3+2]=rz;}}
   WXPTS.geometry.attributes.position.needsUpdate=true;
   if(WX.id==='fog')WXPTS.material.opacity=0.13+0.05*Math.sin(performance.now()/2400);
 }
