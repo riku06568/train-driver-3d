@@ -2274,7 +2274,7 @@ function fenceAcross(c,s,oA,oB){const a=ov(oA,s),b=ov(oB,s),lo=Math.min(a,b),w=M
   for(let i=0;i<=n;i++)inst(c,'fpost',s,lo+i*pl,PH+0.6,0.06,1.2,0.06);}
 /* 線路側で電車のドアが来ない区間（ホームドアのある駅はホームドアの切れ目） */
 function edgeFence(st,k,isSiding){const fk=isSiding?('S'+k):k;st.fz=st.fz||{};if(st.fz[fk])return st.fz[fk];const T=TK[k],sd=isSiding?-T.side(st):T.side(st),base=isSiding?ownTrackOff(k,st.s):T.off(st.s),a=st.s-PBof(st),b=st.s+PF;let zones,line;
-  if(HOMEDOOR.has(st.i)){line=base+sd*(1.72+0.55);zones=[[a+0.3,a+2],[b-2,b-0.3]];}
+  if(HOMEDOOR.has(st.i)){line=base+sd*(1.72+0.22);zones=[[a+0.3,a+2],[b-2,b-0.3]];}
   else{const fr=st.s+T.so,len=carsFor(k)*CARL,ta=T.dir<0?fr:fr-len,tb=T.dir<0?fr+len:fr;line=base+sd*(1.72+0.3);
     zones=[[a+0.3,ta-1.0],[tb+1.0,b-0.3]].filter(z=>z[1]-z[0]>0.5);}
   return st.fz[fk]={line,sd,zones};}
@@ -2376,7 +2376,7 @@ function mkHdLeafMesh(q){
 function buildHomeDoors(c,st,k,isSiding){
   const T=TK[k],sd=isSiding?-T.side(st):T.side(st);
   const offAt=s=>isSiding?ownTrackOff(k,s):T.off(s);
-  const lineAt=s=>offAt(s)+sd*(1.72+0.55);
+  const lineAt=s=>offAt(s)+sd*(1.72+0.22);
   const line=lineAt(st.s);
   const flip=T.dir<0,fr=st.s+T.so,doors=[];const NC=carsFor(k),GCs=greenCarsFor(k);
   const doorMeta=[];
@@ -7281,8 +7281,8 @@ function getAnnGapSec(prevUrl, nextUrl){
   if(n==='ainu_dep_end.mp3'||n==='ainu_arr_end.mp3'||n==='oki_dep_end.mp3'||n==='oki_arr_end.mp3') return -0.015;
   const lp=annLangOf(p), ln=annLangOf(n);
   if(lp!==ln){
-    if(lp==='ja'&&ln==='ainu') return 0.32;
-    return 0.34;
+    if(lp==='ja') return 0.75;
+    return 0.45;
   }
   if(ANN_SENTENCE_END.has(p)||p.startsWith('ja_m_')) return 0.17;
   if(ANN_COMMA_PAUSE.has(p)) return 0.025;
@@ -7852,7 +7852,7 @@ function panelAct(u,v){ // touch panel hit (u,v in 0..1)
 
   const t=Math.floor(x/(512/3));
   if(t===0||t===1){G.panel=t===0?'promo':'ann';if(G.zoom!=='T'){G.zoom='T';G.panelZoomed=true;}}
-  else if(y<142){startHoldHorn('elec');}else{musicHorn();G.mhornT=nowMs();}
+  else if(y<142){startHoldHorn('elec');}else if(LINE_ID==='branch2'){startHoldHorn('air');}else{musicHorn();G.mhornT=nowMs();}
 }
 // stopped at a platform: the zoomed camera monitor works as a touch panel
 function camTouchOn(){if(PAX||G.phase!=='play'||G.v>0.05)return false;if(G.atStation!==null||G.depCheck!==null)return true;const d=stopDist(G.nv);return d>-6.5&&d<17.9;}
@@ -8021,7 +8021,7 @@ function physics(dt){
     /* タブレット自動切り替え：発車直後（次駅放送）、駅手前600m（快特は1000m前、近接駅は到着前スキップ） */
     const isDepartedRun = G.v > 1.2 && G.door && G.door.state === 'closed' && G.atStation === null;
     const isLtdRun = typeof G !== 'undefined' && G && G.key && KIND[G.key] === 'ltd';
-    const soonDist = isLtdRun ? 1000 : 600;
+    const soonDist = (LINE_ID === 'branch2') ? 200 : (isLtdRun ? 1000 : 600);
     const prevStObj = G.list ? stOf(Math.max(0, G.nv - 1)) : stOf(mod(G.nv - G.dir, NST));
     const segDist = (prevStObj && stOf(G.nv)) ? Math.abs(G.dir * sdiff(prevStObj.s, stOf(G.nv).s)) : 9999;
     const tooCloseForSoon = segDist < (isLtdRun ? 1100 : 750);
@@ -8282,16 +8282,18 @@ function drawPanel(){const x=CANV.T.x,W=512,H=284;x.fillStyle='#07101e';x.fillRe
     x.font='700 20px '+FONT;
     x.fillText((isSoon?'まもなく ':'次は ')+(nst?nst.name:'')+'（タップで放送）',5+bw/2,H/2+28);
 
-    const bx=2*(W/3)+5,cw=W/3-10,hOn=!!_activeHorn||nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
-    x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText('警笛',bx+cw/2,56);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,98);
-    x.fillStyle=mOn?'#f2c230':'#6a3fa0';x.fillRect(bx,146,cw,130);x.fillStyle=mOn?'#111':'#fff';x.font='700 24px '+FONT;x.fillText('ミュージック',bx+cw/2,196);x.fillText('ホーン',bx+cw/2,228);
+    const bx=2*(W/3)+5,cw=W/3-10,isB2=(LINE_ID==='branch2'),hElecOn=(!!_activeHorn&&_activeHorn.kind==='elec')||(!_activeHorn&&nowMs()-G.hornT<600&&(!isB2||G.hornKind==='elec')),hAirOn=(!!_activeHorn&&_activeHorn.kind==='air')||(!_activeHorn&&nowMs()-G.hornT<600&&G.hornKind==='air'),mOn=nowMs()-(G.mhornT||0)<1600;
+    x.fillStyle=hElecOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hElecOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText(isB2?'電気笛':'警笛',bx+cw/2,56);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,98);
+    if(isB2){x.fillStyle=hAirOn?'#e8e8e8':'#4a4e56';x.fillRect(bx,146,cw,130);x.fillStyle=hAirOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText('空気笛',bx+cw/2,196);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,238);}
+    else{x.fillStyle=mOn?'#f2c230':'#6a3fa0';x.fillRect(bx,146,cw,130);x.fillStyle=mOn?'#111':'#fff';x.font='700 24px '+FONT;x.fillText('ミュージック',bx+cw/2,196);x.fillText('ホーン',bx+cw/2,228);}
   }
   else{const cw=W/3-10;
     [['乗降促進',G.promoOn?'#e0a21a':'#5a4410',G.promoOn?'再生中':'4種類'],['放送','#2e63a3','4種類']].forEach(([t,c,sub],i)=>{const bx=i*(W/3)+5;x.fillStyle=c;x.fillRect(bx,8,cw,H-16);
       x.fillStyle=(G.promoOn&&i===0)?'#111':'#fff';x.font='700 38px '+FONT;x.fillText(t,bx+cw/2,H/2-16);x.font='500 18px '+FONT;x.fillText(sub,bx+cw/2,H/2+30);});
-    const bx=2*(W/3)+5,hOn=!!_activeHorn||nowMs()-G.hornT<600,mOn=nowMs()-(G.mhornT||0)<1600;
-    x.fillStyle=hOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText('警笛',bx+cw/2,56);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,98);
-    x.fillStyle=mOn?'#f2c230':'#6a3fa0';x.fillRect(bx,146,cw,130);x.fillStyle=mOn?'#111':'#fff';x.font='700 24px '+FONT;x.fillText('ミュージック',bx+cw/2,196);x.fillText('ホーン',bx+cw/2,228);}
+    const bx=2*(W/3)+5,isB2=(LINE_ID==='branch2'),hElecOn=(!!_activeHorn&&_activeHorn.kind==='elec')||(!_activeHorn&&nowMs()-G.hornT<600&&(!isB2||G.hornKind==='elec')),hAirOn=(!!_activeHorn&&_activeHorn.kind==='air')||(!_activeHorn&&nowMs()-G.hornT<600&&G.hornKind==='air'),mOn=nowMs()-(G.mhornT||0)<1600;
+    x.fillStyle=hElecOn?'#e8e8e8':'#3a3e44';x.fillRect(bx,8,cw,126);x.fillStyle=hElecOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText(isB2?'電気笛':'警笛',bx+cw/2,56);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,98);
+    if(isB2){x.fillStyle=hAirOn?'#e8e8e8':'#4a4e56';x.fillRect(bx,146,cw,130);x.fillStyle=hAirOn?'#111':'#fff';x.font='700 34px '+FONT;x.fillText('空気笛',bx+cw/2,196);x.font='600 16px '+FONT;x.fillText('長押しで鳴動',bx+cw/2,238);}
+    else{x.fillStyle=mOn?'#f2c230':'#6a3fa0';x.fillRect(bx,146,cw,130);x.fillStyle=mOn?'#111':'#fff';x.font='700 24px '+FONT;x.fillText('ミュージック',bx+cw/2,196);x.fillText('ホーン',bx+cw/2,228);}}
   CANV.T.tex.needsUpdate=true;}
 /* 新形運転台：側面パネル（WL=駅・時刻、WR=車両情報TIMS） */
 function drawCabSide(){
@@ -8989,7 +8991,7 @@ function rideWalk(dt){
     /* 同じ駅間では一度だけ放送する（区間の途中で信号停車→再発車しても鳴らし直さない） */
     const ns=aiStop(a),segKey=(a.name||'T')+'|'+(a.dir||1)+'|'+(depSt?depSt.i:'')+'|'+(ns&&ns.st?ns.st.i:'');
     if(RIDE.annSeg!==segKey){RIDE.annSeg=segKey;triggerRideAnnounce(a,'next');}}
-  if(!RIDE.soon&&a.state==='run'){const nx=aiStop(a),thr=(KIND[a.key]==='ltd'&&!BRANCH)?1000:600;if(nx&&nx.D<thr){RIDE.soon=true;triggerRideAnnounce(a,'soon');}}
+  if(!RIDE.soon&&a.state==='run'){const nx=aiStop(a),thr=(LINE_ID==='branch2')?200:((KIND[a.key]==='ltd'&&!BRANCH)?1000:600);if(nx&&nx.D<thr){RIDE.soon=true;triggerRideAnnounce(a,'soon');}}
   if(RIDE.prev==='run'&&a.state==='dwell'){RIDE.depSt=a.stSt||stationNear(a.s);stopAdBroadcast();}
   RIDE.prev=a.state;}
 /* ================= people inside trains (seats, standing, walking in/out) ================= */
@@ -9662,7 +9664,7 @@ _on(window,'keydown',e=>{
   switch(e.code){
     case 'KeyH':if(!e.repeat)startHoldHorn('elec');break;case 'KeyG':if(!e.repeat)startHoldHorn('air');break;case 'KeyY':if(!e.repeat)startHoldHorn('both');break;
     case 'KeyA':doAct('lo');break;case 'KeyZ':if(G.manual)setMNotch(G.mnotch>0?0:G.mnotch-1);else doAct('lc');break;case 'KeyD':doAct('ro');break;case 'KeyC':doAct('rc');break;
-    case 'KeyB':G.panel='ann';G.zoom='T';G.panelZoomed=true;break;case 'KeyP':G.panel='promo';G.zoom='T';G.panelZoomed=true;break;case 'KeyJ':musicHorn();G.mhornT=nowMs();break;case 'KeyK':musicHorn2();G.mhornT=nowMs();break;case 'KeyO':doAct('ato');break;case 'KeyU':doAct('auto');break;case 'KeyW':endWaiting();break;
+    case 'KeyB':G.panel='ann';G.zoom='T';G.panelZoomed=true;break;case 'KeyP':G.panel='promo';G.zoom='T';G.panelZoomed=true;break;case 'KeyJ':if(LINE_ID==='branch2'){if(!e.repeat)startHoldHorn('air');}else{musicHorn();G.mhornT=nowMs();}break;case 'KeyK':if(LINE_ID==='branch2'){if(!e.repeat)startHoldHorn('air');}else{musicHorn2();G.mhornT=nowMs();}break;case 'KeyO':doAct('ato');break;case 'KeyU':doAct('auto');break;case 'KeyW':endWaiting();break;
     case 'Digit1':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(0);G.panel='main';G.zoom=null;break;}zoomTo('L');break;case 'Digit2':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(1);G.panel='main';G.zoom=null;break;}zoomTo('S');break;case 'Digit3':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(2);G.panel='main';G.zoom=null;break;}zoomTo('I');break;case 'Digit4':if(G.panel==='ann'||G.panel==='promo'){(G.panel==='ann'?broadcast:promote)(3);G.panel='main';G.zoom=null;break;}zoomTo('M');break;case 'Digit6':zoomTo('T');break;case 'Digit5':zoomTo('R');break;
     case 'KeyQ':if(G.manual)setMNotch(G.mnotch<0?0:G.mnotch+1);else{G.zoom=null;G.lookY=wrapA(G.lookY+0.15);}break;case 'KeyE':G.zoom=null;G.lookY=wrapA(G.lookY-0.15);break;
     case 'KeyV':case 'Digit0':case 'Escape':G.zoom=null;G.lookY=0;G.lookP=0;break;
@@ -9685,7 +9687,7 @@ cv.addEventListener('pointermove',e=>{if(G.walkOn){const p=W.ptr.get(e.pointerId
 cv.addEventListener('pointerup',e=>{G.hold=null;stopHoldHorn();if(G.walkOn){const p=W.ptr.get(e.pointerId);if(p&&p.role==='move'){W.mv.x=W.mv.y=0;}W.ptr.delete(e.pointerId);return;}unlockSpeech();if(G.phase==='title')return;if(drag&&drag.moved<=8&&G.zoom)G.zoom=null;drag=null;});
 cv.addEventListener('click',()=>{unlockSpeech();});
 cv.addEventListener('pointercancel',e=>{drag=null;G.hold=null;stopHoldHorn();W.ptr.delete(e.pointerId);W.mv.x=W.mv.y=0;});
-_on(window,'keyup',e=>{if(e.code==='KeyH'||e.code==='KeyG'||e.code==='KeyY')stopHoldHorn();});
+_on(window,'keyup',e=>{if(e.code==='KeyH'||e.code==='KeyG'||e.code==='KeyY'||(LINE_ID==='branch2'&&(e.code==='KeyJ'||e.code==='KeyK')))stopHoldHorn();});
 _on(window,'blur',()=>stopHoldHorn());
 cv.addEventListener('dblclick',()=>{G.zoom=null;G.lookY=0;G.lookP=0;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
@@ -11855,9 +11857,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     bindHoldBtn('dtHornAir', 'air');
     bindHoldBtn('dtHornBoth', 'both');
     const bMH1 = document.getElementById('dtMHorn1');
-    if (bMH1) bMH1.addEventListener('click', () => { musicHorn(); if (typeof G !== 'undefined') G.mhornT = nowMs(); });
+    if (bMH1) { if (LINE_ID === 'branch2') bMH1.style.display = 'none'; else bMH1.addEventListener('click', () => { musicHorn(); if (typeof G !== 'undefined') G.mhornT = nowMs(); }); }
     const bMH2 = document.getElementById('dtMHorn2');
-    if (bMH2) bMH2.addEventListener('click', () => { musicHorn2(); if (typeof G !== 'undefined') G.mhornT = nowMs(); });
+    if (bMH2) { if (LINE_ID === 'branch2') bMH2.style.display = 'none'; else bMH2.addEventListener('click', () => { musicHorn2(); if (typeof G !== 'undefined') G.mhornT = nowMs(); }); }
     const bindDtCmd = (id, cmd, label) => {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => {
