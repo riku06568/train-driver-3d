@@ -1795,6 +1795,10 @@ function sendPlayNotification(lineId, svcKey, startI, stName) {
    ===================================================================== */
 window.__PAX = false;
 function boot(LINE_ID,SVC,START_I){
+window.__CUR_LINE_ID = LINE_ID;
+{ const _m1 = document.getElementById('dtMHorn1'), _m2 = document.getElementById('dtMHorn2');
+  if (_m1) _m1.style.display = (LINE_ID === 'branch2') ? 'none' : '';
+  if (_m2) _m2.style.display = (LINE_ID === 'branch2') ? 'none' : ''; }
 /* 指令モニター等で既に3Dの世界を作っているときは、古い描画ループ・イベントリスナ・前のキャンバスを片付けてから作り直す */
 const TOKEN=(window.__FRAME_TOKEN||0)+1; window.__FRAME_TOKEN=TOKEN;
 if(window.__TEST_INT){try{clearInterval(window.__TEST_INT);window.__TEST_INT=null;}catch(e){}}
@@ -11144,18 +11148,19 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   if (btnBackFromFeedback) btnBackFromFeedback.onclick = () => showHomeView('viewMain');
 
   let autoAnnEnabled = (()=>{try{return localStorage.getItem('td_auto_ann')!=='0';}catch(e){return true;}})();
-  const setAutoAnn = (on) => {
+  const setAutoAnn = (on, silent) => {
     autoAnnEnabled = on;
     try{localStorage.setItem('td_auto_ann', on ? '1' : '0');}catch(e){}
     const bOff = document.getElementById('btnAutoAnnOff'), bOn = document.getElementById('btnAutoAnnOn');
     if (bOff) bOff.classList.toggle('on', !on);
     if (bOn) bOn.classList.toggle('on', on);
     if (typeof G !== 'undefined' && G) G.autoAnn = on;
+    if (!silent && typeof toast === 'function') toast(on ? '🔊 自動次駅放送をONにしました' : '🔇 自動次駅放送をOFFにしました', 'info');
   };
   const bAutoAnnOff = document.getElementById('btnAutoAnnOff'), bAutoAnnOn = document.getElementById('btnAutoAnnOn');
   if (bAutoAnnOff) bAutoAnnOff.onclick = () => setAutoAnn(false);
   if (bAutoAnnOn) bAutoAnnOn.onclick = () => setAutoAnn(true);
-  setAutoAnn(autoAnnEnabled);
+  setAutoAnn(autoAnnEnabled, true);
 
   /* 意見箱フォーム送信（メールアドレス非公開・安全送信） */
   const fbForm = document.getElementById('feedbackForm');
@@ -11853,9 +11858,9 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     bindHoldBtn('dtHornAir', 'air');
     bindHoldBtn('dtHornBoth', 'both');
     const bMH1 = document.getElementById('dtMHorn1');
-    if (bMH1) { if (LINE_ID === 'branch2') bMH1.style.display = 'none'; else bMH1.addEventListener('click', () => { musicHorn(); if (typeof G !== 'undefined') G.mhornT = nowMs(); }); }
+    if (bMH1) bMH1.addEventListener('click', () => { if (window.__CUR_LINE_ID === 'branch2') return; musicHorn(); if (typeof G !== 'undefined') G.mhornT = nowMs(); });
     const bMH2 = document.getElementById('dtMHorn2');
-    if (bMH2) { if (LINE_ID === 'branch2') bMH2.style.display = 'none'; else bMH2.addEventListener('click', () => { musicHorn2(); if (typeof G !== 'undefined') G.mhornT = nowMs(); }); }
+    if (bMH2) bMH2.addEventListener('click', () => { if (window.__CUR_LINE_ID === 'branch2') return; musicHorn2(); if (typeof G !== 'undefined') G.mhornT = nowMs(); });
     const bindDtCmd = (id, cmd, label) => {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => {

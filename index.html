@@ -200,11 +200,11 @@ html,body{overscroll-behavior:none}
 #qualRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
 
 /* Tutorial Styles */
-#tutRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
-#tutRow .ql{font-weight:700;margin-right:4px}
-#tutRow button{flex:1;min-width:80px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
-#tutRow button.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
-#tutRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
+#tutRow,#autoAnnRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+#tutRow .ql,#autoAnnRow .ql{font-weight:700;margin-right:4px}
+#tutRow button,#autoAnnRow button{flex:1;min-width:80px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+#tutRow button.on,#autoAnnRow button.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
+#tutRow .qd,#autoAnnRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
 
 .q-tut-btn{flex:1;height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
 .q-tut-btn.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
@@ -1779,7 +1779,7 @@ body.disp-monitor #gl{display:none!important}
   })();
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=180', function() {});
+      loadScript('assets/js/game.js?v=181', function() {});
     });
   });
 })();
