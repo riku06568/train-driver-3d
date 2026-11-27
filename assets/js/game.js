@@ -1077,7 +1077,7 @@ function _b64ToU8(b64) {
   return u8;
 }
 
-window.__CREW_MIC = { on: false, mode: 'in', stream: null, src: null, proc: null, zeroGain: null, seq: 0, acc: [] };
+window.__CREW_MIC = { on: false, mode: 'in', stream: null, src: null, nodes: [], proc: null, zeroGain: null, seq: 0, acc: [] };
 function _updCrewMicUI() {
   const stEl = document.getElementById('crewMicStatus');
   const inB = document.getElementById('micInBtn');
@@ -1124,12 +1124,26 @@ async function startCrewMic(mode) {
     return;
   }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
     if (!window.__AC && typeof initAudio === 'function') { try { initAudio(); } catch (e) {} }
     const ac = window.__AC;
     if (!ac) { stream.getTracks().forEach(t => t.stop()); return; }
     if (ac.state === 'suspended') { try { await ac.resume(); } catch (e) {} }
     const src = ac.createMediaStreamSource(stream);
+    const hpIn = ac.createBiquadFilter();
+    hpIn.type = 'highpass';
+    hpIn.frequency.value = 120;
+    const lpIn = ac.createBiquadFilter();
+    lpIn.type = 'lowpass';
+    lpIn.frequency.value = 4800;
+    const compIn = ac.createDynamicsCompressor();
+    compIn.threshold.value = -14;
+    compIn.knee.value = 12;
+    compIn.ratio.value = 6;
+    compIn.attack.value = 0.003;
+    compIn.release.value = 0.15;
+    const inGain = ac.createGain();
+    inGain.gain.value = 0.7;
     const proc = ac.createScriptProcessor(2048, 1, 1);
     const zeroGain = ac.createGain();
     zeroGain.gain.value = 0;
@@ -1156,9 +1170,9 @@ async function startCrewMic(mode) {
         const chunk = m.acc.splice(0, 1024);
         let cPeak = 0;
         for (let i = 0; i < chunk.length; i++) { const a = Math.abs(chunk[i]); if (a > cPeak) cPeak = a; }
-        if (cPeak < 0.0008) return;
+        if (cPeak < 0.004) return;
         const u8 = new Uint8Array(chunk.length);
-        for (let i = 0; i < chunk.length; i++) u8[i] = _encodeMuLawSample(chunk[i]);
+        for (let i = 0; i < chunk.length; i++) u8[i] = _encodeMuLawSample(Math.tanh(chunk[i]));
         const curG = (typeof G !== 'undefined' ? G : (window.__T ? window.__T.G : null));
         const curCfg = (typeof CFG !== 'undefined' ? CFG : (window.__T ? window.__T.CFG : null));
         const nCar = (typeof ownTrain !== 'undefined' && ownTrain && ownTrain.cars) ? ownTrain.cars.length : 8;
@@ -1181,10 +1195,14 @@ async function startCrewMic(mode) {
         } catch (e) {}
       }
     };
-    src.connect(proc);
+    src.connect(hpIn);
+    hpIn.connect(lpIn);
+    lpIn.connect(compIn);
+    compIn.connect(inGain);
+    inGain.connect(proc);
     proc.connect(zeroGain);
     zeroGain.connect(ac.destination);
-    m.on = true; m.stream = stream; m.src = src; m.proc = proc; m.zeroGain = zeroGain; m.acc = [];
+    m.on = true; m.stream = stream; m.src = src; m.nodes = [hpIn, lpIn, compIn, inGain]; m.proc = proc; m.zeroGain = zeroGain; m.acc = [];
     _updCrewMicUI();
     if (typeof toast === 'function') toast(m.mode === 'out' ? '📣 マイクON（車外放送）' : '📢 マイクON（車内放送）', 'ok');
   } catch (e) {
@@ -1196,15 +1214,38 @@ function stopCrewMic() {
   m.on = false;
   m.acc = [];
   try { if (m.proc) m.proc.disconnect(); } catch (e) {}
+  try { if (m.nodes) m.nodes.forEach(n => { try { n.disconnect(); } catch (e) {} }); } catch (e) {}
   try { if (m.src) m.src.disconnect(); } catch (e) {}
   try { if (m.zeroGain) m.zeroGain.disconnect(); } catch (e) {}
   try { if (m.stream) m.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
-  m.proc = null; m.src = null; m.zeroGain = null; m.stream = null;
+  m.proc = null; m.src = null; m.nodes = []; m.zeroGain = null; m.stream = null;
   const meter = document.getElementById('crewMicMeter');
   if (meter) meter.style.width = '0%';
   _updCrewMicUI();
 }
 const _micPlaySched = {};
+let _micOutBus = null;
+let _micOutBusAc = null;
+function _getMicOutBus(ac) {
+  if (_micOutBus && _micOutBusAc === ac) return _micOutBus;
+  try {
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -8;
+    comp.knee.value = 6;
+    comp.ratio.value = 12;
+    comp.attack.value = 0.002;
+    comp.release.value = 0.12;
+    const outG = ac.createGain();
+    outG.gain.value = 0.65;
+    comp.connect(outG);
+    outG.connect(ac.destination);
+    _micOutBus = comp;
+    _micOutBusAc = ac;
+    return _micOutBus;
+  } catch (e) {
+    return ac.destination;
+  }
+}
 function handleIncomingMic(d) {
   if (typeof G !== 'undefined' && G && G.sound === false) return;
   if (!window.__AC && typeof initAudio === 'function') { try { initAudio(); } catch (e) {} }
@@ -1225,7 +1266,7 @@ function handleIncomingMic(d) {
   let isOut = d.mode === 'out';
   if (!isOut) {
     if (!ridingThis) return;
-    vol = 1.25;
+    vol = 0.45;
   } else {
     const doorOpen = d.door === 'open' || d.door === 'opening';
     const doorMul = doorOpen ? 1.0 : 0.25;
@@ -1260,7 +1301,7 @@ function handleIncomingMic(d) {
     const distO = Math.abs(myO - doorO);
     const dist = Math.hypot(distS, distO);
     if (dist > 65) return;
-    vol = Math.pow(Math.max(0, 1 - dist / 65), 1.35) * doorMul * (ridingThis ? 0.5 : 1.35);
+    vol = Math.pow(Math.max(0, 1 - dist / 65), 1.35) * doorMul * (ridingThis ? 0.35 : 0.65);
     if (vol < 0.005) return;
     const diffO = doorO - myO;
     pan = Math.max(-0.85, Math.min(0.85, (diffO * Math.cos(myYaw)) / 8));
@@ -1272,7 +1313,13 @@ function handleIncomingMic(d) {
   const sr = d.sr || 12000;
   const buf = ac.createBuffer(1, u8.length, sr);
   const ch = buf.getChannelData(0);
-  for (let i = 0; i < u8.length; i++) ch[i] = _MU_DEC[u8[i]];
+  const fadeN = Math.min(32, Math.floor(u8.length / 4));
+  for (let i = 0; i < u8.length; i++) {
+    let s = _MU_DEC[u8[i]];
+    if (i < fadeN) s *= (i / fadeN);
+    else if (i >= u8.length - fadeN) s *= ((u8.length - 1 - i) / fadeN);
+    ch[i] = s;
+  }
 
   const src = ac.createBufferSource();
   src.buffer = buf;
@@ -1296,7 +1343,7 @@ function handleIncomingMic(d) {
   } else {
     lp.connect(g);
   }
-  g.connect(ac.destination);
+  g.connect(_getMicOutBus(ac));
 
   const now = ac.currentTime;
   let t = _micPlaySched[d.id] || 0;
