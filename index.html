@@ -10,6 +10,17 @@
 <title>汐見環状線3D【本格電車ゲーム】無料ブラウザ3D運転シミュレーター</title>
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://riku06568.github.io/train-driver-3d/">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1322">
+<meta name="application-name" content="汐見環状線3D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="汐見環状線3D">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+<link rel="shortcut icon" href="assets/icons/favicon.ico">
 <meta name="description" content="【電車ゲーム】ブラウザですぐ遊べる無料の本格3D電車ゲーム「汐見環状線3D」。全85駅の大環状線をリアルに運転！インストール不要・スマホやPCで今すぐ楽しめる本格電車運転シミュレーターです。">
 <meta name="keywords" content="電車ゲーム,3D電車ゲーム,無料電車ゲーム,ブラウザ電車ゲーム,電車運転ゲーム,電車シミュレーター,汐見環状線,汐見環状線3D">
 <meta property="og:title" content="汐見環状線3D【本格電車ゲーム】無料ブラウザ3D運転シミュレーター">
@@ -1787,7 +1798,7 @@ body.disp-monitor #gl{display:none!important}
       });
     })(id,MAP[id]);}
   })();
-  loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
+  loadScript('assets/js/three.min.js?v=187', function() {
     loadScript('assets/js/mqtt.min.js', function() {
       loadScript('assets/js/game.js?v=187', function() {});
     });
@@ -1807,5 +1818,13 @@ body.disp-monitor #gl{display:none!important}
     </div>
   </div>
 </div>
+<script>
+/* PWA: Service Worker 登録（ホーム画面に追加／オフライン起動用） */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
 </body>
 </html>
