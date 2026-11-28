@@ -9,8 +9,7 @@
 |---|---|---|
 | Android | `Shiomi3D-2.5.1-android.apk` | ダウンロードして開き、「提供元不明のアプリ」を許可してインストール |
 | Windows | `Shiomi3D-Setup-2.5.1-x64.exe` / `Shiomi3D-Portable-2.5.1-x64.exe` | Setup はインストーラー、Portable は置くだけで動く単体exe |
-| macOS (Intel) | `Shiomi3D-2.5.1-mac-x64.dmg` / `.zip` | dmgを開いてApplicationsへドラッグ |
-| macOS (Apple Silicon) | `Shiomi3D-2.5.1-mac-arm64.dmg` / `.zip` | 同上（M1/M2/M3/M4はこちら） |
+| macOS (Intel / Apple Silicon 共通) | `Shiomi3D-2.5.1-mac-universal.dmg` / `.zip` | dmgを開いてApplicationsへドラッグ（Intel Mac・M1/M2/M3/M4のどちらでも動作） |
 | Linux | `Shiomi3D-2.5.1-linux-x86_64.AppImage` | 実行権限を付けて起動 |
 
 ## インストール時の注意（無料・未署名のため）

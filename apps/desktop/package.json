@@ -68,11 +68,11 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": ["universal"]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": ["universal"]
         }
       ],
       "category": "public.app-category.games",
@@ -83,6 +83,7 @@
     },
     "dmg": {
       "title": "汐見環状線3D",
+      "volumeName": "Shiomi3D",
       "artifactName": "Shiomi3D-${version}-mac-${arch}.${ext}"
     },
     "linux": {
