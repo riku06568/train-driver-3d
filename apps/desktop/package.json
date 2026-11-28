@@ -83,7 +83,6 @@
     },
     "dmg": {
       "title": "汐見環状線3D",
-      "volumeName": "Shiomi3D",
       "artifactName": "Shiomi3D-${version}-mac-${arch}.${ext}"
     },
     "linux": {
