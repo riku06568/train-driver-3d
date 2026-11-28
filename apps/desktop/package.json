@@ -1,0 +1,95 @@
+{
+  "name": "shiomi-3d-desktop",
+  "productName": "汐見環状線3D",
+  "version": "2.5.1",
+  "description": "汐見環状線 3Dトレインシミュレーター（デスクトップ版）",
+  "author": {
+    "name": "riku06568",
+    "email": "riku06568@users.noreply.github.com"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "sync-web": "node scripts/sync-web.js",
+    "start": "npm run sync-web && electron .",
+    "dist": "npm run sync-web && electron-builder --publish never",
+    "dist:win": "npm run sync-web && electron-builder --win --publish never",
+    "dist:mac": "npm run sync-web && electron-builder --mac --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.0",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "io.github.riku06568.shiomi3d",
+    "productName": "汐見環状線3D",
+    "copyright": "Copyright © 2026 riku06568",
+    "asar": false,
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "www/**/*",
+      "build/icon.png",
+      "build/icon.ico",
+      "build/icon.icns"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-${os}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "汐見環状線3D",
+      "artifactName": "Shiomi3D-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Shiomi3D-Portable-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.games",
+      "identity": null,
+      "icon": "build/icon.icns",
+      "artifactName": "Shiomi3D-${version}-mac-${arch}.${ext}",
+      "darkModeSupport": true
+    },
+    "dmg": {
+      "title": "汐見環状線3D",
+      "artifactName": "Shiomi3D-${version}-mac-${arch}.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Game",
+      "icon": "build/icon.png",
+      "artifactName": "Shiomi3D-${version}-linux-${arch}.${ext}"
+    }
+  }
+}

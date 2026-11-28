@@ -8,6 +8,13 @@ https://riku06568.github.io/train-driver-3d/
 
 PC・スマートフォンのブラウザで開けます（WebGL / three.js を使用）。
 
+## アプリ版（PWA / Android / Windows / macOS）
+
+- **PWA**: 上のURLをスマホのChrome / Safariで開き、「ホーム画面に追加」するとアプリのように全画面で起動できます（Service Worker によるオフライン起動対応）。
+- **Android (.apk) / Windows (.exe) / macOS (.dmg/.zip)**: [Releases](https://github.com/riku06568/train-driver-3d/releases) からダウンロードできます。
+  中身はブラウザ版と同じゲームをアプリとして包んだものです（無料・未署名のため、初回起動時の警告は「詳細情報→実行」「右クリック→開く」で進めてください）。
+- アプリのビルドは GitHub Actions（`.github/workflows/build-apps.yml`）で自動化しています。Web版を更新してタグ `v*-app` を push すると、最新のゲーム内容でアプリが再ビルドされリリースされます。
+
 ## 検索キーワードについて
 
 検索エンジン（Google / Yahoo / Bing など）で探す際は、**「汐見環状線 3D」** や **「汐見環状線 トレインシミュレーター」**、**「汐見環状線 3Dトレインシミュレーター」** と検索してください。実在の路線と重複しない固有タイトルになっているため、検索エンジンのインデックス登録後に確実に最上位ヒットします。
@@ -15,7 +22,9 @@ PC・スマートフォンのブラウザで開けます（WebGL / three.js を�
 ## 技術メモ
 
 - 単一の `index.html`（HTML + CSS + JavaScript）で動作します。
-- 3D 描画は three.js r128（cdnjs の CDN）を読み込みます。オフラインでは動作しません。
+- 3D 描画は three.js r128 を `assets/js/three.min.js` に同梱しています（CDN不要・オフラインでも動作）。
+- PWA: `manifest.json` + `sw.js`。HTML/JS/JSON は network-first（改修が即反映）、画像・音声はキャッシュ優先でオフライン対応。
+- アプリ版のソース: `apps/android`（WebView + WebViewAssetLoader）、`apps/desktop`（Electron + ローカルHTTPサーバー）。アイコンは `tools/make_icons.py` で一括生成。
 - フォントは Google Fonts（DotGothic16 / Zen Kaku Gothic New）を使用しています。
 - 車内放送：全路線・全駅の次駅放送・まもなく放送、および全系統案内・運転台タブレット放送（案内・遅れのお詫び・しばらく停車・まもなく発車・ドア閉め案内）を完全事前録音音声（Nanami Neural TTS）で実装。発車直後（次駅放送）および駅手前600m（まもなく放送）のタブレット手動放送化、OS機械合成音声の完全排除を実現。
 - 支線運行：支線の運行本数を2倍化（運転間隔を半分に短縮、日中5分/ラッシュ3分/深夜10分間隔）。白峰支線・紫雲地下線・天宮高架線はオンライン同期に対応。港見支線は路線長16km・4駅の短距離ローカル線のためオフライン専用。

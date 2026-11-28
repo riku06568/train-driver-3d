@@ -103,8 +103,5 @@ for dpi, size in DENSITIES.items():
 FG_DENSITIES = {"mdpi": 108, "hdpi": 162, "xhdpi": 216, "xxhdpi": 324, "xxxhdpi": 432}
 for dpi, size in FG_DENSITIES.items():
     folder = os.path.join(ANDROID_RES, "mipmap-" + dpi)
-    fg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    inner = int(size * 0.64)
-    fg.paste(scaled(inner), ((size - inner) // 2, (size - inner) // 2))
-    save(fg, os.path.join(folder, "ic_launcher_foreground.png"))
+    save(scaled(size).convert("RGBA"), os.path.join(folder, "ic_launcher_foreground.png"))
 print("done")
