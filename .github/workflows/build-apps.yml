@@ -1,0 +1,200 @@
+name: Build Apps (Android / Windows / macOS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'リリースのタグ名（例: v2.5.1-app）。空の場合はリリース作成をスキップ'
+        required: false
+        default: ''
+      publish_release:
+        description: 'GitHub Releases に公開する'
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'v*-app'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apps-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_VERSION: '2.5.1'
+  CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+  ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build release APK
+        working-directory: apps/android
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Collect and inspect APK
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          SRC=$(find apps/android/app/build/outputs/apk/release -name '*.apk' | head -n 1)
+          echo "built: $SRC"
+          cp "$SRC" "out/Shiomi3D-${APP_VERSION}-android.apk"
+          ls -lh out
+          echo "--- apk badging ---"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort | tail -n 1)
+          "$AAPT" dump badging "out/Shiomi3D-${APP_VERSION}-android.apk" | head -n 12 || true
+          echo "--- apk signature ---"
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -n 1)
+          "$APKSIGNER" verify --print-certs "out/Shiomi3D-${APP_VERSION}-android.apk" | head -n 6 || true
+          echo "--- bundled web files ---"
+          unzip -l "out/Shiomi3D-${APP_VERSION}-android.apk" | grep -E 'assets/www/(index.html|assets/js/game.js)' || true
+          unzip -l "out/Shiomi3D-${APP_VERSION}-android.apk" | tail -n 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: out/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  windows:
+    name: Windows (exe)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Electron toolchain
+        working-directory: apps/desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build Windows installer & portable exe
+        working-directory: apps/desktop
+        run: npx electron-builder --win --publish never
+
+      - name: List output
+        shell: bash
+        run: ls -lh apps/desktop/dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: |
+            apps/desktop/dist/*.exe
+          if-no-files-found: error
+          retention-days: 30
+
+  macos:
+    name: macOS (dmg / zip)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Electron toolchain
+        working-directory: apps/desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build macOS dmg & zip (x64 / arm64)
+        working-directory: apps/desktop
+        run: npx electron-builder --mac --publish never
+
+      - name: List output
+        run: ls -lh apps/desktop/dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: |
+            apps/desktop/dist/*.dmg
+            apps/desktop/dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  linux:
+    name: Linux (AppImage) [おまけ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Electron toolchain
+        working-directory: apps/desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build AppImage
+        working-directory: apps/desktop
+        run: npx electron-builder --linux --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: apps/desktop/dist/*.AppImage
+          if-no-files-found: warn
+          retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    needs: [android, windows, macos]
+    if: ${{ (github.event_name == 'push') || (inputs.publish_release && inputs.tag != '') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Show assets
+        run: |
+          ls -lh artifacts
+          echo "--- total ---"
+          du -sh artifacts
+
+      - name: Create / update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: 汐見環状線3D アプリ版 ${{ env.APP_VERSION }}（Android / Windows / macOS）
+          body_path: .github/release-notes-app.md
+          files: artifacts/**
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+          make_latest: true
