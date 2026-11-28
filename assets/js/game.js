@@ -6031,7 +6031,7 @@ function bellSnd(dest){tone(760,0,0.22,'square',0.22,dest);tone(1520,0,0.15,'sin
 let extBus=null,extLP=null;
 function getExtBus(){if(extBus||!AC)return extBus;extLP=AC.createBiquadFilter();extLP.type='lowpass';extLP.frequency.value=18000;extLP.Q.value=0.5;
   extBus=AC.createGain();extBus.gain.value=1;extBus.connect(extLP);extLP.connect(master);return extBus;}
-function listenerSealed(){if(RIDE)return !(RIDE.a.state==='dwell'&&RIDE.a.frac>0.05);if(PAX||G.walkOn)return false;return G.door.state==='closed';}
+function listenerSealed(){if(RIDE)return !(RIDE.a.state==='dwell'&&RIDE.a.frac>0.05);if(PAX)return false;if(G.walkOn&&G.walkArea!=='train')return false;return G.door.state==='closed';}
 function updExtBus(){const b=getExtBus();if(!b)return;const t=AC.currentTime,sl=listenerSealed();
   b.gain.setTargetAtTime(sl?0:1,t,0.12);extLP.frequency.setTargetAtTime(sl?320:18000,t,0.12);}
 /* positional one-shot bus */
@@ -6850,7 +6850,7 @@ const hdPrev=new Map();
 function playRecordedAnn(file,gainVal,destNode){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
   if(!window.__remoteSndPlaying&&typeof broadcastSound==='function'){try{broadcastSound(file,gainVal);}catch(e){}}
-  const playFallback=()=>{try{const au=new Audio(file);au.volume=Math.min(1,(gainVal||1)*0.8);au.play().catch(()=>{});}catch(_){}};
+  const playFallback=()=>{if(destNode&&destNode===extBus&&typeof listenerSealed==='function'&&listenerSealed())return;try{const au=new Audio(file);au.volume=Math.min(1,(gainVal||1)*0.8);au.play().catch(()=>{});}catch(_){}};
   if(typeof loadAnnBuffer==='function'&&AC){
     loadAnnBuffer(file).then(buf=>{
       if(!buf){playFallback();return;}
@@ -6883,6 +6883,8 @@ function playEmergencyStopAnn(){
 const _apCool=new Map();
 function playApproachAnn(st,k){
   if(window.__DISP_MONITOR||(typeof G!=='undefined'&&G.sound===false))return;
+  const onPlatform=(typeof PAX!=='undefined'&&PAX)?!(typeof RIDE!=='undefined'&&RIDE):(typeof G!=='undefined'&&G&&G.walkOn&&G.walkArea!=='train');
+  if(!onPlatform)return;
   if(typeof listenerSealed==='function'&&listenerSealed())return;
   initAudio();
   const key=st.i+':'+k,now=Date.now();
