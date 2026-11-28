@@ -9335,11 +9335,8 @@ function ownAI(){if(PAX)return null;
 function updInterior(){const want=new Map();
   if(!PAX){const o=ownAI();
     if(isNoPaxTrain(o)){o.load=0;if(o.insideSet)releaseInterior(o);}
-    else if(G.walkOn){const near=[];for(let i=0;i<o.tr.cars.length;i++){const cs=G.s-G.dir*(CARHALF+i*CARL);if(Math.abs(sdiff(W.s,cs))<110)near.push(i);}
-      if(near.length)want.set(o,near);else{for(let i=0;i<o.tr.cars.length;i++)near.push(i);want.set(o,near);}}
-    else if(G.phase==='play'&&monStation()){const all=[];for(let i=0;i<o.tr.cars.length;i++)all.push(i);want.set(o,all);} /* ホームカメラに映る車内 */
-    else if(o.insideSet)releaseInterior(o);}
-  if(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars){const k=RIDE.k,NC=RIDE.a.tr.cars.length;want.set(RIDE.a,RIDE.a.state==='dwell'?Array.from({length:NC},(_,i)=>i):[k-1,k,k+1].filter(x=>x>=0&&x<NC));}
+    else if(o&&o.tr&&o.tr.cars){const all=[];for(let i=0;i<o.tr.cars.length;i++)all.push(i);want.set(o,all);}}
+  if(RIDE&&RIDE.a&&RIDE.a.tr&&RIDE.a.tr.cars){const NC=RIDE.a.tr.cars.length;want.set(RIDE.a,Array.from({length:NC},(_,i)=>i));}
   const camS=PAX?(RIDE?RIDE.a.s:W.s):G.s;
   const allTrains = [...OT];
   if(IS_ONLINE && window.ONLINE_PLAYERS){
@@ -9354,12 +9351,12 @@ function updInterior(){const want=new Map();
   for(const a of allTrains){if(!a.key||a.state==='off'||!a.tr||!a.tr.cars||want.has(a))continue;
     if(isNoPaxTrain(a)){a.load=0;if(a.insideSet)releaseInterior(a);continue;}
     if(!a.vis)continue;
-    const R0=(a.state==='dwell'?180:160)*(QMODE==='heavy'?1.5:1),dist=[];let any=false;
+    const R0=(a.state==='dwell'?320:280)*(QMODE==='heavy'?1.5:1),dist=[];let any=false;
     for(let i=0;i<a.tr.cars.length;i++){const cs=a.s-(a.dir||1)*(CARHALF+i*CARL),dd=Math.abs(sdiff(camS,cs));dist.push([dd,i]);if(dd<R0)any=true;}
-    if(any||(a.insideSet&&dist.some(x=>x[0]<R0+260))){dist.sort((x,y)=>x[0]-y[0]);want.set(a,dist.map(x=>x[1]));} /* 編成全体（近い車両から） */
+    if(any||(a.insideSet&&dist.some(x=>x[0]<R0+280))){dist.sort((x,y)=>x[0]-y[0]);want.set(a,dist.map(x=>x[1]));} /* 間引きなしで編成全体を描画 */
     else if(a.insideSet&&a.state==='dwell')want.set(a,[]);}
   for(const a of allTrains){if(a.insideSet&&!want.has(a))releaseInterior(a);}
-  for(const [a,cars] of want){if(!isNoPaxTrain(a)&&a!==OWNAI&&a.key&&(a.load==null||a.load<carsFor(a.key)*5))a.load=trainLoadFor(a.key);let add=cars.filter(k=>!isPop(a,k));if(a!==RIDE?.a)add=add.slice(0,4); /* 一度に作りすぎないよう近い車両から数両ずつ */if(add.length)populateCars(a,add);}}
+  for(const [a,cars] of want){if(!isNoPaxTrain(a)&&a!==OWNAI&&a.key&&(a.load==null||a.load<carsFor(a.key)*5))a.load=trainLoadFor(a.key);let add=cars.filter(k=>!isPop(a,k));if(add.length)populateCars(a,add);}}
 /* ================= in-car displays ================= */
 function curTrainInfo(){ // which train's guidance to show
   if(RIDE){const a=RIDE.a,k=a.key||'A',nx=aiStop(a);return {kind:BRANCH?'普通':(KINDNAME[k]||'各停'),col:(SVCLOOK[k]?SVCLOOK[k][0]:0x14935f),dir:a.dir||1,key:k,at:a.state==='dwell'?(a.stSt||stationNear(a.s)):null,next:nx?nx.st:null};}
