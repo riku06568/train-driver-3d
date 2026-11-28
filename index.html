@@ -1727,7 +1727,7 @@ body.disp-monitor #gl{display:none!important}
 <div id="avSel" class="hide"><div class="wrap"><div class="brand"><div class="led" id="avSelTitle">アバターのカスタム</div></div><div class="sub" id="avSelSub">あなた（乗客・乗務員）の見た目を選んでください。ゲーム中は「視点」ボタンで三人称にすると自分の姿が見えます</div>
   <div id="avBox"><canvas id="avPrev" width="240" height="380"></canvas><div id="avCtl"></div></div>
   <button id="avGo" class="backbtn" style="background:#1f7a4a;color:#fff;border-color:#1f7a4a">決定して駅を選ぶ →</button> <button id="avBack" class="backbtn">← もどる</button></div></div>
-<div id="crewSel" class="hide"><div class="wrap"><div class="brand"><div class="led" id="crewSelTitle">乗務</div></div><div class="sub">乗務形態を選んでください（快速特急・各駅停車で選択できます）</div>
+<div id="crewSel" class="hide"><div class="wrap"><div class="brand"><div class="led" id="crewSelTitle">乗務</div></div><div class="sub">乗務形態を選んでください（快速特急・各駅停車・天宮高架線で選択できます）</div>
   <div id="crewGrid"><button data-c="one"><b>ワンマン</b><small>運転士ひとりで、運転・ドア・乗降促進・放送をすべて扱います</small></button><button data-c="twoD"><b>ツーマン（運転士）</b><small>ドア・乗降促進・放送は車掌（自動）。車掌の合図（ブザー）が出るまで発車できません</small></button><button data-c="twoC"><b>ツーマン（車掌）</b><small>最後尾の乗務員室に立って乗務。服装・身長を選べ、車内巡回・ホーム上のITVモニタ・ドアやメロディ操作を行えます</small></button></div>
   <button id="crewBack" class="backbtn">← 路線選択に戻る</button></div></div>
 <div id="stSel" class="hide"><div class="wrap"><div class="brand"><div class="led" id="stSelTitle">開始駅</div></div><div class="sub" id="stSelSub">開始する駅を選んでください</div>
@@ -1798,9 +1798,9 @@ body.disp-monitor #gl{display:none!important}
       });
     })(id,MAP[id]);}
   })();
-  loadScript('assets/js/three.min.js?v=188', function() {
+  loadScript('assets/js/three.min.js?v=189', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=188', function() {});
+      loadScript('assets/js/game.js?v=189', function() {});
     });
   });
 })();
