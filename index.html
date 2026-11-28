@@ -200,11 +200,11 @@ html,body{overscroll-behavior:none}
 #qualRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
 
 /* Tutorial Styles */
-#tutRow,#autoAnnRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
-#tutRow .ql,#autoAnnRow .ql{font-weight:700;margin-right:4px}
-#tutRow button,#autoAnnRow button{flex:1;min-width:80px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
-#tutRow button.on,#autoAnnRow button.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
-#tutRow .qd,#autoAnnRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
+#tutRow,#autoAnnRow,#mcInvRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+#tutRow .ql,#autoAnnRow .ql,#mcInvRow .ql{font-weight:700;margin-right:4px}
+#tutRow button,#autoAnnRow button,#mcInvRow button{flex:1;min-width:80px;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+#tutRow button.on,#autoAnnRow button.on,#mcInvRow button.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
+#tutRow .qd,#autoAnnRow .qd,#mcInvRow .qd{width:100%;font-size:12.5px;line-height:1.5;opacity:.8}
 
 .q-tut-btn{flex:1;height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--panel);color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
 .q-tut-btn.on{border-color:#38bdf8;background:#0c4a6e;color:#38bdf8}
@@ -670,6 +670,7 @@ body.disp-monitor #gl{display:none!important}
       </div>
       <div id="tutRow"><span class="ql">チュートリアル表示</span><button id="btnTutOff">OFF</button><button id="btnTutOn" class="on">ON</button><div class="qd" id="tutDesc">ONにすると、ゲーム中やメニュー画面に運転手順や操作説明が分かりやすく表示されます。</div></div>
       <div id="autoAnnRow" style="margin-top:12px;"><span class="ql">自動次駅放送</span><button id="btnAutoAnnOff">OFF</button><button id="btnAutoAnnOn" class="on">ON</button><div class="qd" id="autoAnnDesc">ONまたは完全オート時、発車後と駅手前600mで自動的に車内アナウンス（次は〜 / まもなく〜）を流します。</div></div>
+      <div id="mcInvRow" style="margin-top:12px;"><span class="ql">マスコン操作</span><button id="btnMcInvOn" class="on">↓力行 / ↑ブレーキ</button><button id="btnMcInvOff">↑力行 / ↓ブレーキ</button><div class="qd" id="mcInvDesc">手動運転時の↑↓キーとマスコンボタンの向きを選びます（標準は実車風の「↓で力行／↑でブレーキ」）。</div></div>
       <div class="help" style="margin-top:20px;">
         <h3 style="color:#fff;margin:0 0 8px;font-size:16px;">運転操作ガイド</h3>
         駅に着いたら「戸開」→ 左右のモニターで乗り降りを確認 →「乗降促進」→「戸閉」→「ATO」で次の駅へ。<br>
@@ -681,6 +682,7 @@ body.disp-monitor #gl{display:none!important}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:13px;line-height:1.6;color:#e2e8f0;">
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">→ (右矢印)</b> : 右扉の開閉</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">← (左矢印)</b> : 左扉の開閉</div>
+          <div id="keyHintMc"><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">↓ / ↑ (上下矢印)</b> : 力行 / ブレーキ</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Enter</b> : ATO運転開始 / 停止</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">Space</b> : 次駅放送 / まもなく放送</div>
           <div><b style="color:#fff;background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">H / G / Y キー</b> : 電笛 / 空笛 / 両方（長押しで連続鳴動）</div>
@@ -1787,7 +1789,7 @@ body.disp-monitor #gl{display:none!important}
   })();
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=184', function() {});
+      loadScript('assets/js/game.js?v=185', function() {});
     });
   });
 })();
