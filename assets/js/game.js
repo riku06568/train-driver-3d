@@ -7226,7 +7226,7 @@ function toggleATO(){
   if(G.manual){toast('港見支線は手動運転です（マスコンで加速、ブレーキで減速）','info');return;}
   if(G.twoMan&&!G.condOK&&G.v<1&&(G.atStation!==null||G.depCheck!==null)&&!G.ato){toast('車掌からの合図がありません（ブザーを待ってください）','warn');return;}
   if(miniHold()&&!G.ato){toast('単線のため、対向列車の到着を待ってください（港前で行き違い）','warn');return;}
-  if(G.lean){toast('運転席に戻ってから発車してください','warn');return;}
+  if(G.lean&&G.crew!=='twoC'){toast('運転席に戻ってから発車してください','warn');return;}
   if(G.ato){G.ato=false;G.manualOverride=true;G.mnotch=clamp(G.notch||0,-8,5);updMascon();toast('ATO解除 → 手動運転（↑↓キー / マスコンで操作）','info');return;}
   if(G.door.state!=='closed'){toast('扉を閉めてからATOを押してください','warn');return;}
   if(G.walkOn){toast('ホームに出ている間は発車できません','warn');return;}
