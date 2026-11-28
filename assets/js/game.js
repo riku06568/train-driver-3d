@@ -4003,7 +4003,7 @@ function updGauges(dt){if(!OWNOLD||!GAUGE.S)return;const t=performance.now()/100
   const tg=[[GAUGE.S,0,f(G.v*3.6,120)],[GAUGE.I,0,f(830+Math.sin(t*0.07)*38,1000)],[GAUGE.I,1,f(G.bc,1000)]];
   for(const [gg,i,a] of tg){gg.cur[i]+=(a-gg.cur[i])*k;gg.needles[i].rotation.z=-gg.cur[i]+Math.sin(t*23+i)*0.004*Math.min(1,G.v);}}
 function drawPaper(){if(!OWNOLD)return;const x=PAPER.x,W=512,H=384;x.fillStyle='#f2ecdc';x.fillRect(0,0,W,H);x.fillStyle='#e6ddc4';x.fillRect(0,0,W,40);
-  x.fillStyle='#2a2a2a';x.font='700 22px '+FONT;x.textAlign='left';x.textBaseline='middle';const dn=G.list?STATIONS[G.list[G.list.length-1]].name:'';x.fillText('行路表　白峰支線　普通　'+dn+'行',14,21);
+  x.fillStyle='#2a2a2a';x.font='700 22px '+FONT;x.textAlign='left';x.textBaseline='middle';const rn=(typeof ROUTES!=='undefined'&&ROUTES[G.route])?ROUTES[G.route].name:'支線';const dn=G.list?STATIONS[G.list[G.list.length-1]].name:'';x.fillText('行路表　'+rn+'　普通　'+dn+'行',14,21);
   x.font='500 15px '+FONT;x.fillStyle='#555';x.fillText('駅名',30,56);x.fillText('着',300,56);x.fillText('発',400,56);x.strokeStyle='#8a806a';x.lineWidth=1;
   const v0=G.atStation!==null?G.atStation:G.nv;for(let k=0;k<10;k++){const v=v0+k;if(G.list&&v>lastStop())break;const st=stOf(v),y=86+k*29;
     x.beginPath();x.moveTo(10,y+14);x.lineTo(W-10,y+14);x.stroke();x.fillStyle='#1b1b1b';x.font='700 20px '+FONT;x.fillText(st.name,30,y);
@@ -7153,7 +7153,7 @@ function arriveAnnEn(st,end){st=st||stOf(G.nv);if(end===undefined)end=(G.nv>=las
   if(end)return 'Thank you for riding with us. This is '+enName(st)+', terminal. Please make sure you have all your belongings.'+transferEn(st);
   return 'This is '+enName(st)+', '+enName(st)+'. Thank you for riding with us. Please make sure you have all your belongings. The doors on the '+sd+' side will open.'+transferEn(st);}
 /* four kinds of broadcast from the touch panel */
-function broadcast(n,sys){if(G.phase!=='play')return;if(G.crew==='twoD'&&!sys){toast('ツーマン運転：放送は車掌が行います','warn');return;}chime();let tag='',soundKey=null;
+function broadcast(n,sys){if(G.phase!=='play')return;if(G.crew==='twoD'&&!sys){toast('ツーマン運転：放送は車掌が行います','warn');return;}initAudio();unlockSpeech();if(AC&&AC.state==='suspended'){try{AC.resume();}catch(e){}}chime();let tag='',soundKey=null;
   if(n===0){const stopped=G.atStation!==null||(G.depCheck!==null&&G.v===0);
     if(stopped){const leftSt=G.atStation!==null?stOf(G.atStation):stOf(G.nv);soundKey=guideKindFor(G.key,leftSt)||'lo';tag='案内放送';}
     else{soundKey='tab_manners';tag='車内マナー案内';}}
@@ -7277,15 +7277,53 @@ function updCondUI(){const ui=document.getElementById('condUI');if(!ui)return;ui
   const D=G.door,b=id=>document.getElementById(id),open=D.state==='open'||D.state==='opening',stn=G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv,d=stopDist(G.nv);
   const atStop=G.v===0&&!sigStopped()&&(G.atStation!==null||G.depCheck!==null||(d>-6.5&&d<17.9));
   const vis=(id,on)=>{const e=b(id);if(e)e.style.display=on?'':'none';};
-  vis('cExit',(!G.walkOn||G.walkArea==='train')&&canExit()&&!G.lean);vis('cSal',(!G.walkOn||(G.walkOn&&G.walkArea!=='train'))&&!G.lean);vis('cLean',!G.walkOn&&G.v<=0.05);vis('cMic',true);vis('cItv',true);vis('cView',true);
+  vis('cExit',(!G.walkOn||G.walkArea==='train')&&canExit()&&!G.lean);vis('cSal',(!G.walkOn||(G.walkOn&&G.walkArea!=='train'))&&!G.lean);vis('cLean',!G.walkOn&&G.v<=0.05);vis('cMic',true);vis('cAnn',true);vis('cItv',true);vis('cStaf',true);vis('cView',true);
   vis('cOpen',atStop&&D.state==='closed'&&!(G.depCheck!==null&&G.condOK));vis('cClose',open);vis('cMelo',open&&(nearCondBox()||G.walkArea==='train'||!G.walkOn));vis('cPromo',open);
   vis('cSig',!G.walkOn&&D.state==='closed'&&G.depCheck!==null&&!G.condOK&&G.v===0);
   const cm=b('cMic');if(cm){if(window.__CREW_MIC&&window.__CREW_MIC.on){cm.textContent=window.__CREW_MIC.mode==='out'?'📣 車外放送中':'📢 車内放送中';cm.style.background='#dc2626';}else{cm.textContent='🎤 マイク';cm.style.background='#0e7490';}}
   const cl=b('cLean');if(cl)cl.textContent=G.lean?'🪟 室内に戻る':'🪟 窓から顔を出す';
+  const sp=b('crewStafPanel');if(sp&&!sp.classList.contains('hide'))drawCrewStaf();
   const cs=b('cSal');if(cs)cs.textContent=(G.walkOn&&G.walkArea==='train')?'🚪 乗務員室へ':'🚶 車内を歩く';
   const cv=b('cView');if(cv)cv.textContent=AV3P?'👁️ 三人称':'👁️ 一人称';
   const m=b('cMelo');if(m)m.textContent=G.promoOn?'再生中…':'発車メロディ';const h=b('cHint');
   if(h)h.textContent=G.lean?'窓から顔を出して確認中（ドラッグで見回し）':G.walkOn?(G.walkArea==='train'?('車内巡回中（'+(G.walkCar+1)+'号車）'):(open?(nearCondBox()?'メロディのボタンの前です':'ホーム確認中（ITVモニタも使えます）'):'ドアを開けてください')):(G.v>0.5?'乗務中（後ろ扉・ボタンで車内を歩けます）':open?'ホームや車内・ITVモニタで確認して戸閉→合図':G.depCheck!==null&&!G.condOK?'ドアを閉めたら運転士へ合図を送ります':'停車したらホームに出るかITVモニタを確認して戸開');}
+let _lastCrewStafKey='';
+function drawCrewStaf(force){
+  const panel=document.getElementById('crewStafPanel'),meta=document.getElementById('crewStafMeta'),body=document.getElementById('crewStafBody');
+  if(!panel||!meta||!body||G.crew!=='twoC'||G.phase!=='play')return;
+  const curV=(G.atStation!==null?G.atStation:G.nv);
+  const stopFlag=G.atStation!==null?'S':(G.depCheck!==null?'D':'R');
+  const dName=(G.list&&G.list.length)?stOf(G.list[G.list.length-1]).name:(G.cyc&&G.cyc.length?STATIONS[G.cyc[G.cyc.length-1]].name:'');
+  const key=G.route+'|'+G.key+'|'+G.dir+'|'+curV+'|'+stopFlag+'|'+dName;
+  if(!force&&key===_lastCrewStafKey)return;
+  _lastCrewStafKey=key;
+  const rName=(typeof ROUTES!=='undefined'&&ROUTES[G.route])?ROUTES[G.route].name:'汐見環状線';
+  const dirLabel=BRANCH?'':(G.dir<0?'（内回り）':'（外回り）');
+  const maxSpd=(typeof KIND!=='undefined'&&KIND[G.key]==='exp')?210:(KIND[G.key]==='ltd'?150:(KIND[G.key]==='rapid'?120:(BRANCH?85:100)));
+  const curSt=stOf(curV);
+  meta.innerHTML='<div>路線・種別：'+escapeHtml(rName+dirLabel)+'　／　行先：'+escapeHtml(dName||'―')+'行</div>'
+    +'<div>最高速度：'+maxSpd+' km/h　／　'+(G.atStation!==null?'停車中：':'次駅：')+'<span style="color:#b91c1c;">'+escapeHtml(curSt?curSt.name:'―')+'</span></div>';
+  const startV=Math.max(0,curV-1);
+  const endV=G.list?Math.min(G.list.length-1,curV+25):(curV+20);
+  let html='';
+  for(let v=startV;v<=endV;v++){
+    if(G.list&&v>lastStop())break;
+    const st=stOf(v);if(!st)break;
+    const pl=G.plan?G.plan[v]:null;
+    const arr=pl?hms2(pl.arr):'―';
+    const dep=(pl&&pl.dep)?hms2(pl.dep):(pl&&v!==lastStop()?hms2(pl.arr+30000):'―');
+    const isCur=(v===curV),isPast=(v<curV);
+    const bg=isCur?'#dbeafe':(v%2?'#f1f5f9':'#faf8f0');
+    const col=isPast?'#64748b':(isCur?'#1d4ed8':'#0f172a');
+    const mark=isCur?(G.atStation!==null?'▶ ':'→ '):'';
+    html+='<div style="display:grid;grid-template-columns:1fr 68px 68px;padding:6px 12px;border-bottom:1px solid #e2e8f0;background:'+bg+';color:'+col+';font-weight:'+(isCur?'800':(st.big?'700':'500'))+';">'
+      +'<div>'+mark+escapeHtml(st.name)+(st.big?' ★':'')+'</div>'
+      +'<div style="text-align:right;font-variant-numeric:tabular-nums;">'+arr+'</div>'
+      +'<div style="text-align:right;font-variant-numeric:tabular-nums;">'+dep+'</div></div>';
+  }
+  if(!html)html='<div style="padding:12px;color:#64748b;text-align:center;">行路データがありません</div>';
+  body.innerHTML=html;
+}
 /* 停止信号で止まっている（駅の停止位置より手前）か */
 function sigStopped(){if(G.atStation!==null||G.depCheck!==null||G.v>0.3)return false;const d=stopDist(G.nv);return !!(G.sig&&G.sig.asp==='R'&&G.sig.dist<90&&d>2.5);}
 function shouldAutoNextAnn(){
@@ -10657,6 +10695,11 @@ function player(e,v,anime){e.innerHTML='<div class="note">'+v[0]+'</div><canvas 
   on('micOffBtn',()=>stopCrewMic());
   on('cItv',()=>{const p=document.getElementById('crewItvPanel');if(p)p.classList.toggle('hide');});
   on('crewItvClose',()=>{const p=document.getElementById('crewItvPanel');if(p)p.classList.add('hide');});
+  on('cStaf',()=>{const p=document.getElementById('crewStafPanel');if(!p)return;const show=p.classList.contains('hide');p.classList.toggle('hide',!show);if(show)drawCrewStaf(true);});
+  on('crewStafClose',()=>{const p=document.getElementById('crewStafPanel');if(p)p.classList.add('hide');});
+  on('cAnn',()=>{const p=document.getElementById('crewAnnPanel');if(p)p.classList.toggle('hide');});
+  on('crewAnnClose',()=>{const p=document.getElementById('crewAnnPanel');if(p)p.classList.add('hide');});
+  for(let i=0;i<4;i++)on('annBtn'+i,()=>{broadcast(i);});
   on('itvOpenBtn',()=>{const st=stOf(G.atStation!==null?G.atStation:G.depCheck!==null?G.depCheck:G.nv);openDoor(localSide(st));});
   on('itvCloseBtn',()=>closeDoor(G.door.local));
   on('itvMeloBtn',()=>promote('st'));

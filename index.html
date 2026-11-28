@@ -1740,7 +1740,7 @@ body.disp-monitor #gl{display:none!important}
 <div id="condBadge" class="hide" style="position:fixed;left:10px;top:calc(max(10px,env(safe-area-inset-top)) + 44px);z-index:66;pointer-events:none;background:rgba(8,18,32,0.72);border:1px solid rgba(125,211,252,0.35);border-radius:10px;padding:5px 10px;font-size:11.5px;font-weight:700;color:#dbeafe;line-height:1.35;box-shadow:0 3px 10px rgba(0,0,0,0.35);"></div>
 <div id="mascon" class="hide"><div id="mcSpd">0 km/h</div><button id="mcUp">▲ 加速</button><div id="mcVal">B4</div><button id="mcDn">▼ ブレーキ</button><button id="mcN">N</button><button id="mcEB">非常</button></div>
 <div id="dev" class="hide"><div id="devFrame"><div id="devBar"><button id="devHome">◯</button><span id="devTitle"></span><button id="devClose">✕</button></div><div id="devScreen"></div></div></div><div id="devFlash" class="hide"></div>
-<div id="condUI" class="hide"><div class="lt" id="cHint"></div><div class="lb"><button id="cExit" style="background:#34445e;color:#fff">ホームに出る</button><button id="cSal" style="background:#0f766e;color:#fff">🚶 車内を歩く</button><button id="cLean" style="background:#7a4a12;color:#fff">🪟 窓から顔を出す</button><button id="cMic" style="background:#0e7490;color:#fff">🎤 マイク</button><button id="cItv" style="background:#1d4ed8;color:#fff">📺 ITVモニタ</button><button id="cView" style="background:#475569;color:#fff">👁️ 視点</button><button id="cOpen">戸開</button><button id="cClose" style="background:#c22f28;color:#fff">戸閉</button><button id="cMelo" style="background:#e0a21a">発車メロディ</button><button id="cPromo" style="background:#f2d27a">乗降促進</button><button id="cSig" style="background:#1f7a4a;color:#fff">合図（発車）</button></div></div>
+<div id="condUI" class="hide"><div class="lt" id="cHint"></div><div class="lb"><button id="cExit" style="background:#34445e;color:#fff">ホームに出る</button><button id="cSal" style="background:#0f766e;color:#fff">🚶 車内を歩く</button><button id="cLean" style="background:#7a4a12;color:#fff">🪟 窓から顔を出す</button><button id="cMic" style="background:#0e7490;color:#fff">🎤 マイク</button><button id="cAnn" style="background:#2563eb;color:#fff">📢 放送</button><button id="cItv" style="background:#1d4ed8;color:#fff">📺 ITVモニタ</button><button id="cStaf" style="background:#b45309;color:#fff">📋 行路表</button><button id="cView" style="background:#475569;color:#fff">👁️ 視点</button><button id="cOpen">戸開</button><button id="cClose" style="background:#c22f28;color:#fff">戸閉</button><button id="cMelo" style="background:#e0a21a">発車メロディ</button><button id="cPromo" style="background:#f2d27a">乗降促進</button><button id="cSig" style="background:#1f7a4a;color:#fff">合図（発車）</button></div></div>
 <div id="crewMicPanel" class="hide" style="position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:69;width:min(360px,92vw);background:rgba(10,18,34,0.95);border:2px solid #22d3ee;border-radius:14px;padding:12px;box-shadow:0 12px 32px rgba(0,0,0,0.65);color:#fff;pointer-events:auto;">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
     <div style="font-weight:800;font-size:14px;color:#67e8f9;">🎤 乗務員マイク放送</div>
@@ -1767,6 +1767,29 @@ body.disp-monitor #gl{display:none!important}
     <button id="itvOpenBtn" style="flex:1;padding:8px 6px;border:none;border-radius:8px;background:#e8e4d8;color:#111;font-weight:800;font-size:13px;cursor:pointer;">戸開</button>
     <button id="itvCloseBtn" style="flex:1;padding:8px 6px;border:none;border-radius:8px;background:#c22f28;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">戸閉</button>
     <button id="itvMeloBtn" style="flex:1;padding:8px 6px;border:none;border-radius:8px;background:#e0a21a;color:#111;font-weight:800;font-size:13px;cursor:pointer;">発車メロディ</button>
+  </div>
+</div>
+<div id="crewStafPanel" class="hide" style="position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:68;width:min(380px,92vw);max-height:72vh;display:flex;flex-direction:column;background:#faf8f0;border:3px solid #b91c1c;border-radius:12px;box-shadow:0 14px 36px rgba(0,0,0,0.6);color:#0f172a;pointer-events:auto;overflow:hidden;">
+  <div style="display:flex;align-items:center;justify-content:space-between;background:#b91c1c;color:#fff;padding:8px 12px;">
+    <div style="font-weight:800;font-size:14px;">📋 乗務行路表（スタフ）</div>
+    <button id="crewStafClose" style="background:rgba(0,0,0,0.28);color:#fff;border:none;border-radius:7px;padding:3px 10px;font-size:12.5px;font-weight:700;cursor:pointer;">✕ 閉じる</button>
+  </div>
+  <div id="crewStafMeta" style="padding:8px 12px;background:#f1ead8;border-bottom:1px solid #cbd5e1;font-size:12px;font-weight:700;line-height:1.5;color:#1e293b;"></div>
+  <div style="display:grid;grid-template-columns:1fr 68px 68px;padding:5px 12px;background:#e2e8f0;font-size:11.5px;font-weight:800;color:#334155;border-bottom:1px solid #cbd5e1;">
+    <div>駅名</div><div style="text-align:right;">着</div><div style="text-align:right;">発</div>
+  </div>
+  <div id="crewStafBody" style="overflow-y:auto;max-height:50vh;font-size:13px;"></div>
+</div>
+<div id="crewAnnPanel" class="hide" style="position:fixed;top:calc(54px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:69;width:min(360px,92vw);background:rgba(10,18,34,0.95);border:2px solid #3b82f6;border-radius:14px;padding:12px;box-shadow:0 12px 32px rgba(0,0,0,0.65);color:#fff;pointer-events:auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div style="font-weight:800;font-size:14px;color:#93c5fd;">📢 車内自動放送</div>
+    <button id="crewAnnClose" style="background:#334155;color:#fff;border:none;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer;">✕ 閉じる</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <button id="annBtn0" style="padding:12px 8px;border:none;border-radius:10px;background:#1d4ed8;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer;">🚃 案内放送<br><span style="font-size:11px;font-weight:500;opacity:0.85;">停車・走行案内</span></button>
+    <button id="annBtn1" style="padding:12px 8px;border:none;border-radius:10px;background:#1e40af;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer;">🙇 遅れのお詫び<br><span style="font-size:11px;font-weight:500;opacity:0.85;">遅延案内</span></button>
+    <button id="annBtn2" style="padding:12px 8px;border:none;border-radius:10px;background:#0369a1;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer;">🛑 しばらく停車<br><span style="font-size:11px;font-weight:500;opacity:0.85;">停車案内</span></button>
+    <button id="annBtn3" style="padding:12px 8px;border:none;border-radius:10px;background:#0f766e;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer;">🔔 まもなく発車<br><span style="font-size:11px;font-weight:500;opacity:0.85;">発車案内</span></button>
   </div>
 </div>
 <div id="leanUI" class="hide"><div class="lt">窓から顔を出しています：すぐ横の操作箱のボタン（戸開・戸閉・メロディ）を押します／ドラッグで見回し</div><div class="lb"><button id="leanBackB" style="background:#34445e;color:#fff">運転席に戻る</button></div></div>
@@ -1798,9 +1821,9 @@ body.disp-monitor #gl{display:none!important}
       });
     })(id,MAP[id]);}
   })();
-  loadScript('assets/js/three.min.js?v=190', function() {
+  loadScript('assets/js/three.min.js?v=191', function() {
     loadScript('assets/js/mqtt.min.js', function() {
-      loadScript('assets/js/game.js?v=190', function() {});
+      loadScript('assets/js/game.js?v=191', function() {});
     });
   });
 })();
