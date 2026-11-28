@@ -2162,6 +2162,10 @@ const winTexA=canvasTex(256,512,(x,w,h)=>{x.fillStyle='#c4c8cf';x.fillRect(0,0,w
       x.fillStyle='#1f2937';x.fillRect(px,y,48,22);
       x.fillStyle=(r*7+c*13)%5===0?'#ffe29a':'#486581';x.fillRect(px+3,y+2,42,18);
       x.fillStyle='#94a3b8';x.fillRect(px-2,y+20,52,8);}}});
+const winLitTexA=canvasTex(256,512,(x,w,h)=>{x.fillStyle='#000000';x.fillRect(0,0,w,h);
+  for(let c=0;c<4;c++){x.fillStyle='#ffd98a';x.fillRect(c*64+6,h-42,52,36);}
+  for(let r=0;r<12;r++){const y=r*38+8;
+    for(let c=0;c<4;c++){if((r*7+c*13)%3===0){const px=c*64+8;x.fillStyle='#ffdf94';x.fillRect(px+3,y+2,42,18);}}}});
 const winTexB=canvasTex(256,512,(x,w,h)=>{x.fillStyle='#3d4b5c';x.fillRect(0,0,w,h);
   for(let r=0;r<16;r++){const y=r*32;
     x.fillStyle='#526173';x.fillRect(0,y,w,6);
@@ -2171,6 +2175,9 @@ const winTexB=canvasTex(256,512,(x,w,h)=>{x.fillStyle='#3d4b5c';x.fillRect(0,0,w
       g.addColorStop(0,lit?'#ffdf94':'#6384a8');g.addColorStop(1,lit?'#eab354':'#2f4763');
       x.fillStyle=g;x.fillRect(px,y+6,36,24);
       x.fillStyle='rgba(255,255,255,0.15)';x.fillRect(px+2,y+7,12,4);}}});
+const winLitTexB=canvasTex(256,512,(x,w,h)=>{x.fillStyle='#000000';x.fillRect(0,0,w,h);
+  for(let r=0;r<16;r++){const y=r*32;
+    for(let c=0;c<6;c++){if((r*11+c*7)%3===0){const px=c*42+4;x.fillStyle='#ffe29a';x.fillRect(px,y+6,36,24);}}}});
 const houseTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#f3f0e8';x.fillRect(0,0,w,h);
   x.strokeStyle='rgba(0,0,0,0.08)';x.lineWidth=2;for(let y=12;y<h;y+=16){x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
   for(const y of [38,142]){for(const px of [30,104,178]){
@@ -2178,6 +2185,11 @@ const houseTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#f3f0e8';x.fillRect(0,0,
     x.fillStyle='#587796';x.fillRect(px+4,y+4,40,36);
     x.fillStyle='#cbd5e1';x.fillRect(px+22,y+4,3,36);x.fillRect(px-2,y+44,52,4);}}
   x.fillStyle='#5c3d2e';x.fillRect(108,186,40,70);x.fillStyle='#d4a373';x.fillRect(114,194,28,24);});
+const houseLitTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#000000';x.fillRect(0,0,w,h);
+  for(const [yi,y] of [38,142].entries()){for(const [xi,px] of [30,104,178].entries()){
+    if((yi===1&&xi===1)||((yi*3+xi)%2===0)){
+      x.fillStyle='#ffda82';x.fillRect(px+4,y+4,18,36);x.fillRect(px+25,y+4,19,36);}}}
+  x.fillStyle='#ffcf70';x.fillRect(114,194,28,24);});
 const fieldTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#d8d4c8';x.fillRect(0,0,w,h);
   for(let i=0;i<16;i++){x.fillStyle=i%2?'rgba(0,0,0,0.10)':'rgba(255,255,255,0.08)';x.fillRect(0,i*16,w,8);}
   x.strokeStyle='rgba(120,110,90,0.35)';x.lineWidth=8;x.strokeRect(4,4,w-8,h-8);});
@@ -2214,20 +2226,20 @@ const fenceTex=canvasTex(128,128,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#c9
 const IMATS={sleeper:lam(0x4a3b30),pole:lam(0x7a7f86),pillar:lam(0xe2ded2),stair:lam(0xc3c8bf),tree:lam(0x3f5a34),conc:lam(0x9b9a94),
   tlamp:new THREE.MeshBasicMaterial({color:0xe8f6ff}),streetLamp:new THREE.MeshLambertMaterial({color:0xd8dce0,emissive:0xffe4a8,emissiveIntensity:0}),hdp:lam(0x252c36),hdpost:lam(0x161b22),hdcap:lam(0x94a3b8),
   fence:new THREE.MeshLambertMaterial({map:fenceTex,alphaTest:0.4,side:DS}),fpost:lam(0xb9bec4),melo:lam(0xe0a21a),bumper:lam(0xc8322b),
-  bldA:new THREE.MeshLambertMaterial({map:winTexA,emissive:0xffaa55,emissiveMap:winTexA,emissiveIntensity:0.1}),
-  bldB:new THREE.MeshLambertMaterial({map:winTexB,emissive:0xffcc77,emissiveMap:winTexB,emissiveIntensity:0.1})};
+  bldA:new THREE.MeshLambertMaterial({map:winTexA,emissive:0xffcc66,emissiveMap:winLitTexA,emissiveIntensity:0}),
+  bldB:new THREE.MeshLambertMaterial({map:winTexB,emissive:0xffd47a,emissiveMap:winLitTexB,emissiveIntensity:0})};
 const IGEO={sleeper:boxGeo(2.0,0.1,0.22),post:boxGeo(0.3,7.2,0.3),beam:boxGeo(1,0.35,0.35),pillar:new THREE.CylinderGeometry(0.15,0.15,1,8),
   stair:boxGeo(1,1,1),bldA:boxGeo(1,1,1),bldB:boxGeo(1,1,1),tree:new THREE.ConeGeometry(1.8,6,7),pier:boxGeo(1,1,1),pcap:boxGeo(1,1,1),tlamp:boxGeo(0.12,0.12,1.2),streetLamp:boxGeo(1,1,1),
   hdp:boxGeo(1,1,1),hdpost:boxGeo(1,1,1),hdcap:boxGeo(1,1,1),lightTower:boxGeo(1,1,1),fence:boxGeo(1,1,1),fpost:boxGeo(1,1,1),melo:boxGeo(1,1,1),bumper:boxGeo(1,1,1)};
 const IMATKEY={sleeper:'sleeper',post:'pole',beam:'pole',pillar:'pillar',stair:'stair',bldA:'bldA',bldB:'bldB',tree:'tree',pier:'conc',pcap:'conc',tlamp:'tlamp',streetLamp:'streetLamp',hdp:'hdp',hdpost:'hdpost',hdcap:'hdcap',lightTower:'pole',fence:'fence',fpost:'fpost',melo:'melo',bumper:'bumper'};
 const roofGeo=(()=>{const sh=new THREE.Shape();sh.moveTo(-0.5,0);sh.lineTo(0.5,0);sh.lineTo(0,1);sh.lineTo(-0.5,0);const g=new THREE.ExtrudeGeometry(sh,{depth:1,bevelEnabled:false});g.translate(0,0,-0.5);return g;})();
 Object.assign(IGEO,{house:boxGeo(1,1,1),roof:roofGeo,field:boxGeo(1,1,1),trunk:new THREE.CylinderGeometry(0.18,0.25,1,6),leaf:new THREE.SphereGeometry(1,8,6)});
-Object.assign(IMATS,{house:new THREE.MeshLambertMaterial({map:houseTex,emissive:0xffbb66,emissiveMap:houseTex,emissiveIntensity:0}),roof:lam(0xffffff),field:new THREE.MeshLambertMaterial({map:fieldTex}),trunk:lam(0x5a4030),leaf:lam(0x4d7a3a)});
+Object.assign(IMATS,{house:new THREE.MeshLambertMaterial({map:houseTex,emissive:0xffcc66,emissiveMap:houseLitTex,emissiveIntensity:0}),roof:lam(0xffffff),field:new THREE.MeshLambertMaterial({map:fieldTex}),trunk:lam(0x5a4030),leaf:lam(0x4d7a3a)});
 Object.assign(IMATKEY,{house:'house',roof:'roof',field:'field',trunk:'trunk',leaf:'leaf'});
 const GROUNDK=new Set(['bldA','bldB','tree','pier','lightTower','streetLamp','house','roof','field','trunk','leaf']);
 
 
-for(const t of [winTexA,winTexB,houseTex,fieldTex,facadeTex,trussTex,armTex,fenceTex])SHARED.add(t);for(const g of Object.values(IGEO))SHARED.add(g);
+for(const t of [winTexA,winLitTexA,winTexB,winLitTexB,houseTex,houseLitTex,fieldTex,facadeTex,trussTex,armTex,fenceTex])SHARED.add(t);for(const g of Object.values(IGEO))SHARED.add(g);
 const WIREMAT=new THREE.LineBasicMaterial({color:0x2a2622});
 /* ================= chunks (built lazily around the train) ================= */
 const CH=500,NCH=Math.round(L/CH);
@@ -6648,7 +6660,7 @@ function updEnv(){
   // lights come on the moment it gets dark (and in tunnels), instead of fading in slowly
   const lit=1-smooth(0.015,0.075,e),dark=Math.max(lit,inTun?1:0);
   const lateF=(h>=0.5&&h<5)?0.35:(h>=22||h<0.5)?0.7:1;
-  IMATS.bldA.emissiveIntensity=0.06+1.05*lit*lateF;IMATS.bldB.emissiveIntensity=0.06+1.1*lit*lateF;IMATS.house.emissiveIntensity=0.04+0.8*lit*lateF;IMATS.streetLamp.emissiveIntensity=1.6*lit;
+  IMATS.bldA.emissiveIntensity=1.5*lit*lateF;IMATS.bldB.emissiveIntensity=1.6*lit*lateF;IMATS.house.emissiveIntensity=1.45*lit*lateF;IMATS.streetLamp.emissiveIntensity=1.6*lit;
   TM.iwall.emissiveIntensity=0.3+0.35*dark;TM.ifloor.emissiveIntensity=0.25+0.3*dark;TM.doorway.emissiveIntensity=0.15+0.5*dark;
   MATS.lamp.emissiveIntensity=1.1*lit;MATS.lamp.color.setHex(lit>0.5?0xffffff:0xcfcfcf);G.stLit=lit;STFAC.forEach(m=>m.emissiveIntensity=0.9*lit*lateF);
   headSpot.intensity=dark*2.6;GLOW.head.opacity=0.45+0.5*dark;GLOW.tail.opacity=0.35+0.55*dark;GLOW.pool.opacity=0.6*dark;cabLight.intensity=0.15+dark*0.45;
