@@ -3896,8 +3896,7 @@ for(const sg of [-1,1]){const x=sg*1.37;cbox(0.06,1.05,2.5,CM.shell,x,1.675,1.35
 const SALDOOR=[]; // the saloon doors slide with the real ones
 function updSalDoors(){const D=G.door,f=(D.state==='open'||D.state==='opening'||D.state==='closing')?D.frac:0;
   for(const d of SALDOOR){const open=(D.local*SIDEINV)===d.sg?f:0;d.m.position.z=d.base+d.k*(0.35+open*0.62);}}
-const isCrewSvc=s=>!!(s&&(s.kind==='ltd'||s.kind==='local'||s.line==='branch3'));
-const OWNCREW=isCrewSvc(SERVICES[SVC])?CREWSEL:'one',CONDV=OWNCREW==='twoC',SIDEINV=CONDV?-1:1; /* 車掌：後ろ向きなので左右が逆 */
+const OWNCREW=(SERVICES[SVC]&&(SERVICES[SVC].kind==='ltd'||SERVICES[SVC].kind==='local'||SERVICES[SVC].line==='branch3'))?CREWSEL:'one',CONDV=OWNCREW==='twoC',SIDEINV=CONDV?-1:1; /* 車掌：後ろ向きなので左右が逆 */
 /* passenger saloon behind the cab: identical structure to carTemplate */
 const SM=OWNOLD?OLDI:TM;
 {const OFF=CARHALF,isRearCab=CONDV,LY=salLayout(!isRearCab,isRearCab); /* 運転台ローカル z = 車両ローカル z + 9.75 */
@@ -8575,7 +8574,7 @@ function startRoute(r,si){const R=SERVICES[r];initAudio();unlockSpeech();try{pre
   else{G.list=null;G.cyc=STATIONS.filter(st=>serves(st,G.key)).map(st=>st.i);if(G.dir<0)G.cyc=[G.cyc[0],...G.cyc.slice(1).reverse()];G.cpos=Math.max(0,G.cyc.indexOf(si));}
   /* 乗務（ここで前回、上の停車駅リストの設定を壊していた → ツーマンで発車しない・別の駅に出る原因） */
   G.manual=MINI&&!PAX;G.mnotch=-4;setTimeout(()=>{updMascon();if(G.manual)toast('港見支線は手動運転：右のマスコンで加速（Q）・ブレーキ（Z）','info');},1200);
-  G.crew=(R&&isCrewSvc(R)&&!PAX)?CREWSEL:'one';G.twoMan=G.crew!=='one';G.condOK=false;G.cPh='';G.cT=0;
+  G.crew=(R&&(R.kind==='ltd'||R.kind==='local'||R.line==='branch3')&&!PAX)?CREWSEL:'one';G.twoMan=G.crew!=='one';G.condOK=false;G.cPh='';G.cT=0;
   if(G.crew==='twoC'){G.auto=true;setTimeout(()=>{try{buildAvatar();}catch(e){}},0);setTimeout(()=>toast('ツーマン（車掌）：最後尾の乗務員室に乗務します。車内巡回・ITVモニタ・ドアやメロディ操作が使えます','info'),2500);}
   else if(G.crew==='twoD')setTimeout(()=>toast('ツーマン（運転士）：ドア・乗降促進・放送は車掌。ブザー（合図）が鳴ったら発車できます','info'),2500);
   const st=STATIONS[si];G.arrKey=null;
@@ -11571,7 +11570,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
   /* 快速特急・各駅停車：開始駅を選ぶ前に乗務（ワンマン／ツーマン運転士／ツーマン車掌）を選ぶ */
   function pickStation(id){const S=SERVICES[id];avFromCrew=false;
     if(S.kind==='pax'){avFor=id;document.getElementById('home').classList.add('hide');buildAvCtl();document.getElementById('avSel').classList.remove('hide');return;}
-    if(isCrewSvc(S)){crewFor=id;document.getElementById('home').classList.add('hide');document.getElementById('crewSelTitle').textContent=S.name.replace('　',' ');
+    if(S.kind==='ltd'||S.kind==='local'||S.line==='branch3'){crewFor=id;document.getElementById('home').classList.add('hide');document.getElementById('crewSelTitle').textContent=S.name.replace('　',' ');
       for(const b of document.querySelectorAll('#crewGrid button'))b.classList.toggle('on',b.dataset.c===CREWSEL);document.getElementById('crewSel').classList.remove('hide');return;}
     pickStationGo(id);}
   for(const b of document.querySelectorAll('#crewGrid button'))b.addEventListener('click',()=>{CREWSEL=b.dataset.c;try{localStorage.setItem('td_crew',CREWSEL);}catch(e){}
@@ -11587,7 +11586,7 @@ function unlockMedia(pax){try{if(!window.__AC){const A=new (window.AudioContext|
     curOnlineService = S;
     document.getElementById('home').classList.add('hide');
     document.getElementById('stSel').classList.remove('hide');
-    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+(isCrewSvc(S)?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (!isMinatomi ? ' [🌐 リアルタイム常時オンライン]' : ' [📴 オフライン専用]');
+    document.getElementById('stSelTitle').textContent=S.name.replace('　',' ')+((S.kind==='ltd'||S.kind==='local'||S.line==='branch3')?'（'+({one:'ワンマン',twoD:'ツーマン・運転士',twoC:'ツーマン・車掌'})[CREWSEL]+'）':'') + (!isMinatomi ? ' [🌐 リアルタイム常時オンライン]' : ' [📴 オフライン専用]');
     document.getElementById('stSelSub').textContent=(S.kind==='pax'||S.kind==='staff') ? '【乗客・駅員モード】どの駅でも選べます（他プレイヤーがいる駅にもそのまま行けます）' : (isOnlineSvc ? '【リアルタイム常時オンライン】他列車から1km以上離れた駅を選択してください' : '【オフライン専用】港見支線は短距離ローカル線（16km・4駅）のためオフライン運行です。開始駅を選択してください');
     const g=document.getElementById('stGrid');g.innerHTML='';const L2=S.line?LN[S.line].sts:null;const L3=S.rapid?L2.filter(st=>LN[S.line].cfg.rapidStops.includes(st.i)):S.line==='branch4'?(S.dir>0?[L2[0],L2[0]]:[L2[L2.length-1],L2[L2.length-1]]):L2;
     const list=(S.kind==='pax'||S.kind==='staff')?(L2||sts):S.branch?(S.dir>0?L3.slice(0,-1):L3.slice(1).reverse()):stopsOf(sts,S.kind);
