@@ -2538,13 +2538,13 @@ function buildHomeDoors(c,st,k,isSiding){
 function setHD(hd,f){if(Math.abs(hd.frac-f)<0.002)return;hd.frac=f;for(const l of hd.leaves){const s=l.d+l.q*(0.73+f*1.35); /* 閉：中央でぴったり、端は戸袋に重なる */const ln=hd.lineAt?hd.lineAt(s):hd.line;l.m.position.copy(offs(s,ln,PH+0.65));l.m.rotation.y=-P(s)[2];}}
 /* ホームドア当たり：開いていない区間は線路側へ出られない */
 function hdDoorCenters(hd){if(hd._doors)return hd._doors;const s=new Set();for(const l of hd.leaves)s.add(l.d);return hd._doors=[...s];}
-function hdGapAt(hd,s){if(hd.frac<0.45)return false;const half=Math.max(0.25,hd.frac*1.10-0.15);for(const d of hdDoorCenters(hd))if(Math.abs(sdiff(s,d))<half)return true;return false;}
+function hdGapAt(hd,s){if(hd.frac<0.22)return false;const half=Math.max(0.65,hd.frac*1.25);for(const d of hdDoorCenters(hd))if(Math.abs(sdiff(s,d))<half)return true;return false;}
 function applyHDCollision(p){if(p.trackO===-99||!p.g.visible)return;const st=STATIONS[p.st];if(!st||!st.hd)return;
   const k=p.flow,pk=platKey(st,k);const hdKeys=(!BRANCH&&st.i===0)?[pk,'S'+pk]:(pk!==k?[pk,k]:[k]);
   for(const hk of hdKeys){const hd=st.hd[hk];if(!hd)continue;
-    const sd=hd.sd!=null?hd.sd:(TK[k]?TK[k].side(st):1),line=hd.lineAt?hd.lineAt(p.s):hd.line,safe=line+sd*0.55;
+    const sd=hd.sd!=null?hd.sd:(TK[k]?TK[k].side(st):1),line=hd.lineAt?hd.lineAt(p.s):hd.line,safe=line+sd*0.35;
     if(Math.abs(p.o-line)>3.2)continue;
-    if(hd.frac>=0.45&&hdGapAt(hd,p.s))continue; /* 開いているドアの開口部だけ通過できる */
+    if(hd.frac>=0.22&&(hdGapAt(hd,p.s)||((p.kind==='board'||p.kind==='runner')&&p.doorS!=null&&Math.abs(sdiff(p.s,p.doorS))<1.35&&p.train&&boardOpen(p))))continue; /* 開いているドアの開口部・乗降中は通過できる */
     if(sd>0){if(p.o<safe)p.o=safe;}else{if(p.o>safe)p.o=safe;}}}
 function applyHDPlayer(W){if(!W.st||!W.st.hd)return;
   /* 今いるホームの番線だけ判定（G.key固定だと他ホームへ移れない） */
@@ -4884,7 +4884,7 @@ function pullWaitersBody(st,k,train){
     if(doors[p.j]===undefined)p.j=irand(0,doors.length-1);const ds=doors[p.j]||doors[0];
     p.kind='board';p.doorS=ds;p.face=-sd;p.trackO=base;
     const bq=n;p.delay=rand(0,0.08)+Math.min(0.9,bq*0.14);
-    p.path=[[ds+((bq%3)-1)*0.40,base+sd*(1.85+0.32*(bq%2))],[ds+((bq%2)?0.2:-0.2),base+sd*(1.12+0.16*(bq%2))]];p.speed=rand(1.6,2.2);p.end='board';
+    p.path=[[ds,base+sd*2.55],[ds+((bq%2)?0.12:-0.12),base+sd*(1.12+0.16*(bq%2))]];p.speed=rand(1.6,2.2);p.end='board';
     p.train=train;const cd=doorCarOf(p.j,gc,NC);p.car=cd[0];p.dz=cd[1];p.ls=ls;n++;}
   list.length=0;
   if(train==='OWN'&&n)G.load=clamp((G.load||0)+0,0,maxLoadFor(G.key)); /* load は乗車完了時に加算 */
@@ -4898,7 +4898,7 @@ function arrive1(st,k){return withCrowdSeed(waitCastSeed(st,k)+'|arr|'+((st.arrN
   if(trainOpenAt(st,k))pullWaiters(st,k);
 });}
 function updArrivals(dt){const here=PAX?W.s:G.s;
-  for(const st of STATIONS){if(Math.abs(sdiff(here,st.s))>1000||!Object.keys(st.sp).length)continue;st.arrT=st.arrT||{};
+  for(const st of STATIONS){if(Math.abs(sdiff(here,st.s))>650||!Object.keys(st.sp).length)continue;st.arrT=st.arrT||{};
     for(const k of KEYS){if(!serves(st,k)||!st.sp[k])continue;
       /* ドア開中は待機を吸い上げてすぐ乗せる */
       if(trainOpenAt(st,k))pullWaiters(st,k);
@@ -4913,15 +4913,15 @@ let SWEEPT=0;
 function sweepPeople(dt){SWEEPT+=dt;if(SWEEPT<1.5)return;SWEEPT=0;const here=PAX?W.s:G.s,lim=PAX?1500:3300;
   for(const p of active.slice()){if(p.st==null||p.st<0)continue;const st=STATIONS[p.st];if(!st){freePerson(p);continue;}if(Math.abs(sdiff(here,st.s))>lim)freePerson(p);}
   for(const st of STATIONS)if(Math.abs(sdiff(here,st.s))>lim+100){for(const k in st.wait)if(st.wait[k].length)st.wait[k].length=0;if(Object.keys(st.sp).length){st.sp={};st.staff=null;}}
-  const CAP=1600;if(active.length>CAP){const far=active.filter(p=>p.st>=0&&STATIONS[p.st]).sort((a,b)=>Math.abs(sdiff(here,STATIONS[b.st].s))-Math.abs(sdiff(here,STATIONS[a.st].s)));
+  const CAP=QMODE==='heavy'?1200:(QMODE==='light'?650:480);if(active.length>CAP){const far=active.filter(p=>p.st>=0&&STATIONS[p.st]).sort((a,b)=>Math.abs(sdiff(here,STATIONS[b.st].s))-Math.abs(sdiff(here,STATIONS[a.st].s)));
     for(let i=0;i<active.length-CAP&&i<far.length;i++)freePerson(far[i]);}
   for(let i=JOBS.length-1;i>=0;i--)if(!(JOBS[i].t<600))JOBS.splice(i,1);                      /* 予定が溜まり続けないように */
   if(G.said&&Object.keys(G.said).length>4000)G.said={};}
 function updSpawns(){
   for(const st of STATIONS){const dd=G.dir*sdiff(G.s,st.s);
-    if(PAX?Math.abs(dd)<900:(dd>-150&&dd<2700)){for(const k of KEYS){if(!serves(st,k)||st.sp[k])continue;if(G.flowV>=0&&flowSt()===st.i&&k===fkey())continue;spawnWait(st,k);}
+    if(PAX?Math.abs(dd)<650:(dd>-120&&dd<1100)){for(const k of KEYS){if(!serves(st,k)||st.sp[k])continue;if(G.flowV>=0&&flowSt()===st.i&&k===fkey())continue;spawnWait(st,k);}
       if(!st.sp.idle&&st.extra.length)spawnIdle(st);}
-    if((PAX?Math.abs(dd)>1300:dd<-450)&&Object.keys(st.sp).length){for(const p of active.slice())if(p.st===st.i)freePerson(p);st.sp={};st.staff=null;for(const k in st.wait)st.wait[k].length=0;}}
+    if((PAX?Math.abs(dd)>950:(dd<-280||dd>1500))&&Object.keys(st.sp).length){for(const p of active.slice())if(p.st===st.i)freePerson(p);st.sp={};st.staff=null;for(const k in st.wait)st.wait[k].length=0;}}
 }
 
 /* ================= blocks & signals ================= */
@@ -9351,7 +9351,7 @@ function updInterior(){const want=new Map();
   for(const a of allTrains){if(!a.key||a.state==='off'||!a.tr||!a.tr.cars||want.has(a))continue;
     if(isNoPaxTrain(a)){a.load=0;if(a.insideSet)releaseInterior(a);continue;}
     if(!a.vis)continue;
-    const R0=(a.state==='dwell'?320:280)*(QMODE==='heavy'?1.5:1),dist=[];let any=false;
+    const R0=(a.state==='dwell'?200:160)*(QMODE==='heavy'?1.5:1),dist=[];let any=false;
     for(let i=0;i<a.tr.cars.length;i++){const cs=a.s-(a.dir||1)*(CARHALF+i*CARL),dd=Math.abs(sdiff(camS,cs));dist.push([dd,i]);if(dd<R0)any=true;}
     if(any||(a.insideSet&&dist.some(x=>x[0]<R0+280))){dist.sort((x,y)=>x[0]-y[0]);want.set(a,dist.map(x=>x[1]));} /* 間引きなしで編成全体を描画 */
     else if(a.insideSet&&a.state==='dwell')want.set(a,[]);}
@@ -10198,7 +10198,8 @@ function chunkSphere(ch){if(ch.sph!==undefined&&ch.sphN===ch.g.children.length)r
   ch.sph=box.isEmpty()?null:box.getBoundingSphere(new THREE.Sphere());ch.sphN=ch.g.children.length;return ch.sph;}
 const _trsList = [];
 function cullFor(cam){if(QMODE==='normal')return;cam.updateWorldMatrix(true,false);_pm4.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);_frus.setFromProjectionMatrix(_pm4);
-  const cp=cam.getWorldPosition(_cwp),far=QMODE==='extreme'?Math.min((scene.fog?scene.fog.far:3600)+60,1350):((scene.fog?scene.fog.far:3600)+60);
+  const cp=cam.getWorldPosition(_cwp),fogFar=(scene.fog?scene.fog.far:3600)+60;
+  const far=(typeof monCam!=='undefined'&&cam===monCam)?260:(QMODE==='extreme'?Math.min(fogFar,1100):QMODE==='ultralight'?Math.min(fogFar,1400):QMODE==='light'?Math.min(fogFar,1800):fogFar);
   for(const ch of CHUNKS){if(!ch.built||!ch.g)continue;const sp=chunkSphere(ch);if(!sp){ch.g.visible=true;continue;}
     ch.g.visible=_frus.intersectsSphere(sp)&&(cp.distanceTo(sp.center)-sp.radius)<far;}
   _trsList.length = 0;
