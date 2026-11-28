@@ -1126,9 +1126,16 @@ async function startCrewMic(mode) {
     return;
   }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     if (!window.__AC && typeof initAudio === 'function') { try { initAudio(); } catch (e) {} }
     const ac = window.__AC;
+    if (ac && ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'play-and-record'; } catch (e) {} }
+    let stream = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    } catch (_e1) {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
     if (!ac) { stream.getTracks().forEach(t => t.stop()); return; }
     if (ac.state === 'suspended') { try { await ac.resume(); } catch (e) {} }
     const src = ac.createMediaStreamSource(stream);
@@ -1152,7 +1159,7 @@ async function startCrewMic(mode) {
     const TARGET_SR = 12000;
     const ratio = ac.sampleRate / TARGET_SR;
     proc.onaudioprocess = (ev) => {
-      if (!m.on || !ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
+      if (!m.on) return;
       if (ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
       const inp = ev.inputBuffer.getChannelData(0);
       let peak = 0;
@@ -1162,6 +1169,7 @@ async function startCrewMic(mode) {
       }
       const meter = document.getElementById('crewMicMeter');
       if (meter) meter.style.width = Math.min(100, Math.round(peak * 220)) + '%';
+      if (!ONLINE_CLIENT || !ONLINE_CLIENT.connected) return;
       for (let p = 0; p < inp.length; p += ratio) {
         const idx = Math.floor(p);
         const nxt = Math.min(inp.length - 1, idx + 1);
@@ -1208,7 +1216,9 @@ async function startCrewMic(mode) {
     _updCrewMicUI();
     if (typeof toast === 'function') toast(m.mode === 'out' ? '📣 マイクON（車外放送）' : '📢 マイクON（車内放送）', 'ok');
   } catch (e) {
-    if (typeof toast === 'function') toast('マイクの使用が許可されませんでした', 'warn');
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'playback'; } catch (_e) {} }
+    const msg = (e && e.name === 'NotAllowedError') ? 'マイクの使用が許可されませんでした' : ('マイクを開始できませんでした' + (e && e.name ? ' (' + e.name + ')' : ''));
+    if (typeof toast === 'function') toast(msg, 'warn');
   }
 }
 function stopCrewMic() {
