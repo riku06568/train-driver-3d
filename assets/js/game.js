@@ -3883,14 +3883,13 @@ cbox(0.1,1.2,0.14,CM.frame,-1.32,2.9,0.16);cbox(0.1,1.2,0.14,CM.frame,0.24,2.9,0
 cbox(0.74,0.2,0.08,CM.shell,0.655,2.4,0.18);cbox(0.74,0.14,0.08,CM.shell,0.655,3.28,0.18);
 cplane(1.46,1.05,CM.glass,-0.54,2.825,0.12);cplane(0.72,0.7,CM.glass,0.655,2.85,0.14);
 cbox(2.74,0.05,2.5,CM.shell,0,3.64,1.35);cbox(2.74,0.05,2.5,CM.floor,0,1.15,1.35);
-for(const sg of [-1,1]){const x=sg*1.37;cbox(0.06,1.05,2.5,CM.shell,x,1.675,1.35);cbox(0.06,0.42,2.5,CM.shell,x,3.43,1.35);
-  cbox(0.06,1.02,0.4,CM.shell,x,2.71,0.3);cbox(0.06,1.02,0.5,CM.shell,x,2.71,2.35);const g=cplane(1.55,1.02,CM.glass,x,2.71,1.275);g.rotation.y=Math.PI/2;}
+for(const sg of [-1,1]){const x=sg*1.37;cbox(0.06,1.05,2.56,CM.shell,x,1.675,1.38);cbox(0.06,0.46,2.56,CM.shell,x,3.44,1.38);
+  cbox(0.06,1.02,0.4,CM.shell,x,2.71,0.3);cbox(0.06,1.02,0.54,CM.shell,x,2.71,2.37);const g=cplane(1.55,1.02,CM.glass,x,2.71,1.275);g.rotation.y=Math.PI/2;}
 /* partition behind the driver: same window and door proportions as carTemplate */
 {const Z=2.6,door=TM.door;
-  cbox(2.74,0.64,0.05,CM.shell,0,1.48,Z);cbox(2.74,0.50,0.05,CM.shell,0,3.16,Z);
-  for(const sx of [-1,1])cbox(0.06,1.1,0.05,CM.shell,sx*1.33,2.35,Z);
+  cbox(2.74,0.66,0.08,CM.shell,0,1.47,Z+0.015);cbox(2.74,0.78,0.08,CM.shell,0,3.28,Z+0.015);
+  for(const sx of [-1,1]){cbox(0.06,1.15,0.08,CM.shell,sx*1.33,2.35,Z+0.015);cbox(0.04,1.15,0.06,CM.shell,sx*0.41,2.35,Z+0.01);}
   const cabDoorL=cbox(0.8,1.85,0.05,door,0,2.125,Z-0.03);cbox(0.03,0.04,0.12,CM.metal,0.3,2.1,Z-0.03);
-  cabDoorL.userData.act='enterSal';INTER.push(cabDoorL);const cabDoorHit=cplane(0.85,1.8,CM.hit,0,2.05,Z-0.06);cabDoorHit.userData.act='enterSal';INTER.push(cabDoorHit);
   for(const sx of [-1,1])cplane(0.9,1.1,TM.glassC,sx*0.86,2.35,Z-0.01);
   cbox(0.5,0.1,0.5,CM.desk,-0.3,1.72,1.55);cbox(0.5,0.55,0.08,CM.desk,-0.3,2.05,1.82);cbox(0.08,0.55,0.08,CM.metal,-0.3,1.45,1.55);}
 const SALDOOR=[]; // the saloon doors slide with the real ones
@@ -7288,7 +7287,7 @@ function updCondUI(){const ui=document.getElementById('condUI');if(!ui)return;ui
   const cs=b('cSal');if(cs)cs.textContent=(G.walkOn&&G.walkArea==='train')?'🚪 乗務員室へ':'🚶 車内を歩く';
   const cv=b('cView');if(cv)cv.textContent=AV3P?'👁️ 三人称':'👁️ 一人称';
   const m=b('cMelo');if(m)m.textContent=G.promoOn?'再生中…':'発車メロディ';const h=b('cHint');
-  if(h)h.textContent=G.lean?'窓から顔を出して確認中（ドラッグで見回し）':G.walkOn?(G.walkArea==='train'?('車内巡回中（'+(G.walkCar+1)+'号車）'):(open?(nearCondBox()?'メロディのボタンの前です':'ホーム確認中（ITVモニタも使えます）'):'ドアを開けてください')):(G.v>0.5?'乗務中（後ろ扉・ボタンで車内を歩けます）':open?'ホームや車内・ITVモニタで確認して戸閉→合図':G.depCheck!==null&&!G.condOK?'ドアを閉めたら運転士へ合図を送ります':'停車したらホームに出るかITVモニタを確認して戸開');}
+  if(h)h.textContent=G.lean?'窓から顔を出して確認中（ドラッグで見回し）':G.walkOn?(G.walkArea==='train'?('車内巡回中（'+(G.walkCar+1)+'号車）'):(open?(nearCondBox()?'メロディのボタンの前です':'ホーム確認中（ITVモニタも使えます）'):'ドアを開けてください')):(G.v>0.5?'乗務中（「車内を歩く」ボタンで車内を歩けます）':open?'ホームや車内・ITVモニタで確認して戸閉→合図':G.depCheck!==null&&!G.condOK?'ドアを閉めたら運転士へ合図を送ります':'停車したらホームに出るかITVモニタを確認して戸開');}
 let _lastCrewStafKey='';
 function drawCrewStaf(force){
   const panel=document.getElementById('crewStafPanel'),meta=document.getElementById('crewStafMeta'),body=document.getElementById('crewStafBody');
@@ -8063,7 +8062,6 @@ function doAct(a,hit){
     case 'hornA':startHoldHorn('air');break;case 'hornE':startHoldHorn('elec');break;
     case 'ann0':case 'ann1':case 'ann2':case 'ann3':broadcast(+a.slice(3));break;
     case 'leanL':toggleLean(-1);break;case 'leanR':toggleLean(1);break;
-    case 'enterSal':if(G.crew==='twoC')enterSalWalk();else toast('車内巡回は車掌モードで使えます','info');break;
     case 'lnOpen':openDoor(G.lean);break;case 'lnClose':closeDoor(G.lean);break;case 'lnMelo':promote(defaultPromo());break;
     case 'panel':if(hit&&hit.uv)panelAct(hit.uv.x,hit.uv.y);break;
     case 'monL':case 'monR':{const k=a.slice(3);if(G.zoom===k&&camTouchOn()&&hit&&hit.point&&OLDMON){const M=MON[k],lp=M.g.worldToLocal(hit.point.clone()),x=(lp.x/M.w+0.5)*512,y=(0.5-lp.y/M.h)*384;
