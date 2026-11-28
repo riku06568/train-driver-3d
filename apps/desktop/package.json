@@ -12,6 +12,7 @@
   "main": "main.js",
   "scripts": {
     "sync-web": "node scripts/sync-web.js",
+    "postinstall": "node scripts/sync-web.js",
     "start": "npm run sync-web && electron .",
     "dist": "npm run sync-web && electron-builder --publish never",
     "dist:win": "npm run sync-web && electron-builder --win --publish never",
