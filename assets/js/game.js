@@ -2212,19 +2212,19 @@ const MATS={
 const fenceTex=canvasTex(128,128,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#c9ced4';x.fillRect(0,0,w,12);x.fillRect(0,h-10,w,10);x.fillRect(0,0,8,h);x.fillRect(w-8,0,8,h);
   for(let i=16;i<w-8;i+=14)x.fillRect(i,10,4,h-18);x.fillRect(0,h*0.52,w,5);});
 const IMATS={sleeper:lam(0x4a3b30),pole:lam(0x7a7f86),pillar:lam(0xe2ded2),stair:lam(0xc3c8bf),tree:lam(0x3f5a34),conc:lam(0x9b9a94),
-  tlamp:new THREE.MeshBasicMaterial({color:0xe8f6ff}),hdp:lam(0x252c36),hdpost:lam(0x161b22),hdcap:lam(0x94a3b8),
+  tlamp:new THREE.MeshBasicMaterial({color:0xe8f6ff}),streetLamp:new THREE.MeshLambertMaterial({color:0xd8dce0,emissive:0xffe4a8,emissiveIntensity:0}),hdp:lam(0x252c36),hdpost:lam(0x161b22),hdcap:lam(0x94a3b8),
   fence:new THREE.MeshLambertMaterial({map:fenceTex,alphaTest:0.4,side:DS}),fpost:lam(0xb9bec4),melo:lam(0xe0a21a),bumper:lam(0xc8322b),
   bldA:new THREE.MeshLambertMaterial({map:winTexA,emissive:0xffaa55,emissiveMap:winTexA,emissiveIntensity:0.1}),
   bldB:new THREE.MeshLambertMaterial({map:winTexB,emissive:0xffcc77,emissiveMap:winTexB,emissiveIntensity:0.1})};
 const IGEO={sleeper:boxGeo(2.0,0.1,0.22),post:boxGeo(0.3,7.2,0.3),beam:boxGeo(1,0.35,0.35),pillar:new THREE.CylinderGeometry(0.15,0.15,1,8),
-  stair:boxGeo(1,1,1),bldA:boxGeo(1,1,1),bldB:boxGeo(1,1,1),tree:new THREE.ConeGeometry(1.8,6,7),pier:boxGeo(1,1,1),pcap:boxGeo(1,1,1),tlamp:boxGeo(0.12,0.12,1.2),
+  stair:boxGeo(1,1,1),bldA:boxGeo(1,1,1),bldB:boxGeo(1,1,1),tree:new THREE.ConeGeometry(1.8,6,7),pier:boxGeo(1,1,1),pcap:boxGeo(1,1,1),tlamp:boxGeo(0.12,0.12,1.2),streetLamp:boxGeo(1,1,1),
   hdp:boxGeo(1,1,1),hdpost:boxGeo(1,1,1),hdcap:boxGeo(1,1,1),lightTower:boxGeo(1,1,1),fence:boxGeo(1,1,1),fpost:boxGeo(1,1,1),melo:boxGeo(1,1,1),bumper:boxGeo(1,1,1)};
-const IMATKEY={sleeper:'sleeper',post:'pole',beam:'pole',pillar:'pillar',stair:'stair',bldA:'bldA',bldB:'bldB',tree:'tree',pier:'conc',pcap:'conc',tlamp:'tlamp',hdp:'hdp',hdpost:'hdpost',hdcap:'hdcap',lightTower:'pole',fence:'fence',fpost:'fpost',melo:'melo',bumper:'bumper'};
+const IMATKEY={sleeper:'sleeper',post:'pole',beam:'pole',pillar:'pillar',stair:'stair',bldA:'bldA',bldB:'bldB',tree:'tree',pier:'conc',pcap:'conc',tlamp:'tlamp',streetLamp:'streetLamp',hdp:'hdp',hdpost:'hdpost',hdcap:'hdcap',lightTower:'pole',fence:'fence',fpost:'fpost',melo:'melo',bumper:'bumper'};
 const roofGeo=(()=>{const sh=new THREE.Shape();sh.moveTo(-0.5,0);sh.lineTo(0.5,0);sh.lineTo(0,1);sh.lineTo(-0.5,0);const g=new THREE.ExtrudeGeometry(sh,{depth:1,bevelEnabled:false});g.translate(0,0,-0.5);return g;})();
 Object.assign(IGEO,{house:boxGeo(1,1,1),roof:roofGeo,field:boxGeo(1,1,1),trunk:new THREE.CylinderGeometry(0.18,0.25,1,6),leaf:new THREE.SphereGeometry(1,8,6)});
-Object.assign(IMATS,{house:new THREE.MeshLambertMaterial({map:houseTex}),roof:lam(0xffffff),field:new THREE.MeshLambertMaterial({map:fieldTex}),trunk:lam(0x5a4030),leaf:lam(0x4d7a3a)});
+Object.assign(IMATS,{house:new THREE.MeshLambertMaterial({map:houseTex,emissive:0xffbb66,emissiveMap:houseTex,emissiveIntensity:0}),roof:lam(0xffffff),field:new THREE.MeshLambertMaterial({map:fieldTex}),trunk:lam(0x5a4030),leaf:lam(0x4d7a3a)});
 Object.assign(IMATKEY,{house:'house',roof:'roof',field:'field',trunk:'trunk',leaf:'leaf'});
-const GROUNDK=new Set(['bldA','bldB','tree','pier','lightTower','house','roof','field','trunk','leaf']);
+const GROUNDK=new Set(['bldA','bldB','tree','pier','lightTower','streetLamp','house','roof','field','trunk','leaf']);
 
 
 for(const t of [winTexA,winTexB,houseTex,fieldTex,facadeTex,trussTex,armTex,fenceTex])SHARED.add(t);for(const g of Object.values(IGEO))SHARED.add(g);
@@ -3014,7 +3014,7 @@ function planCity(c,c0,cityF){const B=CITY,c1=c0+CH,samp={};
         strip(c,sA,sB,10,[[s=>of(s)-B.RW/2,0.03],[s=>of(s)+B.RW/2,0.03]],'road',true);
         for(const e of [-1,1])strip(c,sA,sB,10,[[s=>of(s)+e*(B.RW/2),0.13],[s=>of(s)+e*(B.RW/2+2.4),0.13]],'concD',true);   /* 歩道 */
         for(let s2=sA+2;s2<sB-4;s2+=9)strip(c,s2,s2+3,3,[[s=>of(s)-0.09,0.045],[s=>of(s)+0.09,0.045]],'white',true);   /* 中央線 */
-        for(let s2=sA+8;s2<sB-2;s2+=32){const o=of(s2)+side*(B.RW/2+1.4);inst(c,'lightTower',s2,o,3.2,0.16,6.4,0.16);inst(c,'lightTower',s2,o-side*0.9,6.35,1.8,0.14,0.22);}}; /* 街灯 */
+        for(let s2=sA+8;s2<sB-2;s2+=32){const o=of(s2)+side*(B.RW/2+1.4);inst(c,'lightTower',s2,o,3.2,0.16,6.4,0.16);inst(c,'lightTower',s2,o-side*0.9,6.35,1.8,0.14,0.22);inst(c,'streetLamp',s2,o-side*1.55,6.22,0.52,0.14,0.28);}}; /* 街灯とランプ */
       for(let s2=c0;s2<=c1;s2+=10){const bad=nearRiver(s2,72)||!hasTrackish(s2);if(!bad&&a===null)a=s2;if((bad||s2>=c1)&&a!==null){flush(a,Math.min(s2,c1));a=null;}}}
     /* 直角の道路 */
     for(let k=Math.ceil((c0-B.PH0)/B.BL);k*B.BL+B.PH0<c1;k++){const sk=k*B.BL+B.PH0;if(nearRiver(sk,80)||nearCross(sk,30)||!hasTrackish(sk))continue;
@@ -3447,10 +3447,12 @@ const poolTex=canvasTex(64,128,(x,w,h)=>{const g=x.createRadialGradient(32,110,4
 const GLOW={head:new THREE.SpriteMaterial({map:glowTex,color:0xfff4dc,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0.6}),
   tail:new THREE.SpriteMaterial({map:glowTex,color:0xff2a1a,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0.6}),
   pool:new THREE.MeshBasicMaterial({map:poolTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0,side:DS})};
-function addLights(tr){const lg=[];const f=tr.cars[0],r=tr.cars[tr.cars.length-1];
-  for(const sx of [-1,1]){const h=new THREE.Sprite(GLOW.head);h.scale.set(1.5,1.5,1);h.position.set(sx*1.0,1.72,-9.98);f.add(h);lg.push(h);
-    const t=new THREE.Sprite(GLOW.tail);t.scale.set(0.8,0.8,1);t.position.set(sx*0.7,1.72,9.98);r.add(t);lg.push(t);}
-  const pool=new THREE.Mesh(UNIT_PLANE,GLOW.pool);pool.scale.set(3.4,26,1);pool.rotation.x=-Math.PI/2;pool.position.set(0,0.56,-23);f.add(pool);lg.push(pool);tr.lights=lg;}
+function addLights(tr){
+  if(tr.lights)for(const l of tr.lights)if(l&&l.parent)l.parent.remove(l);
+  const lg=[];const f=tr.cars[0],r=tr.cars[tr.cars.length-1],fz=tr.rev?1:-1;
+  for(const sx of [-1,1]){const h=new THREE.Sprite(GLOW.head);h.scale.set(1.5,1.5,1);h.position.set(sx*1.0,1.72,fz*9.98);f.add(h);lg.push(h);
+    const t=new THREE.Sprite(GLOW.tail);t.scale.set(0.8,0.8,1);t.position.set(sx*0.7,1.72,-fz*9.98);r.add(t);lg.push(t);}
+  const pool=new THREE.Mesh(UNIT_PLANE,GLOW.pool);pool.scale.set(3.4,26,1);pool.rotation.x=-Math.PI/2;pool.position.set(0,0.56,fz*23);f.add(pool);lg.push(pool);tr.lights=lg;}
 function buildTrain(dest,flip,liv,withDoors,greenCars,nCar,oldOv,flatGreen){const GC=greenCars||[],NC=nCar||NCAR,old=oldOv!==undefined?(oldOv&&withDoors):(BRANCH&&withDoors); /* 支線の電車は古い形式（天宮支線は一部が本線と同じ電車） */
   const c1=new THREE.Color(liv),c2=c1.clone().lerp(new THREE.Color(0xffffff),0.45);
   const mats={liv1:new THREE.MeshLambertMaterial({color:c1,side:DS}),liv2:new THREE.MeshLambertMaterial({color:c2,side:DS}),dest:null};const dk=mkCanvas(256,48);drawDest(dk,dest);mats.dest=new THREE.MeshBasicMaterial({map:dk.tex,side:DS});if(old){mats.body=OLDBODY;mats.iwall=OLDI.iwall;mats.iseat=OLDI.iseat;mats.ifloor=OLDI.ifloor;drawDestRoll(dk,dest);}
@@ -6646,7 +6648,7 @@ function updEnv(){
   // lights come on the moment it gets dark (and in tunnels), instead of fading in slowly
   const lit=1-smooth(0.015,0.075,e),dark=Math.max(lit,inTun?1:0);
   const lateF=(h>=0.5&&h<5)?0.35:(h>=22||h<0.5)?0.7:1;
-  IMATS.bldA.emissiveIntensity=0.06+0.95*lit*lateF;IMATS.bldB.emissiveIntensity=0.06+1.0*lit*lateF;
+  IMATS.bldA.emissiveIntensity=0.06+1.05*lit*lateF;IMATS.bldB.emissiveIntensity=0.06+1.1*lit*lateF;IMATS.house.emissiveIntensity=0.04+0.8*lit*lateF;IMATS.streetLamp.emissiveIntensity=1.6*lit;
   TM.iwall.emissiveIntensity=0.3+0.35*dark;TM.ifloor.emissiveIntensity=0.25+0.3*dark;TM.doorway.emissiveIntensity=0.15+0.5*dark;
   MATS.lamp.emissiveIntensity=1.1*lit;MATS.lamp.color.setHex(lit>0.5?0xffffff:0xcfcfcf);G.stLit=lit;STFAC.forEach(m=>m.emissiveIntensity=0.9*lit*lateF);
   headSpot.intensity=dark*2.6;GLOW.head.opacity=0.45+0.5*dark;GLOW.tail.opacity=0.35+0.55*dark;GLOW.pool.opacity=0.6*dark;cabLight.intensity=0.15+dark*0.45;
@@ -7181,7 +7183,7 @@ function turnaround(){
   G.v=0;G.atStation=0;G.nv=1;G.depCheck=null;G.lastDepSt=null;G.flowV=(G.flowV>=0?0:-1);G.depAt=G.s;
   G.route=Object.keys(SERVICES).find(id=>SERVICES[id].line===CFG.id&&SERVICES[id].key===nk&&SERVICES[id].kind==='branch')||(nk==='A'?'bu':'bd');
   ownTrain.flip=G.dir<0;ownTrain.lastFrac=-1;drawOwnDest();planFrom(nowMs()+20000);
-  if(OWNAI&&OWNAI.insideSet)releaseInterior(OWNAI);ownTrain.cars.reverse();ownTrain.rev=!ownTrain.rev;relayoutLean(); /* 最後尾だった車両が先頭に */
+  if(OWNAI&&OWNAI.insideSet)releaseInterior(OWNAI);ownTrain.cars.reverse();ownTrain.rev=!ownTrain.rev;addLights(ownTrain);relayoutLean(); /* 最後尾だった車両が先頭に */
   if(G.promoLoop)stopPromoLoop(false);G.promoOn=false;clearAutoMelTimers();G.autoMelOn=false;G.autoMelFired=false;G.autoMelBusy=false;
   /* ドアが開いていたら閉めずに維持し、運転士から見た左右(local)だけ新しい向きへ合わせる */
   const lsNew=localSide(st);
