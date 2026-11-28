@@ -1126,7 +1126,7 @@ async function startCrewMic(mode) {
     return;
   }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     if (!window.__AC && typeof initAudio === 'function') { try { initAudio(); } catch (e) {} }
     const ac = window.__AC;
     if (!ac) { stream.getTracks().forEach(t => t.stop()); return; }
@@ -1221,6 +1221,8 @@ function stopCrewMic() {
   try { if (m.zeroGain) m.zeroGain.disconnect(); } catch (e) {}
   try { if (m.stream) m.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
   m.proc = null; m.src = null; m.nodes = []; m.zeroGain = null; m.stream = null;
+  if (navigator.audioSession) { try { navigator.audioSession.type = 'playback'; } catch (e) {} }
+  if (window.__AC && window.__AC.state === 'suspended') { try { window.__AC.resume(); } catch (e) {} }
   const meter = document.getElementById('crewMicMeter');
   if (meter) meter.style.width = '0%';
   _updCrewMicUI();
